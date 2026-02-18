@@ -56,13 +56,13 @@ Backend:
 - Spring Boot
 
 Database:
-- MongoDB
+- MySQL
 
 ---
 
 ## System Architecture
 
-React Frontend → Spring Boot REST API → MongoDB Database
+React Frontend → Spring Boot REST API → MySQL Database
 
 ---
 
