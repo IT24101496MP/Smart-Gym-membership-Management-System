@@ -33,7 +33,7 @@ This system helps manage gym members, memberships, attendance, payments, and fit
 - Track payment history
 - Monitor pending payments
 
-### 5. Height and Weight Tracking
+### 5. Body Metrics Monitoring
 - Record member height and weight
 - Maintain historical body measurements
 
