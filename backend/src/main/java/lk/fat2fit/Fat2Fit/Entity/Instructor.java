@@ -50,9 +50,11 @@ public class Instructor {
     private String areasOfSpecialization;
 
     @Column(name = "status")
+    @Builder.Default
     private ProfileStatus status =  ProfileStatus.PENDING;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "created_at")
@@ -60,4 +62,15 @@ public class Instructor {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
