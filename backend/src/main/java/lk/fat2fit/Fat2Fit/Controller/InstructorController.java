@@ -33,9 +33,7 @@ public class InstructorController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<?> updateInstructorStatus(
-            @PathVariable int id,
-            @RequestParam String status){
+    public ResponseEntity<?> updateInstructorStatus(@PathVariable int id, @RequestParam String status){
         return instructorService.updateInstructorStatus(id, status);
     }
 }
