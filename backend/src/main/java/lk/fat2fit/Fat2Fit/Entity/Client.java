@@ -44,17 +44,17 @@ public class Client {
     @Column(name = "mobile_number", nullable = false, unique = true)
     @Pattern(
             regexp = "0\\d{9}",
-            message = "Contact number must be a valid mobile number"
+            message = "Contact number must be a valid number"
     )
     private String mobileNumber;
 
-    @Column(name = "home_phone")
+    @Column(name = "land_phone")
     @Pattern(
             regexp = "0\\d{9}",
-            message = "Home phone must be a number",
+            message = "Land phone must be a valid number",
             flags = Pattern.Flag.CASE_INSENSITIVE
     )
-    private String homePhone;
+    private String landPhone;
 
     @Column(name = "email", nullable = false, unique = true)
     @Email(message = "Email should be valid")
