@@ -21,6 +21,6 @@ public class ClientRegister {
     private String emergencyContactNumber;
 
     private String bloodGroup;
-    private byte[] image;
+    private byte[] profilePicture;
     private byte[] digitalSignature;
 }
