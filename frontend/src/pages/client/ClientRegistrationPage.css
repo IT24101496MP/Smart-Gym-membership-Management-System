@@ -128,8 +128,8 @@ textarea {
 
 .photo-preview {
   margin-top: 12px;
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid #DC2F2F;
@@ -155,7 +155,7 @@ textarea {
 
 .clear-signature {
   align-self: flex-end;
-  background-color: #FF894C;
+  background-color: #FF7043;
   border: none;
   color: white;
   padding: 6px 14px;
@@ -202,6 +202,32 @@ textarea {
   color: #DC2F2F;
   font-weight: 700;
   text-decoration: none;
+}
+
+.form-group.clearable {
+  position: relative;
+}
+
+.form-group.clearable input,
+.form-group.clearable textarea,
+.form-group.clearable select {
+  width: 100%;
+  padding-right: 70px; /* space for Clear button */
+}
+
+.form-group.clearable button {
+  align-self: flex-end;
+  padding: 4px 10px;
+  background-color: #FF7043;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.form-group.clearable button:hover {
+  background-color: #FF5722;
 }
 
 @media (max-width: 600px) {
