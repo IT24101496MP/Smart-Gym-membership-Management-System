@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface InstructorRepository extends JpaRepository<Instructor, Integer> {
     boolean existsByEmail(String email);
-    boolean existByPhoneNumber(String phoneNumber);
+    boolean existsByPhoneNumber(String phoneNumber);
 
     boolean existsByEmailOrPhoneNumber(String email, String phoneNumber);
 
