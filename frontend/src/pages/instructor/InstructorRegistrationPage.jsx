@@ -11,7 +11,9 @@ const InstructorRegistrationPage = () => {
     address: '',
     qualification: '',
     yearsOfExperience: '',
-    areasOfSpecialization: ''
+    areasOfSpecialization: '',
+    password: '',
+    confirmPassword: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -55,6 +57,16 @@ const InstructorRegistrationPage = () => {
     if (formData.yearsOfExperience !== '' && (isNaN(formData.yearsOfExperience) || Number(formData.yearsOfExperience) < 0)) {
       newErrors.yearsOfExperience = 'Years of experience cannot be negative';
     }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
 
     return newErrors;
   };
@@ -71,12 +83,13 @@ const InstructorRegistrationPage = () => {
     setIsSubmitting(true);
     
     try {
+      const { confirmPassword: _, ...payload } = formData;
       const response = await fetch('http://localhost:8080/api/instructor/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -89,7 +102,9 @@ const InstructorRegistrationPage = () => {
           address: '',
           qualification: '',
           yearsOfExperience: '',
-          areasOfSpecialization: ''
+          areasOfSpecialization: '',
+          password: '',
+          confirmPassword: ''
         });
       } else {
         const error = await response.text();
@@ -239,6 +254,39 @@ const InstructorRegistrationPage = () => {
               onChange={handleChange}
               placeholder="e.g. Yoga, Pilates, Strength Training"
             />
+          </div>
+
+          {/* Account Security */}
+          <p className="form-section-title">Account Security</p>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="password">Password <span className="required-star">*</span></label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Min. 8 characters"
+                className={errors.password ? 'error-field' : ''}
+              />
+              {errors.password && <span className="error-message">{errors.password}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password <span className="required-star">*</span></label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Re-enter password"
+                className={errors.confirmPassword ? 'error-field' : ''}
+              />
+              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+            </div>
           </div>
 
           <div className="form-actions">
