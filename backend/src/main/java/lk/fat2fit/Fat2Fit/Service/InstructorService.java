@@ -1,14 +1,15 @@
 package lk.fat2fit.Fat2Fit.Service;
 
-import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
-import lk.fat2fit.Fat2Fit.Entity.Instructor;
-import lk.fat2fit.Fat2Fit.Repository.InstructorRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
+import lk.fat2fit.Fat2Fit.Entity.Instructor;
+import lk.fat2fit.Fat2Fit.Repository.InstructorRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
