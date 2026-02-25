@@ -29,7 +29,7 @@ public class ClientService {
                 .emergencyContactRelationship(emptyToNull(clientRegister.getEmergencyContactRelationship()))
                 .emergencyContactNumber(emptyToNull(clientRegister.getEmergencyContactNumber()))
                 .bloodGroup(emptyToNull(clientRegister.getBloodGroup()))
-                .image(clientRegister.getImage())
+                .profilePicture(clientRegister.getProfilePicture())
                 .digitalSignature(clientRegister.getDigitalSignature())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
