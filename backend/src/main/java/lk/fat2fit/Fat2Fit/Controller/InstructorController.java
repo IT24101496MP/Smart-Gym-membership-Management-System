@@ -1,14 +1,14 @@
 package lk.fat2fit.Fat2Fit.Controller;
 
-import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
-import lk.fat2fit.Fat2Fit.Entity.Instructor;
-import lk.fat2fit.Fat2Fit.Service.InstructorService;
-import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
+import lk.fat2fit.Fat2Fit.Service.InstructorService;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/api/instructor")

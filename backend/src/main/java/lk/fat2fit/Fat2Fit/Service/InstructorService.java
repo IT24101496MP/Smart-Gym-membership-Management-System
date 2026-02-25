@@ -33,7 +33,7 @@ public class InstructorService {
     public ResponseEntity<?> registerInstructor(InstructorRegister instructor){
 
         if(instructorRepository.existsByEmailOrPhoneNumber(instructor.getEmail(), instructor.getPhoneNumber())){
-            ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Instructor with email: " + instructor.getEmail() +
                             " or phone: " + instructor.getPhoneNumber() + " already exists");
         }
