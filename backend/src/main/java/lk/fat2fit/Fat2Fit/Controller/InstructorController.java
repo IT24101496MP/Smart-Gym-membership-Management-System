@@ -26,4 +26,16 @@ public class InstructorController {
     public List<Instructor> getAllInstructors(){
         return instructorService.getAllInstructors();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getInstructorById(@PathVariable int id){
+        return instructorService.getInstructorById(id);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateInstructorStatus(
+            @PathVariable int id,
+            @RequestParam String status){
+        return instructorService.updateInstructorStatus(id, status);
+    }
 }

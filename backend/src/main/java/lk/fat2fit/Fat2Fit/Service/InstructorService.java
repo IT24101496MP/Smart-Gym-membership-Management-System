@@ -48,4 +48,25 @@ public class InstructorService {
     public List<Instructor> getAllInstructors(){
         return instructorRepository.findAll();
     }
+
+    public ResponseEntity<?> getInstructorById(int id){
+        return instructorRepository.findById(id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Instructor not found"));
+    }
+
+    public ResponseEntity<?> updateInstructorStatus(int id, String status){
+        Instructor.ProfileStatus newStatus;
+        try {
+            newStatus = Instructor.ProfileStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid status value: " + status);
+        }
+
+        return instructorRepository.findById(id).map(instructor -> {
+            instructor.setStatus(newStatus);
+            instructorRepository.save(instructor);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Instructor not found"));
+    }
 }
