@@ -14,41 +14,41 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "client")
+@Table(name = "Clients")
 public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "client_id")
+    @Column(name = "Client_id")
     private int clientId;
 
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "First_name", nullable = false)
     @NotBlank(message = "First name is required")
     private String firstName;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "Last_name", nullable = false)
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @Column(name = "age", nullable = false)
+    @Column(name = "Age", nullable = false)
     @Min(value = 0, message = "Age cannot be negative")
     private int age;
 
-    @Column(name = "gender", nullable = false)
+    @Column(name = "Gender", nullable = false)
     @Pattern(
             regexp = "Male|Female|Prefer not to say",
             message = "Gender must be Male, Female, or Prefer not to say"
     )
     private String gender;
 
-    @Column(name = "mobile_number", nullable = false, unique = true)
+    @Column(name = "Mobile_number", nullable = false, unique = true)
     @Pattern(
             regexp = "0\\d{9}",
-            message = "Contact number must be a valid number"
+            message = "Mobile number must be a valid number"
     )
     private String mobileNumber;
 
-    @Column(name = "land_phone")
+    @Column(name = "Land_phone")
     @Pattern(
             regexp = "0\\d{9}",
             message = "Land phone must be a valid number",
@@ -56,42 +56,42 @@ public class Client {
     )
     private String landPhone;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "Email", nullable = false, unique = true)
     @Email(message = "Email should be valid")
     @NotBlank(message = "Email is required")
     private String email;
 
-    @Column(name = "address", nullable = false)
+    @Column(name = "Address", nullable = false)
     @NotBlank(message = "Address is required")
     private String address;
 
-    @Column(name = "emergency_contact_name")
+    @Column(name = "Emergency_contact_name")
     private String emergencyContactName;
 
-    @Column(name = "emergency_contact_relationship")
+    @Column(name = "Emergency_contact_relationship")
     private String emergencyContactRelationship;
 
-    @Column(name = "emergency_contact_number")
+    @Column(name = "Emergency_contact_number")
     @Pattern(
             regexp = "0\\d{9}",
-            message = "Emergency contact phone must be a valid number"
+            message = "Emergency contact number must be a valid number"
     )
     private String emergencyContactNumber;
 
-    @Column(name = "blood_group")
+    @Column(name = "Blood_group")
     private String bloodGroup;
 
     @Lob
-    @Column(name = "image")
-    private byte[] image;
+    @Column(name = "Profile_picture")
+    private byte[] profilePicture;
 
     @Lob
-    @Column(name = "digital_signature")
+    @Column(name = "Digital_signature")
     private byte[] digitalSignature;
 
-    @Column(name = "created_at")
+    @Column(name = "Created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "Updated_at")
     private LocalDateTime updatedAt;
 }
