@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorEmploymentAssignment;
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Service.InstructorService;
@@ -35,5 +36,10 @@ public class InstructorController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateInstructorStatus(@PathVariable int id, @RequestParam String status){
         return instructorService.updateInstructorStatus(id, status);
+    }
+
+    @PutMapping("/{id}/employment")
+    public ResponseEntity<?> assignEmploymentDetails(@PathVariable int id, @RequestBody InstructorEmploymentAssignment dto){
+        return instructorService.assignEmploymentDetails(id, dto);
     }
 }
