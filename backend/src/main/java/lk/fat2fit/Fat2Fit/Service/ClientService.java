@@ -1,6 +1,6 @@
 package lk.fat2fit.Fat2Fit.Service;
 
-import lk.fat2fit.Fat2Fit.DTO.Client.ClientRegister;
+import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
