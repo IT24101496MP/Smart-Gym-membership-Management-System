@@ -45,8 +45,16 @@ const ClientRegistrationPage = () => {
     if (errors[name]) setErrors({ ...errors, [name]: null });
   };
 
+  const clearField = (fieldName) => {
+    setFormData({ ...formData, [fieldName]: "" });
+
+    // Clear photo preview if needed
+    if (fieldName === "profilePicture") setPhotoPreview(null);
+  };
+
   const clearSignature = () => {
     sigCanvas.current.clear();
+    setFormData({ ...formData, digitalSignature: null });
   };
 
   const validateForm = () => {
@@ -123,29 +131,43 @@ const ClientRegistrationPage = () => {
           <p className="form-section-title">Personal Information</p>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>First Name *</label>
-              <input type="text" name="firstName" value={formData.firstName}
-              onChange={handleChange}
-              placeholder="e.g., John"
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                placeholder="e.g., John"
               />
+              <button type="button" onClick={() => clearField("firstName")}>Clear</button>
             </div>
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Last Name *</label>
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange}
-              placeholder="e.g., Cena"
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="e.g., Cena"
               />
+              <button type="button" onClick={() => clearField("lastName")}>Clear</button>
             </div>
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Age *</label>
-              <input type="number" name="age" value={formData.age} onChange={handleChange}
-              placeholder="e.g., 18"
+              <input
+                type="number"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                placeholder="e.g., 18"
               />
+              <button type="button" onClick={() => clearField("age")}>Clear</button>
             </div>
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Gender *</label>
               <select name="gender" value={formData.gender} onChange={handleChange}>
                 <option value="">Select</option>
@@ -153,39 +175,59 @@ const ClientRegistrationPage = () => {
                 <option>Female</option>
                 <option>Prefer not to say</option>
               </select>
+              <button type="button" onClick={() => clearField("gender")}>Clear</button>
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group clearable">
             <label>Mobile Number *</label>
-            <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange}
-            placeholder="e.g., 0712345678"
+            <input
+              type="text"
+              name="mobileNumber"
+              value={formData.mobileNumber}
+              onChange={handleChange}
+              placeholder="e.g., 0712345678"
             />
+            <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
           </div>
 
-          <div className="form-group">
+          <div className="form-group clearable">
             <label>Land Phone</label>
-            <input type="text" name="landPhone" value={formData.landPhone} onChange={handleChange}
-            placeholder="e.g., 0112345678"
+            <input
+              type="text"
+              name="landPhone"
+              value={formData.landPhone}
+              onChange={handleChange}
+              placeholder="e.g., 0112345678"
             />
+            <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
           </div>
 
-          <div className="form-group">
+          <div className="form-group clearable">
             <label>Email *</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange}
-            placeholder="e.g., john.cena@example.com"
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="e.g., john.cena@example.com"
             />
+            <button type="button" onClick={() => clearField("email")}>Clear</button>
           </div>
 
-          <div className="form-group">
+          <div className="form-group clearable">
             <label>Address *</label>
-            <textarea name="address" value={formData.address} onChange={handleChange}
-            placeholder="e.g., 123 Main Street, Kiribathgoda"
+            <textarea
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="e.g., 123 Main Street, Kiribathgoda"
             />
+            <button type="button" onClick={() => clearField("address")}>Clear</button>
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Blood Group</label>
               <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                 <option value="">Select</option>
@@ -198,37 +240,57 @@ const ClientRegistrationPage = () => {
                 <option>AB+</option>
                 <option>AB-</option>
               </select>
+              <button type="button" onClick={() => clearField("bloodGroup")}>Clear</button>
             </div>
 
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Profile Picture</label>
               <input type="file" name="profilePicture" accept="image/*" onChange={handleChange} />
+              <button type="button" onClick={() => clearField("profilePicture")}>Clear</button>
               {photoPreview && <img src={photoPreview} alt="Profile Preview" className="photo-preview" />}
             </div>
           </div>
 
+          {/* Emergency Contact */}
           <p className="form-section-title">Emergency Contact</p>
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Name</label>
-              <input type="text" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange}
-              placeholder="e.g., Mary Jones"
+              <input
+                type="text"
+                name="emergencyContactName"
+                value={formData.emergencyContactName}
+                onChange={handleChange}
+                placeholder="e.g., Mary Jones"
               />
+              <button type="button" onClick={() => clearField("emergencyContactName")}>Clear</button>
             </div>
-            <div className="form-group">
+            <div className="form-group clearable">
               <label>Relationship</label>
-              <input type="text" name="emergencyContactRelationship" value={formData.emergencyContactRelationship} onChange={handleChange}
-              placeholder="e.g., Mother"
+              <input
+                type="text"
+                name="emergencyContactRelationship"
+                value={formData.emergencyContactRelationship}
+                onChange={handleChange}
+                placeholder="e.g., Mother"
               />
+              <button type="button" onClick={() => clearField("emergencyContactRelationship")}>Clear</button>
             </div>
-          </div>
-          <div className="form-group">
-            <label>Contact Number</label>
-            <input type="text" name="emergencyContactNumber" value={formData.emergencyContactNumber} onChange={handleChange}
-            placeholder="e.g., 0712345678"
-            />
           </div>
 
+          <div className="form-group clearable">
+            <label>Contact Number</label>
+            <input
+              type="text"
+              name="emergencyContactNumber"
+              value={formData.emergencyContactNumber}
+              onChange={handleChange}
+              placeholder="e.g., 0712345678"
+            />
+            <button type="button" onClick={() => clearField("emergencyContactNumber")}>Clear</button>
+          </div>
+
+          {/* Signature */}
           <p className="form-section-title">Digital Signature</p>
           <div className="signature-wrapper">
             <SignatureCanvas
