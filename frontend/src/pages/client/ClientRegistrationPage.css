@@ -1,7 +1,12 @@
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 .registration-page {
@@ -10,8 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  padding: 40px 20px;
 }
 
 .registration-container {
@@ -19,39 +23,47 @@
   max-width: 720px;
   background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06),
-              0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
-/* Header */
 .registration-header {
   background-color: #363636;
   padding: 28px 36px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 22px;
 }
 
 .header-accent {
-  width: 6px;
-  height: 42px;
+  width: 10px;
+  height: 65px;
   background-color: #DC2F2F;
   border-radius: 4px;
 }
 
 .registration-header h1 {
   color: #ffffff;
-  font-size: 1.4rem;
+  font-size: 2rem;
   font-weight: 700;
 }
 
 .registration-header p {
   color: #cccccc;
-  font-size: 0.85rem;
+  font-size: 1rem;
   margin-top: 4px;
 }
 
+.header-logo {
+  height: 70px;
+  object-fit: contain;
+}
 
 .registration-form {
   display: flex;
@@ -61,13 +73,14 @@
 }
 
 .form-section-title {
-  font-size: 0.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #FF894C;
   padding-bottom: 8px;
   border-bottom: 1px solid #eeeeee;
+  margin-top: 10px;
 }
 
 .form-row {
@@ -94,8 +107,7 @@
   padding: 11px 14px;
   border: 1.5px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 0.95rem;
-  font-family: inherit;
+  font-size: 1rem;
   background-color: #fafafa;
   transition: all 0.2s ease;
   outline: none;
@@ -109,31 +121,18 @@
   box-shadow: 0 0 0 3px rgba(220, 47, 47, 0.15);
 }
 
-.form-group textarea {
+textarea {
   resize: vertical;
   min-height: 80px;
 }
 
-
-.error-field {
-  border-color: #DC2F2F !important;
-  background-color: #fff5f5;
-}
-
-.error-message {
-  font-size: 0.75rem;
-  color: #DC2F2F;
-}
-
-/* Photo preview */
 .photo-preview {
   margin-top: 12px;
   width: 120px;
   height: 120px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 50%;
   border: 2px solid #DC2F2F;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .signature-wrapper {
@@ -141,28 +140,29 @@
   border-radius: 12px;
   background: #fff;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .signature-canvas {
   border-radius: 8px;
   background: #ffffff;
+  width: 400px;
+  height: 120px;
+  margin-bottom: 6px;
 }
 
 .clear-signature {
-  margin-top: 8px;
+  align-self: flex-end;
   background-color: #FF894C;
   border: none;
   color: white;
   padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
-
-.clear-signature:hover {
-  background-color: #e07035;
-}
-
 
 .form-actions {
   display: flex;
@@ -174,56 +174,49 @@
 .submit-button {
   background-color: #DC2F2F;
   color: #ffffff;
-  padding: 12px 32px;
+  padding: 8px 20px;
   border: none;
   border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.0rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(220, 47, 47, 0.25);
 }
 
 .submit-button:hover:not(:disabled) {
   background-color: #b71f1f;
-  transform: translateY(-1px);
 }
 
 .submit-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
-  box-shadow: none;
 }
-
 
 .signin-prompt {
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #777777;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .signin-prompt a {
   color: #DC2F2F;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
 }
 
-.signin-prompt a:hover {
-  color: #b71f1f;
-  text-decoration: underline;
-}
-
-
 @media (max-width: 600px) {
-  .registration-header,
-  .registration-form {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .signature-canvas {
+    width: 100% !important;
+    height: 120px !important;
+  }
+
+  .photo-preview {
+    width: 100px;
+    height: 100px;
   }
 
   .submit-button {
