@@ -311,4 +311,181 @@
   .profile-banner  { padding: 18px 20px; gap: 14px; }
   .info-grid       { grid-template-columns: 1fr; }
   .info-row--span  { grid-column: unset; }
+  .emp-form__grid  { grid-template-columns: 1fr; }
+  .emp-current__grid { grid-template-columns: 1fr 1fr; }
+}
+
+.emp-section .section-title,
+.emp-section__title {
+  color: #1a1a1a;
+  background-color: #f9fafb;
+}
+
+.emp-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.emp-section__header .section-title,
+.emp-section__header .emp-section__title {
+  border-bottom: none;
+  flex: 1;
+}
+
+.emp-current {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+}
+
+.emp-current__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.emp-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.emp-info-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.emp-info-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.emp-active  { color: #16a34a; }
+.emp-inactive { color: #dc2626; }
+
+.emp-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.emp-form__subtitle {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.02em;
+}
+
+.emp-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.emp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.emp-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.emp-label .req {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.emp-input {
+  padding: 9px 13px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.18s;
+  font-family: inherit;
+}
+
+.emp-input:focus {
+  border-color: #1a1a1a;
+}
+
+.emp-input--readonly,
+.emp-input--readonly:focus {
+  background-color: #f9fafb;
+  border-color: #f0f0f0;
+  color: #374151;
+  cursor: default;
+  pointer-events: none;
+}
+
+.emp-input--error {
+  border-color: #dc2626;
+}
+
+.emp-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: -2px;
+}
+
+.emp-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn--save {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.btn--save:not(:disabled):hover {
+  background-color: #000000;
+}
+
+.btn--edit-emp {
+  background-color: transparent;
+  border: 1.5px solid #d1d5db;
+  color: #374151;
+  font-size: 0.8125rem;
+  padding: 6px 16px;
+  margin-right: 14px;
+  border-radius: 6px;
+}
+
+.btn--edit-emp:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+.emp-locked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  margin: 0 0 4px 0;
+  background-color: #f9fafb;
+  border: 1.5px dashed #e5e7eb;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.emp-locked__icon {
+  font-size: 1.375rem;
+  flex-shrink: 0;
 }
