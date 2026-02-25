@@ -1,10 +1,7 @@
 package lk.fat2fit.Fat2Fit.Controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
 import lk.fat2fit.Fat2Fit.Service.InstructorService;
