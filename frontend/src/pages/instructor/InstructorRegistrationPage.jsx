@@ -10,6 +10,7 @@ const InstructorRegistrationPage = () => {
     phoneNumber: '',
     address: '',
     qualification: '',
+    yearsOfExperience: '',
     areasOfSpecialization: ''
   });
 
@@ -51,7 +52,10 @@ const InstructorRegistrationPage = () => {
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
     }
-    
+    if (formData.yearsOfExperience !== '' && (isNaN(formData.yearsOfExperience) || Number(formData.yearsOfExperience) < 0)) {
+      newErrors.yearsOfExperience = 'Years of experience cannot be negative';
+    }
+
     return newErrors;
   };
 
@@ -84,6 +88,7 @@ const InstructorRegistrationPage = () => {
           phoneNumber: '',
           address: '',
           qualification: '',
+          yearsOfExperience: '',
           areasOfSpecialization: ''
         });
       } else {
@@ -185,22 +190,43 @@ const InstructorRegistrationPage = () => {
               onChange={handleChange}
               rows="3"
               placeholder="123 Main St, Colombo, Sri Lanka"
-            />
+              className={errors.address ? 'error-field' : ''}
+              />
+              {errors.address && <span className="error-message">{errors.address}</span>}
           </div>
 
           {/* Professional Information */}
           <p className="form-section-title">Professional Information</p>
 
-          <div className="form-group">
-            <label htmlFor="qualification">Qualification</label>
-            <textarea
-              id="qualification"
-              name="qualification"
-              value={formData.qualification}
-              onChange={handleChange}
-              rows="2"
-              placeholder="e.g. BSc in Sports Science"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="qualification">Qualification</label>
+              <input
+                type="text"
+                id="qualification"
+                name="qualification"
+                value={formData.qualification}
+                onChange={handleChange}
+                placeholder="e.g. BSc in Sports Science"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="yearsOfExperience">Years of Experience</label>
+              <input
+                type="number"
+                id="yearsOfExperience"
+                name="yearsOfExperience"
+                value={formData.yearsOfExperience}
+                onChange={handleChange}
+                defaultValue="0"
+                placeholder="5"
+                min="0"
+                max="50"
+                className={errors.yearsOfExperience ? 'error-field' : ''}
+              />
+              {errors.yearsOfExperience && <span className="error-message">{errors.yearsOfExperience}</span>}
+            </div>
           </div>
 
           <div className="form-group">
