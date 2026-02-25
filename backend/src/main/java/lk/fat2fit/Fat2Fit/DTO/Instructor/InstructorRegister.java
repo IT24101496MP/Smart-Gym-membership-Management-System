@@ -1,10 +1,10 @@
 package lk.fat2fit.Fat2Fit.DTO.Instructor;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
+@AllArgsConstructor
 public class InstructorRegister {
         private String firstName;
         private String lastName;
@@ -12,6 +12,6 @@ public class InstructorRegister {
         private String email;
         private String address;
         private String qualification;
-        private int yearsOfExperience;
+        private Integer yearsOfExperience;
         private String areasOfSpecialization;
 }
