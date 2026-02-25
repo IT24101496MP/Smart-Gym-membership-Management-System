@@ -49,6 +49,9 @@ public class Instructor {
     @Column(name = "areas_of_spealization")
     private String areasOfSpecialization;
 
+    @Column(name = "password", nullable = false)
+    private String password;
+
     @Column(name = "status")
     @Builder.Default
     private ProfileStatus status =  ProfileStatus.PENDING;

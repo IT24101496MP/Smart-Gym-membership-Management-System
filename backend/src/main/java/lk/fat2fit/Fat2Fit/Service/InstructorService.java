@@ -6,6 +6,7 @@ import lk.fat2fit.Fat2Fit.Repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class InstructorService {
 
     private final InstructorRepository instructorRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private Instructor instructorRegisterToInstructor(InstructorRegister instructorRegister){
         return Instructor.builder()
@@ -25,6 +27,7 @@ public class InstructorService {
                 .yearsOfExperience(instructorRegister.getYearsOfExperience() != null ?
                         instructorRegister.getYearsOfExperience() : 0)
                 .areasOfSpecialization(emptyToNull(instructorRegister.getAreasOfSpecialization()))
+                .password(passwordEncoder.encode(instructorRegister.getPassword()))
                 .build();
     }
 
