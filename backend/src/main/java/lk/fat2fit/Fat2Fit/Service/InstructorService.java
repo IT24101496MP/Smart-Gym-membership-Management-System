@@ -22,6 +22,8 @@ public class InstructorService {
                 .email(instructorRegister.getEmail())
                 .address(instructorRegister.getAddress())
                 .qualification(emptyToNull(instructorRegister.getQualification()))
+                .yearsOfExperience(instructorRegister.getYearsOfExperience() != null ?
+                        instructorRegister.getYearsOfExperience() : 0)
                 .areasOfSpecialization(emptyToNull(instructorRegister.getAreasOfSpecialization()))
                 .build();
     }
@@ -34,8 +36,7 @@ public class InstructorService {
 
         if(instructorRepository.existsByEmailOrPhoneNumber(instructor.getEmail(), instructor.getPhoneNumber())){
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Instructor with email: " + instructor.getEmail() +
-                            " or phone: " + instructor.getPhoneNumber() + " already exists");
+                    .body("Instructor with same email or phone number already exists");
         }
 
         instructorRepository.save(instructorRegisterToInstructor(instructor));
