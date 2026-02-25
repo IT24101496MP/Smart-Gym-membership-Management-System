@@ -1,8 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
+import SignatureCanvas from "react-signature-canvas";
 import "./ClientRegistrationPage.css";
 
 const ClientRegistrationPage = () => {
+
+  const sigCanvas = useRef(null);
+
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -18,7 +23,7 @@ const ClientRegistrationPage = () => {
     emergencyContactNumber: "",
     bloodGroup: "",
     profilePhoto: null,
-    digitalSignature: ""
+    digitalSignature: null
   });
 
   const [errors, setErrors] = useState({});
@@ -28,7 +33,12 @@ const ClientRegistrationPage = () => {
     const { name, value, type, files } = e.target;
 
     if (type === "file") {
-      setFormData({ ...formData, [name]: files[0] });
+      const file = files[0];
+      setFormData({ ...formData, [name]: file });
+
+      if (name === "profilePhoto" && file) {
+        setPhotoPreview(URL.createObjectURL(file));
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -38,16 +48,20 @@ const ClientRegistrationPage = () => {
     }
   };
 
+  const clearSignature = () => {
+    sigCanvas.current.clear();
+    setFormData({ ...formData, digitalSignature: null });
+  };
+
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.age) newErrors.age = "Age is required";
-    if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.mobileNumber.trim()) newErrors.mobileNumber = "Mobile number is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.firstName.trim()) newErrors.firstName = "First name required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
+    if (!formData.age) newErrors.age = "Age required";
+    if (!formData.gender) newErrors.gender = "Gender required";
+    if (!formData.mobileNumber.trim()) newErrors.mobileNumber = "Mobile required";
+    if (!formData.email.trim()) newErrors.email = "Email required";
+    if (!formData.address.trim()) newErrors.address = "Address required";
     return newErrors;
   };
 
@@ -63,34 +77,35 @@ const ClientRegistrationPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/clients/register", {
+
+      const formPayload = new FormData();
+
+      Object.keys(formData).forEach(key => {
+        if (formData[key]) {
+          formPayload.append(key, formData[key]);
+        }
+      });
+
+      if (!sigCanvas.current.isEmpty()) {
+        const signatureDataUrl = sigCanvas.current.toDataURL("image/png");
+        const blob = await fetch(signatureDataUrl).then(res => res.blob());
+        const file = new File([blob], "signature.png", { type: "image/png" });
+        formPayload.append("digitalSignature", file);
+      }
+
+      const response = await fetch("http://localhost:8080/api/client/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formPayload
       });
 
       if (response.ok) {
         alert("Client registered successfully!");
-        setFormData({
-          firstName: "",
-          lastName: "",
-          age: "",
-          gender: "",
-          mobileNumber: "",
-          landPhone: "",
-          email: "",
-          address: "",
-          emergencyContactName: "",
-          emergencyContactRelationship: "",
-          emergencyContactNumber: "",
-          bloodGroup: "",
-          profilePhoto: null,
-          digitalSignature: ""
-        });
+        window.location.reload();
       } else {
         const error = await response.text();
         alert("Registration failed: " + error);
       }
+
     } catch (error) {
       alert("Server error occurred.");
     }
@@ -114,185 +129,82 @@ const ClientRegistrationPage = () => {
 
           <p className="form-section-title">Personal Information</p>
 
-          {/* First + Last Name */}
           <div className="form-row">
             <div className="form-group">
               <label>First Name *</label>
-              <input
-                type="text"
-                name="firstName"
+              <input type="text" name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className={errors.firstName ? "error-field" : ""}
-              />
-              {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                className={errors.firstName ? "error-field" : ""}/>
             </div>
 
             <div className="form-group">
               <label>Last Name *</label>
-              <input
-                type="text"
-                name="lastName"
+              <input type="text" name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className={errors.lastName ? "error-field" : ""}
-              />
-              {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                className={errors.lastName ? "error-field" : ""}/>
             </div>
           </div>
 
-          {/* Age + Gender */}
           <div className="form-row">
             <div className="form-group">
               <label>Age *</label>
-              <input
-                type="number"
-                name="age"
+              <input type="number" name="age"
                 value={formData.age}
-                onChange={handleChange}
-                className={errors.age ? "error-field" : ""}
-              />
-              {errors.age && <span className="error-message">{errors.age}</span>}
+                onChange={handleChange}/>
             </div>
 
             <div className="form-group">
               <label>Gender *</label>
-              <select
-                name="gender"
+              <select name="gender"
                 value={formData.gender}
-                onChange={handleChange}
-                className={errors.gender ? "error-field" : ""}
-              >
+                onChange={handleChange}>
                 <option value="">Select</option>
                 <option>Male</option>
                 <option>Female</option>
-                <option>Other</option>
+                <option>Prefer not to say</option>
               </select>
-              {errors.gender && <span className="error-message">{errors.gender}</span>}
             </div>
           </div>
 
-          {/* Mobile + Land */}
-          <div className="form-row">
-            <div className="form-group">
-              <label>Mobile Number *</label>
-              <input
-                type="tel"
-                name="mobileNumber"
-                value={formData.mobileNumber}
-                onChange={handleChange}
-                className={errors.mobileNumber ? "error-field" : ""}
-              />
-              {errors.mobileNumber && <span className="error-message">{errors.mobileNumber}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Land Phone</label>
-              <input
-                type="tel"
-                name="landPhone"
-                value={formData.landPhone}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div className="form-group">
-            <label>Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={errors.email ? "error-field" : ""}
-            />
-            {errors.email && <span className="error-message">{errors.email}</span>}
-          </div>
-
-          {/* Address */}
-          <div className="form-group">
-            <label>Address *</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows="3"
-              className={errors.address ? "error-field" : ""}
-            />
-            {errors.address && <span className="error-message">{errors.address}</span>}
-          </div>
-
-          <p className="form-section-title">Emergency Contact</p>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                name="emergencyContactName"
-                value={formData.emergencyContactName}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Relationship</label>
-              <input
-                type="text"
-                name="emergencyContactRelationship"
-                value={formData.emergencyContactRelationship}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Emergency Contact Number</label>
-            <input
-              type="tel"
-              name="emergencyContactNumber"
-              value={formData.emergencyContactNumber}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Blood Group */}
-          <div className="form-group">
-            <label>Blood Group *</label>
-            <input
-              type="text"
-              name="bloodGroup"
-              value={formData.bloodGroup}
-              onChange={handleChange}
-              className={errors.bloodGroup ? "error-field" : ""}
-            />
-            {errors.bloodGroup && <span className="error-message">{errors.bloodGroup}</span>}
-          </div>
-
-          {/* Profile Photo */}
           <div className="form-group">
             <label>Profile Photo</label>
-            <input
-              type="file"
+            <input type="file"
               name="profilePhoto"
-              onChange={handleChange}
-            />
+              accept="image/*"
+              onChange={handleChange}/>
+            {photoPreview && (
+              <img src={photoPreview}
+                   alt="Preview"
+                   className="photo-preview"/>
+            )}
           </div>
 
-          {/* Digital Signature */}
           <div className="form-group">
             <label>Digital Signature</label>
-            <input
-              type="text"
-              name="digitalSignature"
-              value={formData.digitalSignature}
-              onChange={handleChange}
-            />
+            <div className="signature-wrapper">
+              <SignatureCanvas
+                penColor="black"
+                canvasProps={{
+                  width: 500,
+                  height: 180,
+                  className: "signature-canvas"
+                }}
+                ref={sigCanvas}
+              />
+            </div>
+            <button type="button"
+                    className="clear-signature"
+                    onClick={clearSignature}>
+              Clear Signature
+            </button>
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="submit-button" disabled={isSubmitting}>
+            <button type="submit"
+              className="submit-button"
+              disabled={isSubmitting}>
               {isSubmitting ? "Submitting..." : "Register"}
             </button>
           </div>
