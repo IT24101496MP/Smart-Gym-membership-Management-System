@@ -71,7 +71,7 @@ const InstructorRegistrationPage = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:8080/api/instructors/register', {
+      const response = await fetch('http://localhost:8080/api/instructor/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
