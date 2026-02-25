@@ -82,11 +82,11 @@ public class Client {
     private String bloodGroup;
 
     @Lob
-    @Column(name = "Profile_picture")
+    @Column(name = "profile_picture", columnDefinition = "LONGBLOB")
     private byte[] profilePicture;
 
     @Lob
-    @Column(name = "Digital_signature")
+    @Column(name = "digital_signature", columnDefinition = "LONGBLOB")
     private byte[] digitalSignature;
 
     @Column(name = "Created_at")
