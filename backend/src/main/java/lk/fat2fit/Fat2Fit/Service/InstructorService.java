@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class InstructorService {
@@ -41,5 +43,9 @@ public class InstructorService {
 
         instructorRepository.save(instructorRegisterToInstructor(instructor));
         return ResponseEntity.ok().build();
+    }
+
+    public List<Instructor> getAllInstructors(){
+        return instructorRepository.findAll();
     }
 }
