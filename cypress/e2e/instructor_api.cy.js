@@ -28,7 +28,7 @@ describe("Instructor Registration API", () => {
   });
 
 
-  // ❌ Duplicate Email Test
+  //  Duplicate Email Test
   it("should handle duplicate email correctly", () => {
 
     const stamp = Date.now();
@@ -64,8 +64,8 @@ describe("Instructor Registration API", () => {
       failOnStatusCode: false
     }).then((res) => {
 
-      // Accept either correct validation (409)
-      // OR log bug if backend allows duplicate email (200)
+      // Accept either correct validation
+      // OR log bug if backend allows duplicate email
       expect([200, 409]).to.include(res.status);
 
       if (res.status === 200) {
@@ -99,7 +99,7 @@ describe("Instructor Registration API", () => {
       failOnStatusCode: false
     });
 
-    // Second request with same phone
+    // Second request with same phone number
     cy.request({
       method: "POST",
       url: API_URL,
