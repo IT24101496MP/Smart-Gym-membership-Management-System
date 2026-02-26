@@ -22,7 +22,7 @@ const ClientRegistrationPage = () => {
     emergencyContactRelationship: "",
     emergencyContactNumber: "",
     profilePicture: null,
-    digitalSignature: null
+    digitalSignature: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -47,8 +47,6 @@ const ClientRegistrationPage = () => {
 
   const clearField = (fieldName) => {
     setFormData({ ...formData, [fieldName]: "" });
-
-    // Clear photo preview if needed
     if (fieldName === "profilePicture") setPhotoPreview(null);
   };
 
@@ -95,7 +93,7 @@ const ClientRegistrationPage = () => {
 
       const response = await fetch("http://localhost:8080/api/client/register", {
         method: "POST",
-        body: formPayload
+        body: formPayload,
       });
 
       if (response.ok) {
@@ -142,6 +140,7 @@ const ClientRegistrationPage = () => {
               />
               <button type="button" onClick={() => clearField("firstName")}>Clear</button>
             </div>
+
             <div className="form-group clearable">
               <label>Last Name *</label>
               <input
@@ -167,6 +166,7 @@ const ClientRegistrationPage = () => {
               />
               <button type="button" onClick={() => clearField("age")}>Clear</button>
             </div>
+
             <div className="form-group clearable">
               <label>Gender *</label>
               <select name="gender" value={formData.gender} onChange={handleChange}>
@@ -247,7 +247,12 @@ const ClientRegistrationPage = () => {
               <label>Profile Picture</label>
               <input type="file" name="profilePicture" accept="image/*" onChange={handleChange} />
               <button type="button" onClick={() => clearField("profilePicture")}>Clear</button>
-              {photoPreview && <img src={photoPreview} alt="Profile Preview" className="photo-preview" />}
+
+              {photoPreview && (
+                <div className="photo-preview-wrapper">
+                  <img src={photoPreview} alt="Profile Preview" className="photo-preview" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -265,6 +270,7 @@ const ClientRegistrationPage = () => {
               />
               <button type="button" onClick={() => clearField("emergencyContactName")}>Clear</button>
             </div>
+
             <div className="form-group clearable">
               <label>Relationship</label>
               <input
