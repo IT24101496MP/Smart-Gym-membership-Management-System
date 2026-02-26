@@ -1,5 +1,6 @@
 package lk.fat2fit.Fat2Fit.Entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -27,6 +28,12 @@ public class Instructor {
         PENDING,
         APPROVED,
         REJECTED
+    }
+
+    public enum EmploymentType {
+        FULL_TIME,
+        PART_TIME,
+        CONTRACT
     }
 
     @Id
@@ -62,11 +69,20 @@ public class Instructor {
 
     @Column(name = "status")
     @Builder.Default
-    private ProfileStatus status =  ProfileStatus.PENDING;
+    private ProfileStatus status = ProfileStatus.PENDING;
 
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "employment_type")
+    private EmploymentType employmentType;
+
+    @Column(name = "working_hours_per_week")
+    private Integer workingHoursPerWeek;
+
+    @Column(name = "salary", precision = 10, scale = 2)
+    private BigDecimal salary;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
