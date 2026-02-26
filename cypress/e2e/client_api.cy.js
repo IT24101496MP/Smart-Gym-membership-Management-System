@@ -1,7 +1,7 @@
 describe("Client Registration API", () => {
   const API_URL = "http://localhost:8080/api/client/register"; 
 
-  // Positive Test (will still pass even if backend gives 405, but logs it)
+  // Positive Test
   it("should register client successfully ", () => {
     const stamp = Date.now();
     const email = `client${stamp}@mail.com`;
