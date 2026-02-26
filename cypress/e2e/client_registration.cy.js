@@ -4,7 +4,7 @@ describe("Client Registration UI", () => {
   const ROUTE = "/client/register";
   const API_URL = "http://localhost:8080/api/client/register";
 
-  // 1. Should NOT submit empty form
+  // Should NOT submit empty form
   it("should not submit empty form", () => {
 
     cy.visit(FE_URL + ROUTE);
@@ -20,7 +20,7 @@ describe("Client Registration UI", () => {
   });
 
 
-  //  2. Should NOT allow duplicate email
+  // Should NOT allow duplicate email
   it("should not allow duplicate email", () => {
 
     const email = "duplicate@mail.com";
@@ -51,7 +51,7 @@ describe("Client Registration UI", () => {
   });
 
 
-  // ✅ 3. Should register successfully
+  // 3. Should register successfully
   it("should register client successfully", () => {
 
     const stamp = Date.now();
