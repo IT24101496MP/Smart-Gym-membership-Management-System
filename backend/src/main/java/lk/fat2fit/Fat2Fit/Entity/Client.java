@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -89,9 +91,11 @@ public class Client {
     @Column(name = "digital_signature", columnDefinition = "LONGBLOB")
     private byte[] digitalSignature;
 
-    @Column(name = "Created_at")
+    @CreationTimestamp
+    @Column(name = "Created_at", updatable = false, columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
 
-    @Column(name = "Updated_at")
+    @UpdateTimestamp
+    @Column(name = "Updated_at", columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
 }
