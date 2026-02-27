@@ -9,11 +9,11 @@ import java.util.List;
 public interface ClientRepository extends JpaRepository<Client, Integer> {
 
     boolean existsByEmail(String email);
-    boolean existsByMobileNumber(String mobileNumber);
-    boolean existsByEmailOrMobileNumber(String email, String mobileNumber);
+    boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByEmailOrPhoneNumber(String email, String phoneNumber);
 
     Optional<Client> findByEmail(String email);
-    Optional<Client> findByMobileNumber(String mobileNumber);
+    Optional<Client> findByPhoneNumber(String phoneNumber);
     List<Client> findByBloodGroup(String bloodGroup);
 
 }

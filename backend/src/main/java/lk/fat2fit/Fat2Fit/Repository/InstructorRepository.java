@@ -1,5 +1,6 @@
 package lk.fat2fit.Fat2Fit.Repository;
 
+import lk.fat2fit.Fat2Fit.Entity.Enum.ProfileStatus;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,7 +16,7 @@ public interface InstructorRepository extends JpaRepository<Instructor, Integer>
     Optional<Instructor> findByEmail(String email);
     Optional<Instructor> findByPhoneNumber(String phoneNumber);
 
-    List<Instructor> findByStatus(Instructor.ProfileStatus status);
+    List<Instructor> findByStatus(ProfileStatus status);
     List<Instructor> findByIsActiveTrue();
     List<Instructor> findByIsActiveFalse();
 }
