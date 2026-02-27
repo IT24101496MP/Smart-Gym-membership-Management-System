@@ -10,7 +10,7 @@
 
 .auth-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1100px;
   background: #f2f2f2;
   border-radius: 16px;
   box-shadow: 0 10px 35px rgba(0,0,0,0.08);
@@ -64,19 +64,26 @@
   min-height: 500px;
 }
 
-.split-left-full, .split-right-full {
+.split-left-full {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
 }
+
+.split-right-full {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 
 /* Left Image */
 .split-left-full img {
-  width: 125%;
-  height: 107%;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 /* Right Features */
@@ -84,6 +91,8 @@
   flex-direction: column;
   gap: 18px;
   align-items: center;
+  margin-left: 25px;
+  margin-top: 16px;
 }
 
 /* Form Inputs */
@@ -165,7 +174,7 @@
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin: 15px 0;
+  margin: 5px 0;
 }
 
 .icon-wrapper {
