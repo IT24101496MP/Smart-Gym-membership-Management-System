@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/Fat2fit Logo.jpg";
+import { setTokens } from "../../utils/auth";
 import "./LoginPage.css";
 
 const LoginPage = () => {
@@ -57,7 +58,7 @@ const LoginPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("token", data.token);
+        setTokens(data.accessToken, data.refreshToken);
         navigate("/dashboard");
       } else {
         const message = await response.text();

@@ -4,6 +4,7 @@ import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import LoginPage from "./pages/auth/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 
 function App() {
@@ -11,7 +12,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route path="/login" element={<LoginPage />} />
 
