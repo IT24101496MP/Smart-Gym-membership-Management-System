@@ -1,26 +1,27 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <BrowserRouter>
+        <Routes>
 
-        <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/" element={<Navigate to="/client/register" replace />} />
+          {/* Login Page */}
+          <Route path="/login" element={<UserLoginRegistration />} />
 
-        <Route
-          path="/login"
-          element={
-            <div style={{ textAlign: "center", marginTop: "50px" }}>
-              <h1>Login Page</h1>
-              <p>This is a placeholder login page.</p>
-            </div>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Catch all unknown routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 
