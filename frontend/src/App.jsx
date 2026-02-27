@@ -3,6 +3,7 @@ import InstructorRegistrationPage from "./pages/instructor/InstructorRegistratio
 import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
+import LoginPage from "./pages/auth/LoginPage";
 
 
 function App() {
@@ -10,17 +11,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/" element={<Navigate to="/client/register" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route
-          path="/login"
-          element={
-            <div style={{ textAlign: "center", marginTop: "50px" }}>
-              <h1>Login Page</h1>
-              <p>This is a placeholder login page.</p>
-            </div>
-          }
-        />
+        <Route path="/login" element={<LoginPage />} />
 
         <Route path="/instructor" element={<InstructorListPage />} />
         <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
