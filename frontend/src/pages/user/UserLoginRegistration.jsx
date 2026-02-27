@@ -10,13 +10,127 @@ import loginImage from "../../assets/Login page.jpg";
 import "./UserLoginRegistration.css";
 
 const UserLoginRegistration = () => {
+  // Form state
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const googleLogin = useGoogleLogin({
-    onSuccess: (tokenResponse) => console.log("Google login success:", tokenResponse),
+    onSuccess: async (tokenResponse) => {
+      console.log("Google login success:", tokenResponse);
+      try {
+        const userInfoResponse = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
+        );
+        const userInfo = await userInfoResponse.json();
+        
+        const response = await fetch("/api/user/oauth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userInfo.email),
+        });
+        
+        if (response.ok) {
+          const data = await response.text();
+          setSuccess(data);
+          setError("");
+        } else {
+          const errorData = await response.text();
+          setError(errorData);
+        }
+      } catch (err) {
+        setError("Google login failed");
+        console.error(err);
+      }
+    },
     onError: (error) => console.error("Google login error:", error),
   });
 
-  const handleFacebookResponse = (response) => {
+  const handleFacebookResponse = async (response) => {
     console.log("Facebook login response:", response);
+    if (response.email) {
+      try {
+        const res = await fetch("/api/user/oauth/facebook", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(response.email),
+        });
+        
+        if (res.ok) {
+          const data = await res.text();
+          setSuccess(data);
+          setError("");
+        } else {
+          const errorData = await res.text();
+          setError(errorData);
+        }
+      } catch (err) {
+        setError("Facebook login failed");
+        console.error(err);
+      }
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setError("");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    if (!formData.email || !formData.password || !formData.confirmPassword) {
+      setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/user/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.text();
+        setSuccess(data);
+        setFormData({ email: "", password: "", confirmPassword: "" });
+      } else {
+        const errorData = await response.text();
+        setError(errorData);
+      }
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+      console.error("Registration error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // State for password visibility
@@ -48,10 +162,20 @@ const UserLoginRegistration = () => {
 
           {/* Right Features */}
           <div className="split-right-full">
+            {/* Error/Success Messages */}
+            {error && <div className="error-message">{error}</div>}
+            {success && <div className="success-message">{success}</div>}
+
             {/* Email Input */}
             <div className="form-group">
               <label>Email</label>
-              <input type="email" placeholder="Enter your email" />
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </div>
 
             {/* Password Input */}
@@ -60,7 +184,10 @@ const UserLoginRegistration = () => {
               <div className="password-wrapper">
                 <input
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   placeholder="Enter password"
+                  value={formData.password}
+                  onChange={handleInputChange}
                 />
                 <span
                   className="eye-icon"
@@ -77,7 +204,10 @@ const UserLoginRegistration = () => {
               <div className="password-wrapper">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
                   placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
                 />
                 <span
                   className="eye-icon"
@@ -90,7 +220,13 @@ const UserLoginRegistration = () => {
 
             {/* Sign Up Button */}
             <div className="signup-center">
-              <button className="submit-button">Sign Up</button>
+              <button
+                className="submit-button"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? "Signing Up..." : "Sign Up"}
+              </button>
             </div>
 
             {/* Divider */}

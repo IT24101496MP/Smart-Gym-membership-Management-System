@@ -248,3 +248,38 @@
 .eye-icon:hover {
   color: #DC2F2F;
 }
+
+/* Error and Success Messages */
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  border: 1px solid #fecaca;
+}
+
+.success-message {
+  background-color: #dcfce7;
+  color: #16a34a;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  border: 1px solid #bbf7d0;
+}
+
+/* Button disabled state */
+.submit-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.submit-button:disabled:hover {
+  background-color: #9ca3af;
+}
