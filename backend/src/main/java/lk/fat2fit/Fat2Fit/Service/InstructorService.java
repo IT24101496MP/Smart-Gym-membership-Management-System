@@ -11,6 +11,7 @@ import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
