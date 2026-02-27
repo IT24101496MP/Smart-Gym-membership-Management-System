@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+
     private Client clientRegisterToClient(ClientRegister clientRegister) {
         return Client.builder()
                 .firstName(clientRegister.getFirstName())
@@ -41,13 +42,23 @@ public class ClientService {
     }
 
     public ResponseEntity<?> registerClient(ClientRegister clientRegister) {
-        if (clientRepository.existsByEmailOrMobileNumber(
-                clientRegister.getEmail(),
-                clientRegister.getMobileNumber()
-        )) {
+
+        boolean emailExists = clientRepository.existsByEmail(clientRegister.getEmail());
+        boolean mobileExists = clientRepository.existsByMobileNumber(clientRegister.getMobileNumber());
+
+        if (emailExists && mobileExists) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Client with email: " + clientRegister.getEmail() +
-                            " or mobile: " + clientRegister.getMobileNumber() + " already exists");
+                    .body("This email and mobile number already exist.");
+        }
+
+        if (emailExists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("This email already exists.");
+        }
+
+        if (mobileExists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("This mobile number already exists.");
         }
 
         clientRepository.save(clientRegisterToClient(clientRegister));
