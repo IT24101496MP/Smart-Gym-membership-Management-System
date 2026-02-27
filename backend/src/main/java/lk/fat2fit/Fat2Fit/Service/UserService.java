@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -14,52 +15,52 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    public User registerUser(String email, String rawPassword) {
 
-    public User registerUser(String username, String rawPassword, User.Role role) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email already exists");
         }
 
-        if (rawPassword == null || rawPassword.trim().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
+        if (!isStrongPassword(rawPassword)) {
+            throw new RuntimeException(
+                    "Password must be at least 8 characters, include uppercase, lowercase, number, and special character."
+            );
         }
 
         String hashedPassword = passwordEncoder.encode(rawPassword);
 
-
-        User.Status status = (role == User.Role.INSTRUCTOR) ? User.Status.PENDING : User.Status.APPROVED;
-
         User user = User.builder()
-                .username(username)
+                .email(email)
                 .password(hashedPassword)
-                .role(role)
-                .status(status)
+                .role(User.Role.CLIENT)       // Default role
+                .status(User.Status.APPROVED) // Default status
                 .build();
 
         return userRepository.save(user);
     }
 
-    public User approveInstructor(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (user.getRole() != User.Role.INSTRUCTOR) {
-            throw new RuntimeException("User is not an instructor");
-        }
-
-        user.setStatus(User.Status.APPROVED);
-        return userRepository.save(user);
-    }
-
-    public List<User> getAllInstructors() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == User.Role.INSTRUCTOR)
-                .toList();
+    // Google/Facebook OAuth registration or get existing user
+    public User registerOrGetOAuthUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User user = User.builder()
+                            .email(email)
+                            .password("")
+                            .role(User.Role.CLIENT)
+                            .status(User.Status.APPROVED)
+                            .build();
+                    return userRepository.save(user);
+                });
     }
 
     public List<User> getAllClients() {
         return userRepository.findAll().stream()
                 .filter(u -> u.getRole() == User.Role.CLIENT)
                 .toList();
+    }
+    private boolean isStrongPassword(String password) {
+        if (password == null) return false;
+        String pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$";
+        return Pattern.compile(pattern).matcher(password).matches();
     }
 }

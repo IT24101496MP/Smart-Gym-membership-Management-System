@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
@@ -16,37 +14,40 @@ public class UserController {
 
     private final UserService userService;
 
+    // Normal registration with email + password
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserRegisterDTO dto) {
         try {
-            User.Role role = User.Role.valueOf(dto.getRole().toUpperCase());
-            User user = userService.registerUser(dto.getUsername(), dto.getPassword(), role);
+            if (!dto.getPassword().equals(dto.getConfirmPassword())) {
+                return ResponseEntity.badRequest().body("Passwords do not match");
+            }
+
+            User user = userService.registerUser(dto.getEmail(), dto.getPassword());
             return ResponseEntity.ok("User registered with ID: " + user.getId());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid role");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Admin approves instructor
-    @PostMapping("/approve/{id}")
-    public ResponseEntity<?> approveInstructor(@PathVariable Long id) {
+    // Google OAuth
+    @PostMapping("/oauth/google")
+    public ResponseEntity<?> googleLogin(@RequestBody String email) {
         try {
-            User user = userService.approveInstructor(id);
-            return ResponseEntity.ok("Instructor approved: " + user.getUsername());
+            User user = userService.registerOrGetOAuthUser(email);
+            return ResponseEntity.ok("Google user logged in: " + user.getEmail());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping("/instructors")
-    public ResponseEntity<List<User>> getAllInstructors() {
-        return ResponseEntity.ok(userService.getAllInstructors());
-    }
-
-    @GetMapping("/clients")
-    public ResponseEntity<List<User>> getAllClients() {
-        return ResponseEntity.ok(userService.getAllClients());
+    // Facebook OAuth
+    @PostMapping("/oauth/facebook")
+    public ResponseEntity<?> facebookLogin(@RequestBody String email) {
+        try {
+            User user = userService.registerOrGetOAuthUser(email);
+            return ResponseEntity.ok("Facebook user logged in: " + user.getEmail());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
