@@ -10,12 +10,13 @@ import org.springframework.stereotype.Service;
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorEmploymentAssignment;
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
 import lk.fat2fit.Fat2Fit.Entity.Employment;
-import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.Enum.EmploymentType;
 import lk.fat2fit.Fat2Fit.Entity.Enum.ProfileStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
+import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Repository.EmploymentRepository;
 import lk.fat2fit.Fat2Fit.Repository.InstructorRepository;
+import lk.fat2fit.Fat2Fit.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +25,7 @@ public class InstructorService {
 
     private final InstructorRepository instructorRepository;
     private final EmploymentRepository employmentRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     private Instructor instructorRegisterToInstructor(InstructorRegister dto) {
@@ -50,7 +52,7 @@ public class InstructorService {
     }
 
     public ResponseEntity<?> registerInstructor(InstructorRegister dto) {
-        if (instructorRepository.existsByEmailOrPhoneNumber(dto.getEmail(), dto.getPhoneNumber())) {
+        if (userRepository.existsByEmailOrPhoneNumber(dto.getEmail(), dto.getPhoneNumber())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Instructor with same email or phone number already exists");
         }

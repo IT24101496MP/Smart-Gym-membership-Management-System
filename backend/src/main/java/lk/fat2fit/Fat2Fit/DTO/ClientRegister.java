@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -17,7 +17,7 @@ public class ClientRegister {
     private String firstName;
     private String lastName;
     private int age;
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
     private Gender gender;
     private String phoneNumber;
     private String landPhone;

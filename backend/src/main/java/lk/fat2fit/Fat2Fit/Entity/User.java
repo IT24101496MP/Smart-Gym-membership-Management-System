@@ -1,25 +1,20 @@
 package lk.fat2fit.Fat2Fit.Entity;
 
-import java.time.LocalDate;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
+import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-
-import jakarta.validation.constraints.Pattern;
-
-import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
 
 @Data
 @NoArgsConstructor
@@ -45,7 +40,7 @@ public class User {
     private int age;
 
     @Column(name = "Date_of_birth", nullable = false)
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @Column(name = "Gender", nullable = false)
     private Gender gender;

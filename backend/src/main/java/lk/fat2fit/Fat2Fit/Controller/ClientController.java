@@ -1,17 +1,21 @@
 package lk.fat2fit.Fat2Fit.Controller;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
 import lk.fat2fit.Fat2Fit.Service.ClientService;
 import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -54,10 +58,10 @@ public class ClientController {
         if (age <= 0)
             return ResponseEntity.badRequest().body("Invalid age");
 
-        Date dob;
+        LocalDate dob;
         try {
-            dob = new SimpleDateFormat("yyyy-MM-dd").parse(dateOfBirth);
-        } catch (ParseException e) {
+            dob = LocalDate.parse(dateOfBirth);
+        } catch (DateTimeParseException e) {
             return ResponseEntity.badRequest().body("Invalid date of birth format. Use yyyy-MM-dd");
         }
 

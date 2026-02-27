@@ -1,11 +1,11 @@
 package lk.fat2fit.Fat2Fit.DTO.Instructor;
 
+import java.time.LocalDate;
+
 import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 @Data
 @AllArgsConstructor
@@ -14,7 +14,7 @@ public class InstructorRegister {
     private String firstName;
     private String lastName;
     private int age;
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
     private Gender gender;
     private String phoneNumber;
     private String landPhone;
