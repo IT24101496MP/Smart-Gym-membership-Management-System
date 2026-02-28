@@ -24,7 +24,6 @@ public class ClientService {
                 .gender(clientRegister.getGender())
                 .mobileNumber(clientRegister.getMobileNumber())
                 .landPhone(emptyToNull(clientRegister.getLandPhone()))
-                .email(clientRegister.getEmail())
                 .address(clientRegister.getAddress())
                 .emergencyContactName(emptyToNull(clientRegister.getEmergencyContactName()))
                 .emergencyContactRelationship(emptyToNull(clientRegister.getEmergencyContactRelationship()))
@@ -43,18 +42,7 @@ public class ClientService {
 
     public ResponseEntity<?> registerClient(ClientRegister clientRegister) {
 
-        boolean emailExists = clientRepository.existsByEmail(clientRegister.getEmail());
         boolean mobileExists = clientRepository.existsByMobileNumber(clientRegister.getMobileNumber());
-
-        if (emailExists && mobileExists) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("This email and mobile number already exist.");
-        }
-
-        if (emailExists) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("This email already exists.");
-        }
 
         if (mobileExists) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
