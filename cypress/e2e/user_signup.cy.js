@@ -1,8 +1,4 @@
-// cypress/e2e/user_signup.cy.js
-// FULL corrected Cypress UI test file for UserLoginRegistration mounted at /login
-
 describe("User Sign Up (UserLoginRegistration) on /login", () => {
-  // Change only if your frontend runs on a different port
   const APP_URL = "http://localhost:5173";
 
   beforeEach(() => {
@@ -12,9 +8,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
   const getEmail = () => cy.get('input[name="email"]');
   const getPassword = () => cy.get('input[name="password"]');
   const getConfirmPassword = () => cy.get('input[name="confirmPassword"]');
-
-  // Your button text switches between "Sign Up" and "Signing Up..."
-  // So we select by class to avoid text timing issues.
   const getSubmitBtn = () => cy.get("button.submit-button");
 
   it("renders the sign up page basics", () => {
@@ -51,7 +44,7 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
     cy.get(".error-message").should("not.exist");
   });
 
-  it("toggles password visibility (password field)", () => {
+  it("toggles password visibility ", () => {
     getPassword().should("have.attr", "type", "password");
 
     // first eye icon = password
@@ -62,7 +55,7 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
     getPassword().should("have.attr", "type", "password");
   });
 
-  it("toggles password visibility (confirm password field)", () => {
+  it("toggles password visibility", () => {
     getConfirmPassword().should("have.attr", "type", "password");
 
     // second eye icon = confirm password
