@@ -28,7 +28,6 @@ public class ClientController {
             @RequestParam int age,
             @RequestParam String gender,
             @RequestParam String mobileNumber,
-            @RequestParam String email,
             @RequestParam String address,
             @RequestParam(required = false) String landPhone,
             @RequestParam(required = false) String emergencyContactName,
@@ -73,11 +72,6 @@ public class ClientController {
             return ResponseEntity.badRequest().body("Invalid emergency contact number");
         }
 
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            return ResponseEntity.badRequest().body("Invalid email");
-        }
-
-        // Convert files to byte arrays
         byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty())
                 ? profilePicture.getBytes()
                 : null;
@@ -92,7 +86,6 @@ public class ClientController {
                 .age(age)
                 .gender(gender)
                 .mobileNumber(mobileNumber)
-                .email(email)
                 .address(address.trim())
                 .landPhone(emptyToNull(landPhone))
                 .emergencyContactName(emptyToNull(emergencyContactName))
