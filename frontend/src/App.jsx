@@ -1,26 +1,45 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
+
+import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
+import ClientProfile from "./pages/client/ClientProfile";
 
 function App() {
+
+  const handleFacebookLogin = (response) => {
+    console.log("Facebook login response:", response);
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <BrowserRouter>
+        <Routes>
 
-        <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/" element={<Navigate to="/client/register" replace />} />
+          {/* Login/Signup Page */}
+          <Route
+            path="/login"
+            element={
+              <UserLoginRegistration
+                onFacebookLogin={handleFacebookLogin}
+              />
+            }
+          />
 
-        <Route
-          path="/login"
-          element={
-            <div style={{ textAlign: "center", marginTop: "50px" }}>
-              <h1>Login Page</h1>
-              <p>This is a placeholder login page.</p>
-            </div>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route path="/client-registration" element={<ClientRegistrationPage />} />
+          <Route path="/profile" element={<ClientProfile />} />
+
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Catch all unknown routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

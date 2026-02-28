@@ -9,6 +9,14 @@ html, body, #root {
   box-sizing: border-box;
 }
 
+:root {
+  --color-dark: #363636;
+  --color-accent: #DC2F2F;
+  --color-accent2: #FF894C;
+  --color-bg: #F8F8F8;
+  --card-bg: #ffffff;
+}
+
 .registration-page {
   min-height: 100vh;
   background-color: #F8F8F8;
@@ -20,7 +28,7 @@ html, body, #root {
 
 .registration-container {
   width: 100%;
-  max-width: 720px;
+  max-width: 900px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
@@ -28,11 +36,12 @@ html, body, #root {
 }
 
 .registration-header {
-  background-color: #363636;
-  padding: 28px 36px;
+  background-color: var(--color-dark);
+  padding: 24px 36px 36px 36px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
+  position: relative;
 }
 
 .header-left {
@@ -61,8 +70,11 @@ html, body, #root {
 }
 
 .header-logo {
-  height: 70px;
+  height: 60px;
   object-fit: contain;
+  position: absolute;
+  right: 24px;
+  top: 12px;
 }
 
 .registration-form {
@@ -75,12 +87,12 @@ html, body, #root {
 .form-section-title {
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #FF894C;
-  padding-bottom: 8px;
+  color: var(--color-accent2);
+  padding-bottom: 10px;
   border-bottom: 1px solid #eeeeee;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .form-row {
@@ -98,27 +110,27 @@ html, body, #root {
 .form-group label {
   font-size: 1rem;
   font-weight: 650;
-  color: #363636;
+  color: #222222;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   padding: 11px 14px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background-color: #fafafa;
-  transition: all 0.2s ease;
+  border: 1.5px solid #e6e6e6;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background-color: #fbfbfb;
+  transition: all 0.18s ease;
   outline: none;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #DC2F2F;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(220, 47, 47, 0.15);
+  border-color: var(--color-accent);
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.06);
 }
 
 textarea {
@@ -147,6 +159,17 @@ textarea {
   display: block;
 }
 
+/* simple preview when using inline img (registration uses .photo-preview) */
+.photo-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 12px;
+  border: 2px solid #eee;
+  display: block;
+}
+
 .signature-wrapper {
   border: 2px dashed #DC2F2F;
   border-radius: 12px;
@@ -167,7 +190,7 @@ textarea {
 
 .clear-signature {
   align-self: flex-end;
-  background-color: #FF7043;
+  background-color: var(--color-accent2);
   border: none;
   color: white;
   padding: 6px 14px;
@@ -184,18 +207,20 @@ textarea {
 }
 
 .submit-button {
-  background-color: #DC2F2F;
+  background-color: var(--color-accent);
   color: #ffffff;
-  padding: 8px 20px;
+  padding: 10px 22px;
   border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1.0rem;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 1.02rem;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(220,47,47,0.12);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #b71f1f;
+  filter: brightness(0.95);
+  transform: translateY(-1px);
 }
 
 .submit-button:disabled {
@@ -221,10 +246,21 @@ textarea {
 }
 
 .form-group.clearable input,
-.form-group.clearable textarea,
 .form-group.clearable select {
   width: 100%;
   padding-right: 70px; /* space for Clear button */
+}
+
+.form-group.clearable textarea {
+  width: 100%;
+  padding-right: 14px; /* textarea doesn't need large right padding */
+}
+
+/* when we want a wider textarea without large right padding */
+.wide-input textarea {
+  padding-right: 14px;
+  min-height: 120px;
+  font-size: 0.95rem;
 }
 
 .form-group.clearable button {

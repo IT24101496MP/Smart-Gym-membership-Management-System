@@ -82,6 +82,16 @@ public class ClientController {
         }
     }
 
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getClientByUserId(@PathVariable int id) {
+        try {
+            Client client = clientService.getClientById(id);
+            return ResponseEntity.ok(client);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/update")
     public ResponseEntity<?> updateClientProfile(
             @PathVariable int id,

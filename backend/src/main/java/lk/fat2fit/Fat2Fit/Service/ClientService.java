@@ -48,9 +48,9 @@ public class ClientService {
                     .body("This mobile number already exists.");
         }
 
-        clientRepository.save(clientRegisterToClient(clientRegister));
+        Client saved = clientRepository.save(clientRegisterToClient(clientRegister));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Client registered successfully");
+            .body(saved);
     }
 
     public Client getClientById(int id) {

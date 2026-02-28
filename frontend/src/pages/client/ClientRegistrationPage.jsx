@@ -1,10 +1,11 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import SignatureCanvas from "react-signature-canvas";
 import logo from "../../assets/Fat2fit Logo.jpg";
 import "./ClientRegistrationPage.css";
 
 const ClientRegistrationPage = () => {
+  const navigate = useNavigate();
   const sigCanvas = useRef(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -95,14 +96,45 @@ const ClientRegistrationPage = () => {
       });
 
       if (response.ok) {
-        alert("Client registered successfully!");
-        window.location.reload();
+        let data = null;
+        try {
+          data = await response.json();
+        } catch (err) {
+          // response might be plain text
+          const txt = await response.text();
+          console.warn("Non-JSON registration response:", txt);
+        }
+
+        // Try to find an id in common locations
+        const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || null;
+
+        if (id) {
+          localStorage.setItem("userId", String(id));
+          alert("Client registered successfully!");
+          navigate("/profile");
+        } else if (data && typeof data === "object") {
+          // as a last resort, try nested paths
+          const nestedId = data.client && (data.client.clientId || data.client.id);
+          if (nestedId) {
+            localStorage.setItem("userId", String(nestedId));
+            alert("Client registered successfully!");
+            navigate("/profile");
+          } else {
+            console.error("Could not determine client id from response:", data);
+            alert("Registration succeeded but client id was not returned by server. Please login to continue.");
+            navigate("/login");
+          }
+        } else {
+          alert("Registration succeeded but unexpected server response. Please login.");
+          navigate("/login");
+        }
       } else {
         const error = await response.text();
         alert("Registration failed: " + error);
       }
     } catch (error) {
       alert("Server error occurred.");
+      console.error(error);
     }
     setIsSubmitting(false);
   };
@@ -177,37 +209,39 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Mobile Number *</label>
-            <input
-              type="text"
-              name="mobileNumber"
-              value={formData.mobileNumber}
-              onChange={handleChange}
-              placeholder="e.g., 0712345678"
-            />
-            <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
+          <div className="form-row">
+            <div className="form-group clearable">
+              <label>Mobile Number *</label>
+              <input
+                type="text"
+                name="mobileNumber"
+                value={formData.mobileNumber}
+                onChange={handleChange}
+                placeholder="e.g., 0712345678"
+              />
+              <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
+            </div>
+
+            <div className="form-group clearable">
+              <label>Land Phone</label>
+              <input
+                type="text"
+                name="landPhone"
+                value={formData.landPhone}
+                onChange={handleChange}
+                placeholder="e.g., 0112345678"
+              />
+              <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
+            </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Land Phone</label>
-            <input
-              type="text"
-              name="landPhone"
-              value={formData.landPhone}
-              onChange={handleChange}
-              placeholder="e.g., 0112345678"
-            />
-            <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
-          </div>
-
-          <div className="form-group clearable">
+          <div className="form-group clearable wide-input">
             <label>Address *</label>
             <textarea
               name="address"
               value={formData.address}
               onChange={handleChange}
-              placeholder="e.g., 123 Main Street, Kiribathgoda"
+              placeholder="e.g., 123 Main Street"
             />
             <button type="button" onClick={() => clearField("address")}>Clear</button>
           </div>
@@ -217,14 +251,9 @@ const ClientRegistrationPage = () => {
               <label>Blood Group</label>
               <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                 <option value="">Select</option>
-                <option>A+</option>
-                <option>A-</option>
-                <option>B+</option>
-                <option>B-</option>
-                <option>O+</option>
-                <option>O-</option>
-                <option>AB+</option>
-                <option>AB-</option>
+                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
               <button type="button" onClick={() => clearField("bloodGroup")}>Clear</button>
             </div>
@@ -232,17 +261,11 @@ const ClientRegistrationPage = () => {
             <div className="form-group clearable">
               <label>Profile Picture</label>
               <input type="file" name="profilePicture" accept="image/*" onChange={handleChange} />
+              {photoPreview && <img src={photoPreview} alt="Preview" className="photo-preview" />}
               <button type="button" onClick={() => clearField("profilePicture")}>Clear</button>
-
-              {photoPreview && (
-                <div className="photo-preview-wrapper">
-                  <img src={photoPreview} alt="Profile Preview" className="photo-preview" />
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Emergency Contact */}
           <p className="form-section-title">Emergency Contact</p>
           <div className="form-row">
             <div className="form-group clearable">
@@ -282,7 +305,6 @@ const ClientRegistrationPage = () => {
             <button type="button" onClick={() => clearField("emergencyContactNumber")}>Clear</button>
           </div>
 
-          {/* Signature */}
           <p className="form-section-title">Digital Signature</p>
           <div className="signature-wrapper">
             <SignatureCanvas
@@ -300,10 +322,6 @@ const ClientRegistrationPage = () => {
               {isSubmitting ? "Submitting..." : "Register"}
             </button>
           </div>
-
-          <p className="signin-prompt">
-            Already registered? <Link to="/login">Sign in</Link>
-          </p>
         </form>
       </div>
     </div>
