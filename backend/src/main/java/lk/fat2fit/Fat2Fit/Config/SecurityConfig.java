@@ -51,6 +51,7 @@ public class SecurityConfig {
 
                         // ADMIN only
                         .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
+                        .requestMatchers("/api/user/**").hasRole("ADMIN")
 
                         // ADMIN or INSTRUCTOR
                         .requestMatchers(HttpMethod.GET, "/api/instructor/**").hasAnyRole("ADMIN", "INSTRUCTOR")
