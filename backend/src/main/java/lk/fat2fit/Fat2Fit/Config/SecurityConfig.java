@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -33,9 +36,33 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
-                        .requestMatchers("/api/client/register", "/api/instructor/register").permitAll()
-                        .anyRequest().permitAll()
+
+                        // Public auth endpoints
+                        .requestMatchers(HttpMethod.POST, 
+                                "/api/auth/login", 
+                                "/api/auth/refresh", 
+                                "/api/auth/logout",
+                                "/api/client/register",
+                                "/api/instructor/register")
+                                .permitAll()
+
+                        // Authenticated-only
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                        // ADMIN only
+                        .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
+
+                        // ADMIN or INSTRUCTOR
+                        .requestMatchers(HttpMethod.GET, "/api/instructor/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        
+                        // Instructor mutating operations: ADMIN only
+                        .requestMatchers(HttpMethod.PUT, "/api/instructor/**").hasRole("ADMIN")
+
+                        // ADMIN or CLIENT
+                        .requestMatchers("/api/client/**").hasAnyRole("ADMIN", "CLIENT")
+
+                        // Everything else requires authentication
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
