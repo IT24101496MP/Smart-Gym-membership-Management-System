@@ -7,7 +7,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
-import UserListPage from "./pages/user/UserListPage";
+import ManagePage from "./pages/manage/ManagePage";
 
 
 function App() {
@@ -30,12 +30,12 @@ function App() {
           }
         />
 
-        {/* ADMIN-only */}
+        {/* All authenticated roles – role-aware manage page */}
         <Route
-          path="/user"
+          path="/manage"
           element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <UserListPage />
+            <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "CLIENT"]}>
+              <ManagePage />
             </ProtectedRoute>
           }
         />
@@ -57,16 +57,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* ADMIN and INSTRUCTOR*/}
-        {/* <Route
-          path="/instructor/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-              <InstructorDetailPage />
-            </ProtectedRoute>
-          }
-        /> */}
 
         {/* Fallback */}
         <Route path="/" element={<Navigate to="/profile" replace />} />
