@@ -7,6 +7,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import UserListPage from "./pages/user/UserListPage";
 
 
 function App() {
@@ -30,6 +31,15 @@ function App() {
         />
 
         {/* ADMIN-only */}
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <UserListPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/instructor"
           element={
