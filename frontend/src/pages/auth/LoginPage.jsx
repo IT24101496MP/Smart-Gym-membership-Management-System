@@ -59,7 +59,7 @@ const LoginPage = () => {
       if (response.ok) {
         const data = await response.json();
         setTokens(data.accessToken, data.refreshToken);
-        navigate("/dashboard");
+        navigate("/profile");
       } else {
         const message = await response.text();
         setServerError(message || "Login failed. Please try again.");
