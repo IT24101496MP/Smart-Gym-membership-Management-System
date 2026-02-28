@@ -42,4 +42,18 @@ public class InstructorController {
     public ResponseEntity<?> assignEmploymentDetails(@PathVariable int id, @RequestBody InstructorEmploymentAssignment dto){
         return instructorService.assignEmploymentDetails(id, dto);
     }
+
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> updateInstructorProfile(
+            @PathVariable int id,
+            @RequestBody InstructorRegister instructorRegister,
+            @RequestParam Long updatedBy
+    ) {
+        try {
+            Instructor updated = instructorService.updateInstructorProfile(id, instructorRegister, updatedBy);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }
