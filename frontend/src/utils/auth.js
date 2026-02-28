@@ -14,6 +14,21 @@ export const clearTokens = () => {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
 };
 
+/**
+ * Decodes the JWT access token and returns the role claim (e.g. "ADMIN", "INSTRUCTOR", "CLIENT").
+ * Returns null when no token is present or the token is malformed.
+ */
+export const getRole = () => {
+  const token = getAccessToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const isTokenExpired = (token) => {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
