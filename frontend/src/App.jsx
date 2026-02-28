@@ -39,17 +39,27 @@ function App() {
           }
         />
 
-        {/* ADMIN and INSTRUCTOR*/}
         <Route
+          path="/instructor/:id"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <InstructorDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ADMIN and INSTRUCTOR*/}
+        {/* <Route
           path="/instructor/:id"
           element={
             <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
               <InstructorDetailPage />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* Fallback */}
+        <Route path="/" element={<Navigate to="/profile" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
