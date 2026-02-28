@@ -5,19 +5,52 @@ import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UnauthorizedPage from "./pages/error/UnauthorizedPage";
+import ProfilePage from "./pages/profile/ProfilePage";
 
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/client/register" element={<ClientRegistrationPage />} />
-
+        {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
-
-        <Route path="/instructor" element={<InstructorListPage />} />
+        <Route path="/client/register" element={<ClientRegistrationPage />} />
         <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
-        <Route path="/instructor/:id" element={<InstructorDetailPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Only Logged in User */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ADMIN-only */}
+        <Route
+          path="/instructor"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <InstructorListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ADMIN and INSTRUCTOR*/}
+        <Route
+          path="/instructor/:id"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+              <InstructorDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
