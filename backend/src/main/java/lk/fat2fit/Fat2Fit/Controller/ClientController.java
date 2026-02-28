@@ -4,6 +4,8 @@ import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Service.ClientService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,7 @@ import java.io.IOException;
 public class ClientController {
 
     private final ClientService clientService;
+    private final Logger logger = LoggerFactory.getLogger(ClientController.class);
 
     private static String emptyToNull(String value) {
         return (value == null || value.trim().isEmpty()) ? null : value;
@@ -69,7 +72,12 @@ public class ClientController {
                 .digitalSignature(signatureBytes)
                 .build();
 
-        return clientService.registerClient(clientRegister);
+        try {
+            return clientService.registerClient(clientRegister);
+        } catch (Exception e) {
+            logger.error("Error registering client", e);
+            return ResponseEntity.status(500).body("Server error during registration: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")

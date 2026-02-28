@@ -19,7 +19,7 @@ html, body, #root {
 
 .registration-page {
   min-height: 100vh;
-  background-color: #F8F8F8;
+  background-color: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,7 +29,7 @@ html, body, #root {
 .registration-container {
   width: 100%;
   max-width: 900px;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -53,7 +53,7 @@ html, body, #root {
 .header-accent {
   width: 10px;
   height: 65px;
-  background-color: #DC2F2F;
+  background-color: var(--color-accent);
   border-radius: 4px;
 }
 
@@ -101,6 +101,11 @@ html, body, #root {
   gap: 18px;
 }
 
+.full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -109,7 +114,7 @@ html, body, #root {
 
 .form-group label {
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
   color: #222222;
 }
 
@@ -141,25 +146,24 @@ textarea {
 .photo-preview-wrapper {
   width: 180px;
   height: 180px;
-  border: 2px solid #DC2F2F;
+  border: 2px solid var(--color-accent);
   border-radius: 12px;
   margin-top: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffffff;
+  background-color: var(--card-bg);
 }
 
 .photo-preview-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: contain;   /* Show full image */
+  object-fit: contain;
   object-position: center;
   display: block;
 }
 
-/* simple preview when using inline img (registration uses .photo-preview) */
 .photo-preview {
   width: 120px;
   height: 120px;
@@ -171,9 +175,9 @@ textarea {
 }
 
 .signature-wrapper {
-  border: 2px dashed #DC2F2F;
+  border: 2px dashed var(--color-accent);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card-bg);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -182,9 +186,10 @@ textarea {
 
 .signature-canvas {
   border-radius: 8px;
-  background: #ffffff;
-  width: 400px;
-  height: 120px;
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 500px;
+  height: 150px;
   margin-bottom: 6px;
 }
 
@@ -236,7 +241,7 @@ textarea {
 }
 
 .signin-prompt a {
-  color: #DC2F2F;
+  color: var(--color-accent);
   font-weight: 700;
   text-decoration: none;
 }
@@ -248,19 +253,21 @@ textarea {
 .form-group.clearable input,
 .form-group.clearable select {
   width: 100%;
-  padding-right: 70px; /* space for Clear button */
+  padding-right: 70px;
 }
 
 .form-group.clearable textarea {
   width: 100%;
-  padding-right: 14px; /* textarea doesn't need large right padding */
+  padding-right: 14px;
 }
 
-/* when we want a wider textarea without large right padding */
-.wide-input textarea {
-  padding-right: 14px;
-  min-height: 120px;
-  font-size: 0.95rem;
+.full-width textarea {
+  width: 100%;
+  min-height: 180px;
+  font-size: 1rem;
+  padding: 14px;
+  border-radius: 12px;
+  resize: vertical;
 }
 
 .form-group.clearable button {
@@ -296,4 +303,27 @@ textarea {
   .submit-button {
     width: 100%;
   }
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.success-message {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 500;
 }

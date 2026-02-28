@@ -27,6 +27,7 @@ const ClientRegistrationPage = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -96,41 +97,21 @@ const ClientRegistrationPage = () => {
       });
 
       if (response.ok) {
-        let data = null;
         try {
-          data = await response.json();
+          const data = await response.json();
+          const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || (data.client && (data.client.clientId || data.client.id)) || null;
+          if (id) localStorage.setItem("userId", String(id));
         } catch (err) {
-          // response might be plain text
           const txt = await response.text();
-          console.warn("Non-JSON registration response:", txt);
+          console.warn("Non-JSON registration response:", response.status, txt);
         }
 
-        // Try to find an id in common locations
-        const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || null;
-
-        if (id) {
-          localStorage.setItem("userId", String(id));
-          alert("Client registered successfully!");
-          navigate("/profile");
-        } else if (data && typeof data === "object") {
-          // as a last resort, try nested paths
-          const nestedId = data.client && (data.client.clientId || data.client.id);
-          if (nestedId) {
-            localStorage.setItem("userId", String(nestedId));
-            alert("Client registered successfully!");
-            navigate("/profile");
-          } else {
-            console.error("Could not determine client id from response:", data);
-            alert("Registration succeeded but client id was not returned by server. Please login to continue.");
-            navigate("/login");
-          }
-        } else {
-          alert("Registration succeeded but unexpected server response. Please login.");
-          navigate("/login");
-        }
+        setSuccessMsg("Client registered successfully!");
+        setTimeout(() => navigate("/profile"), 1000);
       } else {
-        const error = await response.text();
-        alert("Registration failed: " + error);
+        const errorText = await response.text();
+        console.error("Registration failed", response.status, errorText);
+        alert("Registration failed: " + errorText);
       }
     } catch (error) {
       alert("Server error occurred.");
@@ -153,6 +134,10 @@ const ClientRegistrationPage = () => {
           </div>
           <img src={logo} alt="Fat2Fit Logo" className="header-logo" />
         </div>
+
+        {/* Messages */}
+        {successMsg && <div className="success-message">{successMsg}</div>}
+        {Object.keys(errors).length > 0 && Object.values(errors).some(e => e) && <div className="error-message">Please fix the errors below</div>}
 
         {/* Form */}
         <form className="registration-form" onSubmit={handleSubmit}>
@@ -235,15 +220,17 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable wide-input">
-            <label>Address *</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="e.g., 123 Main Street"
-            />
-            <button type="button" onClick={() => clearField("address")}>Clear</button>
+          <div className="full-width">
+            <div className="form-group clearable">
+              <label>Address *</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="e.g., 123 Main Street"
+              />
+              <button type="button" onClick={() => clearField("address")}>Clear</button>
+            </div>
           </div>
 
           <div className="form-row">
@@ -293,7 +280,7 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
+          <div className="form-group clearable full-width">
             <label>Contact Number</label>
             <input
               type="text"
@@ -310,7 +297,7 @@ const ClientRegistrationPage = () => {
             <SignatureCanvas
               ref={sigCanvas}
               penColor="black"
-              canvasProps={{ className: "signature-canvas", width: 500, height: 200 }}
+              canvasProps={{ className: "signature-canvas" }}
             />
             <button type="button" className="clear-signature" onClick={clearSignature}>
               Clear Signature
