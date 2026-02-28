@@ -15,7 +15,6 @@ const ClientRegistrationPage = () => {
     gender: "",
     mobileNumber: "",
     landPhone: "",
-    email: "",
     address: "",
     bloodGroup: "",
     emergencyContactName: "",
@@ -62,7 +61,6 @@ const ClientRegistrationPage = () => {
     if (!formData.age) newErrors.age = "Age required";
     if (!formData.gender) newErrors.gender = "Gender required";
     if (!formData.mobileNumber.trim()) newErrors.mobileNumber = "Mobile required";
-    if (!formData.email.trim()) newErrors.email = "Email required";
     if (!formData.address.trim()) newErrors.address = "Address required";
     return newErrors;
   };
@@ -201,18 +199,6 @@ const ClientRegistrationPage = () => {
               placeholder="e.g., 0112345678"
             />
             <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
-          </div>
-
-          <div className="form-group clearable">
-            <label>Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="e.g., john.cena@example.com"
-            />
-            <button type="button" onClick={() => clearField("email")}>Clear</button>
           </div>
 
           <div className="form-group clearable">
