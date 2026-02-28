@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './InstructorListPage.css';
+import api from '../../utils/api';
 
 const InstructorListPage = () => {
   const [instructors, setInstructors] = useState([]);
@@ -12,14 +13,10 @@ const InstructorListPage = () => {
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/instructor');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch instructors (${response.status})`);
-        }
-        const data = await response.json();
+        const { data } = await api.get('/api/instructor');
         setInstructors(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data || err.message);
       } finally {
         setLoading(false);
       }

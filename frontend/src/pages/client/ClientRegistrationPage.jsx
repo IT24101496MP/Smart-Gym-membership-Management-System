@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import SignatureCanvas from "react-signature-canvas";
 import logo from "../../assets/Fat2fit Logo.jpg";
+import { publicApi } from "../../utils/api";
 import "./ClientRegistrationPage.css";
 
 const ClientRegistrationPage = () => {
@@ -100,28 +101,20 @@ const ClientRegistrationPage = () => {
         formPayload.append("digitalSignature", file);
       }
 
-      const response = await fetch("http://localhost:8080/api/client/register", {
-        method: "POST",
-        body: formPayload,
-      });
-
-      if (response.ok) {
-        alert("Registration successful!\nWelcome to Fat2Fit! Your client account has been created. You can now log in with your email and password.");
-        window.location.reload();
-      } else {
-        const message = await response.text();
-        console.error("Registration failed:", message);
-        if (response.status === 409) {
-          alert(`Registration failed: ${message}`);
-        } else if (response.status === 400) {
-          alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
-        } else {
-          alert(`Registration failed (${response.status}): ${message || 'An unexpected error occurred. Please try again.'}`);
-        }
-      }
+      await publicApi.post("/api/client/register", formPayload);
+      alert("Registration successful!\nWelcome to Fat2Fit! Your client account has been created. You can now log in with your email and password.");
+      window.location.reload();
     } catch (error) {
-      console.error("Error:", error);
-      alert("Unable to connect to the server.\nPlease check your internet connection and try again.");
+      const status  = error.response?.status;
+      const message = error.response?.data || 'An unexpected error occurred. Please try again.';
+      console.error("Registration failed:", message);
+      if (status === 409) {
+        alert(`Registration failed: ${message}`);
+      } else if (status === 400) {
+        alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
+      } else {
+        alert(`Registration failed (${status ?? 'Network Error'}): ${message}`);
+      }
     }
     setIsSubmitting(false);
   };

@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 
@@ -43,20 +45,11 @@ export const refreshAccessToken = async () => {
   if (!refreshToken) return false;
 
   try {
-    const response = await fetch("http://localhost:8080/api/auth/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+    const { data } = await axios.post("http://localhost:8080/api/auth/refresh", {
+      refreshToken,
     });
-
-    if (response.ok) {
-      const data = await response.json();
-      setTokens(data.accessToken, data.refreshToken);
-      return true;
-    }
-
-    clearTokens();
-    return false;
+    setTokens(data.accessToken, data.refreshToken);
+    return true;
   } catch {
     clearTokens();
     return false;
@@ -82,11 +75,7 @@ export const logout = async () => {
   const refreshToken = getRefreshToken();
   if (refreshToken) {
     try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
+      await axios.post("http://localhost:8080/api/auth/logout", { refreshToken });
     } catch {
       // Proceed with local cleanup even if the request fails
     }
@@ -97,6 +86,7 @@ export const logout = async () => {
 /**
  * Wrapper around fetch that automatically attaches the Authorization header
  * and retries once after a silent token refresh on 401 responses.
+ * @deprecated Use the default axios instance from utils/api.js instead.
  */
 export const authFetch = async (url, options = {}) => {
   const accessToken = getAccessToken();

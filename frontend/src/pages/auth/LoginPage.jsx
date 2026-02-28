@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/Fat2fit Logo.jpg";
 import { setTokens } from "../../utils/auth";
+import { publicApi } from "../../utils/api";
 import "./LoginPage.css";
 
 const LoginPage = () => {
@@ -47,25 +48,16 @@ const LoginPage = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifier: formData.identifier.trim(),
-          password: formData.password,
-        }),
+      const { data } = await publicApi.post("/api/auth/login", {
+        identifier: formData.identifier.trim(),
+        password: formData.password,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTokens(data.accessToken, data.refreshToken);
-        navigate("/profile");
-      } else {
-        const message = await response.text();
-        setServerError(message || "Login failed. Please try again.");
-      }
-    } catch {
-      setServerError("Login failed. Please try again.");
+      setTokens(data.accessToken, data.refreshToken);
+      navigate("/profile");
+    } catch (error) {
+      setServerError(
+        error.response?.data || "Login failed. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
