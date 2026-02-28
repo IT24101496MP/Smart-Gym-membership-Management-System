@@ -58,11 +58,6 @@ public class Client {
     )
     private String landPhone;
 
-    @Column(name = "Email", nullable = false, unique = true)
-    @Email(message = "Email should be valid")
-    @NotBlank(message = "Email is required")
-    private String email;
-
     @Column(name = "Address", nullable = false)
     @NotBlank(message = "Address is required")
     private String address;
