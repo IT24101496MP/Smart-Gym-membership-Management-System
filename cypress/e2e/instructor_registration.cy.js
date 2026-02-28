@@ -1,5 +1,5 @@
 describe("Instructor Registration", () => {
-  it("Registers instructor (or shows correct backend error)", () => {
+  it("Registers instructor", () => {
     const email = `auto_${Date.now()}@gmail.com`;
 
     cy.visit("http://localhost:5173/instructor/register");
@@ -15,16 +15,14 @@ describe("Instructor Registration", () => {
     cy.get("#password").type("Password123");
     cy.get("#confirmPassword").type("Password123");
 
-    // Set alert listener BEFORE clicking submit
+    // Set alert listener 
     const alertMessages = [];
     cy.on("window:alert", (txt) => {
       alertMessages.push(txt);
     });
 
     cy.intercept("POST", "http://localhost:8080/api/instructor/register").as("register");
-
     cy.contains("Submit").click();
-
     cy.wait("@register").then(({ response }) => {
       expect(response, "Backend response should exist").to.exist;
 
