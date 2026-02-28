@@ -5,7 +5,6 @@ describe("Instructor Detail - Approve + Employment Assignment", () => {
   const uniqueEmail = () =>
     `auto_e2e_${Date.now()}_${Math.floor(Math.random() * 1000)}@gmail.com`;
 
-  // Always unique
   const uniquePhone = () => `07${Date.now().toString().slice(-8)}`;
 
   const makePayload = () => ({
@@ -47,20 +46,12 @@ describe("Instructor Detail - Approve + Employment Assignment", () => {
     registerAndGetId().then((id) => {
       cy.visit(`${UI_BASE}/instructor/${id}`);
       cy.contains("Instructor Review").should("exist");
-
-      // Must be pending at start
       cy.get(".profile-banner .badge").should("contain.text", "PENDING");
-
-      // Approve intercept BEFORE click
       cy.intercept("PUT", "**/api/instructor/**/status**").as("approve");
-
-      // Click the real approve button
       cy.get("button.btn--approve")
         .should("be.visible")
         .should("not.be.disabled")
         .click({ force: true });
-
-      // Validate approve request fired
       cy.wait("@approve", { timeout: 30000 }).then((i) => {
         expect(i.response, "Approve response should exist").to.exist;
         expect([200, 204]).to.include(i.response.statusCode);
