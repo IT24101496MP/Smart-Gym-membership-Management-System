@@ -1,8 +1,3 @@
-// cypress/e2e/user_backend_api.cy.js
-// FULL corrected Cypress API test file (backend on port 8081)
-// FIXED: accepts 401 for the "empty email" OAuth test because your backend/security
-// can respond 401 for invalid/empty body depending on filters/parsing.
-
 describe("Backend API - UserController", () => {
   const BACKEND_URL = "http://localhost:8081";
 
