@@ -8,11 +8,8 @@ import java.util.List;
 
 public interface ClientRepository extends JpaRepository<Client, Integer> {
 
-    boolean existsByEmail(String email);
     boolean existsByMobileNumber(String mobileNumber);
-    boolean existsByEmailOrMobileNumber(String email, String mobileNumber);
 
-    Optional<Client> findByEmail(String email);
     Optional<Client> findByMobileNumber(String mobileNumber);
     List<Client> findByBloodGroup(String bloodGroup);
 
