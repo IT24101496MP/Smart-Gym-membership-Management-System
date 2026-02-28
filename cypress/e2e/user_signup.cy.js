@@ -57,8 +57,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
 
   it("toggles password visibility", () => {
     getConfirmPassword().should("have.attr", "type", "password");
-
-    // second eye icon = confirm password
     cy.get(".password-group .eye-icon").eq(1).click();
     getConfirmPassword().should("have.attr", "type", "text");
 
@@ -68,7 +66,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
 
   it("submits registration successfully and shows success + clears inputs", () => {
     cy.intercept("POST", "/api/user/register", (req) => {
-      // Basic request-body checks
       expect(req.body).to.have.property("email", "newuser@example.com");
       expect(req.body).to.have.property("password");
       expect(req.body).to.have.property("confirmPassword");
@@ -83,8 +80,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
 
     cy.wait("@register").its("response.statusCode").should("eq", 200);
     cy.contains(".success-message", "Registration successful").should("be.visible");
-
-    // Your component resets the form on success
     getEmail().should("have.value", "");
     getPassword().should("have.value", "");
     getConfirmPassword().should("have.value", "");
@@ -109,7 +104,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
   it("disables button while request is pending (loading state)", () => {
     cy.intercept("POST", "/api/user/register", (req) => {
       req.reply((res) => {
-        // Keep request pending long enough to observe loading UI
         res.setDelay(1500);
         res.send({ statusCode: 200, body: "OK" });
       });
@@ -120,10 +114,10 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
     getConfirmPassword().type("Password123!");
     getSubmitBtn().click();
 
-    // ✅ Reliable: button becomes disabled while loading=true
+    // button becomes disabled while loading=true
     getSubmitBtn().should("be.disabled");
 
-    // ✅ Optional: if the label changes, assert it (won't fail if label doesn't change instantly)
+    //  if the label changes, assert it 
     getSubmitBtn().invoke("text").then((txt) => {
       const t = (txt || "").trim();
       if (/signing up/i.test(t)) {
@@ -140,8 +134,6 @@ describe("User Sign Up (UserLoginRegistration) on /login", () => {
   });
 
   it("facebook icon click does not crash (smoke)", () => {
-    // FB OAuth popup flow isn't reliably automatable in Cypress,
-    // so we just confirm clicking doesn't break the page.
     cy.get(".icon-wrapper.facebook").click({ force: true });
     cy.contains("h1", /sign up/i).should("be.visible");
   });
