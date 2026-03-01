@@ -1,4 +1,4 @@
-describe("RBAC - Backend API Access (Spring Security)", () => {
+describe("RBAC - Backend API Access ", () => {
   const API = "http://localhost:8080";
 
   const users = {
