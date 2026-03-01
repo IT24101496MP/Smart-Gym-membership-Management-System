@@ -1,10 +1,11 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import SignatureCanvas from "react-signature-canvas";
 import logo from "../../assets/Fat2fit Logo.jpg";
 import "./ClientRegistrationPage.css";
 
 const ClientRegistrationPage = () => {
+  const navigate = useNavigate();
   const sigCanvas = useRef(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -29,6 +30,7 @@ const ClientRegistrationPage = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -140,6 +142,10 @@ const ClientRegistrationPage = () => {
           <img src={logo} alt="Fat2Fit Logo" className="header-logo" />
         </div>
 
+        {/* Messages */}
+        {successMsg && <div className="success-message">{successMsg}</div>}
+        {Object.keys(errors).length > 0 && Object.values(errors).some(e => e) && <div className="error-message">Please fix the errors below</div>}
+
         {/* Form */}
         <form className="registration-form" onSubmit={handleSubmit}>
           <p className="form-section-title">Personal Information</p>
@@ -221,27 +227,30 @@ const ClientRegistrationPage = () => {
             <button type="button" onClick={() => clearField("phoneNumber")}>Clear</button>
           </div>
 
-          <div className="form-group clearable">
-            <label>Land Phone</label>
-            <input
-              type="text"
-              name="landPhone"
-              value={formData.landPhone}
-              onChange={handleChange}
-              placeholder="e.g., 0112345678"
-            />
-            <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
+            <div className="form-group clearable">
+              <label>Land Phone</label>
+              <input
+                type="text"
+                name="landPhone"
+                value={formData.landPhone}
+                onChange={handleChange}
+                placeholder="e.g., 0112345678"
+              />
+              <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
+            </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Address *</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="e.g., 123 Main Street, Kiribathgoda"
-            />
-            <button type="button" onClick={() => clearField("address")}>Clear</button>
+          <div className="full-width">
+            <div className="form-group clearable">
+              <label>Address *</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="e.g., 123 Main Street"
+              />
+              <button type="button" onClick={() => clearField("address")}>Clear</button>
+            </div>
           </div>
 
           <div className="form-row">
@@ -249,14 +258,9 @@ const ClientRegistrationPage = () => {
               <label>Blood Group</label>
               <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                 <option value="">Select</option>
-                <option>A+</option>
-                <option>A-</option>
-                <option>B+</option>
-                <option>B-</option>
-                <option>O+</option>
-                <option>O-</option>
-                <option>AB+</option>
-                <option>AB-</option>
+                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
               <button type="button" onClick={() => clearField("bloodGroup")}>Clear</button>
             </div>
@@ -264,17 +268,11 @@ const ClientRegistrationPage = () => {
             <div className="form-group clearable">
               <label>Profile Picture</label>
               <input type="file" name="profilePicture" accept="image/*" onChange={handleChange} />
+              {photoPreview && <img src={photoPreview} alt="Preview" className="photo-preview" />}
               <button type="button" onClick={() => clearField("profilePicture")}>Clear</button>
-
-              {photoPreview && (
-                <div className="photo-preview-wrapper">
-                  <img src={photoPreview} alt="Profile Preview" className="photo-preview" />
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Emergency Contact */}
           <p className="form-section-title">Emergency Contact</p>
           <div className="form-row">
             <div className="form-group clearable">
@@ -302,7 +300,7 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
+          <div className="form-group clearable full-width">
             <label>Contact Number</label>
             <input
               type="text"
@@ -346,7 +344,7 @@ const ClientRegistrationPage = () => {
             <SignatureCanvas
               ref={sigCanvas}
               penColor="black"
-              canvasProps={{ className: "signature-canvas", width: 500, height: 200 }}
+              canvasProps={{ className: "signature-canvas" }}
             />
             <button type="button" className="clear-signature" onClick={clearSignature}>
               Clear Signature
@@ -358,10 +356,6 @@ const ClientRegistrationPage = () => {
               {isSubmitting ? "Submitting..." : "Register"}
             </button>
           </div>
-
-          <p className="signin-prompt">
-            Already registered? <Link to="/login">Sign in</Link>
-          </p>
         </form>
       </div>
     </div>

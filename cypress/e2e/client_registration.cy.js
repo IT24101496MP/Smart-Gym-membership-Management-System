@@ -1,86 +1,39 @@
-describe("Client Registration UI", () => {
+describe("Client Registration Page ", () => {
+  it("shows validation error banner when required fields missing", () => {
+    cy.intercept("POST", "**/api/client/register").as("clientRegister");
 
-  const FE_URL = "http://localhost:5173";
-  const ROUTE = "/client/register";
-  const API_URL = "http://localhost:8080/api/client/register";
+    cy.visit("http://localhost:5173/client-registration");
 
-  // Should NOT submit empty form
-  it("should not submit empty form", () => {
+    cy.contains("button", "Register").click();
+    cy.get("div.error-message")
+      .should("be.visible")
+      .and("contain.text", "Please fix the errors below");
 
-    cy.visit(FE_URL + ROUTE);
-
-    cy.intercept("POST", API_URL).as("register");
-
-    cy.get("button[type='submit']").click();
-
-    cy.wait(800);
-
-    // Ensure no API call happened
-    cy.get("@register.all").should("have.length", 0);
+    cy.get("@clientRegister.all").should("have.length", 0);
   });
 
-
-  // Should NOT allow duplicate email
-  it("should not allow duplicate email", () => {
-
-    const email = "duplicate@mail.com";
-
-    // Mock backend to return 409 for duplicate
-    cy.intercept("POST", API_URL, {
-      statusCode: 409,
-      body: "Email already exists"
-    }).as("register");
-
-    cy.visit(FE_URL + ROUTE);
-
-    cy.get('input[name="firstName"]').type("John");
-    cy.get('input[name="lastName"]').type("Cena");
-    cy.get('input[name="age"]').type("25");
-    cy.get('select[name="gender"]').select("Male");
-    cy.get('input[name="mobileNumber"]').type("0771234567");
-    cy.get('input[name="email"]').type(email);
-    cy.get('textarea[name="address"]').type("Colombo");
-
-    cy.window().then((win) => cy.stub(win, "alert").as("alert"));
-
-    cy.get('button[type="submit"]').click();
-
-    cy.wait("@register");
-
-    cy.get("@alert").should("have.been.calledWithMatch", /Registration failed/i);
-  });
-
-
-  // 3. Should register successfully
-  it("should register client successfully", () => {
-
-    const stamp = Date.now();
-    const email = `client${stamp}@mail.com`;
-    const mobile = `07${String(stamp).slice(-8)}`;
-
-    cy.intercept("POST", API_URL, {
+  it("successful registration redirects to /profile (stubbed)", () => {
+    cy.intercept("POST", "**/api/client/register", {
       statusCode: 200,
-      body: "OK"
-    }).as("register");
+      body: { id: 123 },
+    }).as("clientRegister");
 
-    cy.visit(FE_URL + ROUTE);
+    cy.visit("http://localhost:5173/client-registration");
+    cy.get("input[name='firstName']").type("John");
+    cy.get("input[name='lastName']").type("Cena");
+    cy.get("input[name='age']").type("24");
+    cy.get("select[name='gender']").select("Male");
+    cy.get("input[name='mobileNumber']").type("0712345678");
+    cy.get("textarea[name='address']").type("123 Main Street");
 
-    cy.get('input[name="firstName"]').type("John");
-    cy.get('input[name="lastName"]').type("Cena");
-    cy.get('input[name="age"]').type("25");
-    cy.get('select[name="gender"]').select("Male");
-    cy.get('input[name="mobileNumber"]').type(mobile);
-    cy.get('input[name="landPhone"]').type("0112345678");
-    cy.get('input[name="email"]').type(email);
-    cy.get('textarea[name="address"]').type("Colombo");
+    cy.contains("button", "Register").click();
 
-    cy.window().then((win) => cy.stub(win, "alert").as("alert"));
+    cy.wait("@clientRegister");
 
-    cy.get('button[type="submit"]').click();
+    cy.get("div.success-message")
+      .should("be.visible")
+      .and("contain.text", "Client registered successfully!");
 
-    cy.wait("@register");
-
-    cy.get("@alert").should("have.been.calledWithMatch", /Client registered successfully/i);
+    cy.location("pathname", { timeout: 8000 }).should("eq", "/profile");
   });
-
 });

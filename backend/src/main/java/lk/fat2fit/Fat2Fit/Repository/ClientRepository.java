@@ -21,5 +21,6 @@ public interface ClientRepository extends JpaRepository<Client, Integer> {
     Optional<Client> findByMobileNumber(String mobileNumber);
 >>>>>>> testing
     List<Client> findByBloodGroup(String bloodGroup);
+    List<Client> findByStatus(String status);
 
 }

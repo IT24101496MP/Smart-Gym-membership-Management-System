@@ -63,6 +63,9 @@ public class Client {
     @NotBlank(message = "Address is required")
     private String address;
 
+        @Column(nullable = false)
+        private String status = "Active";
+
     @Column(name = "Emergency_contact_name")
     private String emergencyContactName;
 
