@@ -8,6 +8,11 @@ import InstructorRegistrationPage from "./pages/instructor/InstructorRegistratio
 import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
+import LoginPage from "./pages/auth/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import UnauthorizedPage from "./pages/error/UnauthorizedPage";
+import ProfilePage from "./pages/profile/ProfilePage";
+import UserListPage from "./pages/user/UserListPage";
 import ClientProfile from "./pages/client/ClientProfile";
 import ActiveMembers from "./pages/admin/ActiveMembers";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
@@ -35,12 +40,37 @@ function App() {
             }
           />
 
-          {/* Client Registration */}
+          {/* public pages */}
           <Route path="/client-registration" element={<ClientRegistrationPage />} />
-          <Route path="/profile" element={<ClientProfile />} />
-          <Route path="/instructor" element={<InstructorListPage />} />
           <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
-          <Route path="/instructor/:id" element={<InstructorDetailPage />} />
+            
+          {/* ADMIN-only */}
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <UserListPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/instructor"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <InstructorListPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/instructor/:id"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <InstructorDetailPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/active-members"
@@ -60,8 +90,19 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          {/* Only Logged in User */}
+          <Route
+            path="/profile-me
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Catch all unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />

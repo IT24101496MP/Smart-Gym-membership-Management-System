@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
 import './InstructorDetailPage.css';
 
 const InstructorDetailPage = () => {
@@ -30,11 +31,8 @@ const InstructorDetailPage = () => {
   useEffect(() => {
     const fetchInstructor = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/instructor/${id}`);
-        if (!res.ok) throw new Error(`Instructor not found (${res.status})`);
-        const data = await res.json();
+        const { data } = await api.get(`/api/instructor/${id}`);
         setInstructor(data);
-        // Pre-populate form with existing values if present
         const emp = data.employment;
         const hasEmp = !!emp?.employmentType;
         setEmpForm({
@@ -43,10 +41,9 @@ const InstructorDetailPage = () => {
           salary: emp?.salary ?? '',
           isActive: data.isActive !== null ? String(data.isActive) : '',
         });
-        // Start in edit mode only when no employment has been assigned yet
         setEmpEditing(!hasEmp);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data || err.message);
       } finally {
         setLoading(false);
       }
@@ -57,15 +54,11 @@ const InstructorDetailPage = () => {
   const updateStatus = async (newStatus) => {
     setActionLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/instructor/${id}/status?status=${newStatus}`,
-        { method: 'PUT' }
-      );
-      if (!res.ok) throw new Error(`Failed to update status (${res.status})`);
+      await api.put(`/api/instructor/${id}/status?status=${newStatus}`);
       setInstructor((prev) => ({ ...prev, status: newStatus }));
       showToast('success', `Instructor ${newStatus === 'APPROVED' ? 'approved' : 'rejected'} successfully.`);
     } catch (err) {
-      showToast('error', err.message);
+      showToast('error', err.response?.data || err.message);
     } finally {
       setActionLoading(false);
     }
@@ -103,21 +96,12 @@ const InstructorDetailPage = () => {
         salary: Number(empForm.salary),
         isActive: empForm.isActive === 'true',
       };
-      const res = await fetch(`http://localhost:8080/api/instructor/${id}/employment`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || `Request failed (${res.status})`);
-      }
-      const updated = await res.json();
+      const { data: updated } = await api.put(`/api/instructor/${id}/employment`, payload);
       setInstructor(updated);
       setEmpEditing(false);
       showToast('success', 'Employment details saved successfully.');
     } catch (err) {
-      showToast('error', err.message);
+      showToast('error', err.response?.data || err.message);
     } finally {
       setEmpLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authFetch, logout } from "../../utils/auth";
+import api from "../../utils/api";
+import { logout } from "../../utils/auth";
 import "./ProfilePage.css";
 
 const ProfilePage = () => {
@@ -9,15 +10,10 @@ const ProfilePage = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    authFetch("http://localhost:8080/api/auth/me")
-      .then(async (res) => {
-        if (res.ok) {
-          setUser(await res.json());
-        } else {
-          setError("Failed to load profile.");
-        }
-      })
-      .catch(() => setError("Unable to connect to the server."));
+    api
+      .get("/api/auth/me")
+      .then(({ data }) => setUser(data))
+      .catch(() => setError("Failed to load profile."));
   }, []);
 
   const handleLogout = async () => {

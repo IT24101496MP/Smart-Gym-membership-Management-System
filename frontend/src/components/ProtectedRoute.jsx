@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../utils/auth";
+import { isAuthenticated, getRole } from "../utils/auth";
 
-const ProtectedRoute = ({ children }) => {
-  // "checking" while the async token validation / silent refresh is in progress
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const [authState, setAuthState] = useState("checking");
 
   useEffect(() => {
@@ -12,8 +11,17 @@ const ProtectedRoute = ({ children }) => {
     });
   }, []);
 
-  if (authState === "checking") return null; // renders nothing while checking (add a spinner here if desired)
+  if (authState === "checking") return null;
   if (authState === "invalid") return <Navigate to="/login" replace />;
+
+  // Role check – only runs once we know the user is authenticated
+  if (allowedRoles && allowedRoles.length > 0) {
+    const role = getRole();
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+
   return children;
 };
 

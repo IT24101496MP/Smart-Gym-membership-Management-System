@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { publicApi } from '../../utils/api';
 import './InstructorRegistrationPage.css';
 
 const InstructorRegistrationPage = () => {
@@ -97,46 +98,35 @@ const InstructorRegistrationPage = () => {
     
     try {
       const { confirmPassword: _, ...payload } = formData;
-      const response = await fetch('http://localhost:8080/api/instructor/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      await publicApi.post('/api/instructor/register', payload);
+      alert('Application submitted successfully!\nYour instructor profile is now under review. You will be notified by email once an admin approves your account.');
+      setFormData({
+        firstName: '',
+        lastName: '',
+        age: '',
+        dateOfBirth: '',
+        gender: '',
+        email: '',
+        phoneNumber: '',
+        landPhone: '',
+        address: '',
+        qualification: '',
+        yearsOfExperience: '',
+        areasOfSpecialization: '',
+        password: '',
+        confirmPassword: ''
       });
-
-      if (response.ok) {
-        alert('Application submitted successfully!\nYour instructor profile is now under review. You will be notified by email once an admin approves your account.');
-        setFormData({
-          firstName: '',
-          lastName: '',
-          age: '',
-          dateOfBirth: '',
-          gender: '',
-          email: '',
-          phoneNumber: '',
-          landPhone: '',
-          address: '',
-          qualification: '',
-          yearsOfExperience: '',
-          areasOfSpecialization: '',
-          password: '',
-          confirmPassword: ''
-        });
-      } else {
-        const message = await response.text();
-        console.error('Registration failed:', message);
-        if (response.status === 409) {
-          alert(`Registration failed: ${message}`);
-        } else if (response.status === 400) {
-          alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
-        } else {
-          alert(`Registration failed (${response.status}): ${message || 'An unexpected error occurred. Please try again.'}`);
-        }
-      }
     } catch (error) {
-      console.error('Error:', error);
-      alert('Unable to connect to the server.\nPlease check your internet connection and try again.');
+      const status  = error.response?.status;
+      const message = error.response?.data || 'An unexpected error occurred. Please try again.';
+      console.error('Registration failed:', message);
+      if (status === 409) {
+        alert(`Registration failed: ${message}`);
+      } else if (status === 400) {
+        alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
+      } else {
+        alert(`Registration failed (${status ?? 'Network Error'}): ${message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
