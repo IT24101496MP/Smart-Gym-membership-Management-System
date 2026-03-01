@@ -28,13 +28,12 @@ describe("Protected Routes", () => {
     cy.visit(`${APP}/login`);
     setAuth("CLIENT");
 
-    // in case any page calls /api/auth/me
     cy.intercept("GET", "**/api/auth/me", {
       statusCode: 200,
       body: { id: 1, firstName: "John", lastName: "Cena", email: "john@example.com", role: "CLIENT" },
     });
 
-    cy.visit(`${APP}/instructor`); // ADMIN only
+    cy.visit(`${APP}/instructor`);
     cy.location("pathname").should("eq", "/unauthorized");
     cy.contains("Access Denied").should("be.visible");
   });
