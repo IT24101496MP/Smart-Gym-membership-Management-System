@@ -33,13 +33,12 @@ describe("Backend API - Instructor", () => {
   });
 
   it("PUT /api/instructor/{id}/update ", () => {
-    // Because your backend security blocks this endpoint before controller validation runs
     cy.request({
       method: "PUT",
       url: `${API}/api/instructor/1/update`,
       failOnStatusCode: false,
       headers: { "Content-Type": "application/json" },
-      body: {}, // even with empty body, security hits first
+      body: {}, 
     }).then((res) => {
       expect([401, 403]).to.include(res.status);
     });
@@ -63,7 +62,7 @@ describe("Backend API - Instructor", () => {
       url: `${API}/api/instructor/1/employment`,
       failOnStatusCode: false,
       headers: { "Content-Type": "application/json" },
-      body: {}, // DTO unknown; backend may respond conflict/validation
+      body: {}, 
     }).then((res) => {
       expect([200, 400, 404, 409, 422, 500]).to.include(res.status);
     });
