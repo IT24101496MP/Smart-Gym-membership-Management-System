@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -35,6 +36,7 @@ public class ClientService {
                 .digitalSignature(clientRegister.getDigitalSignature())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .status("Active")
                 .build();
     }
 
@@ -57,6 +59,30 @@ public class ClientService {
     public Client getClientById(int id) {
         return clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
+    }
+
+    public List<Client> getActiveClients() {
+        return clientRepository.findByStatus("Active");
+    }
+
+    public List<Client> getAllClients() {
+        return clientRepository.findAll();
+    }
+
+    public void deactivateClient(int id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        client.setStatus("Inactive");
+        clientRepository.save(client);
+    }
+
+    public void activateClient(int id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        client.setStatus("Active");
+        clientRepository.save(client);
     }
 
     @Transactional

@@ -9,6 +9,8 @@ import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import ClientProfile from "./pages/client/ClientProfile";
+import ActiveMembers from "./pages/admin/ActiveMembers";
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -39,6 +41,15 @@ function App() {
           <Route path="/instructor" element={<InstructorListPage />} />
           <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
           <Route path="/instructor/:id" element={<InstructorDetailPage />} />
+
+          <Route
+            path="/active-members"
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <ActiveMembers />
+              </RoleProtectedRoute>
+            }
+          />
 
           {/* Protected Profile Page */}
           <Route

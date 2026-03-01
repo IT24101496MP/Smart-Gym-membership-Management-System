@@ -1,0 +1,152 @@
+.active-members-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #363636 0%, #504e4e 100%);
+  padding: 40px 20px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #363636;
+  color: white;
+  border-radius: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  height: 50px;
+  width: auto;
+}
+
+.header-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.back-button {
+  background-color: #FF894C;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+}
+.back-button:hover {
+  background-color: #e67a3a;
+  transform: translateX(-5px);
+}
+
+.members-content {
+  background: #F8F8F8;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  max-width: 1200px;
+  margin: 30px auto 0;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+.tab-button.active {
+  color: #FF894C;
+  border-bottom-color: #FF894C;
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.members-table thead {
+  background-color: #363636;
+  color: white;
+}
+.members-table th, .members-table td {
+  padding: 15px;
+  text-align: left;
+}
+.members-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+.status-active {
+  background-color: #fff3e0;
+  color: #FF894C;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.status-inactive {
+  background-color: #ffebee;
+  color: #DC2F2F;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.deactivate-button, .activate-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.deactivate-button {
+  background-color: #DC2F2F;
+  color: white;
+  border: none;
+}
+.deactivate-button:hover {
+  background-color: #b82222;
+  transform: scale(1.05);
+}
+.activate-button {
+  background-color: #FF894C;
+  color: white;
+  border: none;
+}
+.activate-button:hover {
+  background-color: #e67a3a;
+  transform: scale(1.05);
+}
+
+.no-members {
+  text-align: center;
+  padding: 40px 20px;
+  color: #777;
+}
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  font-weight: 600;
+  color: #FF894C;
+}

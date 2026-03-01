@@ -15,7 +15,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    public User registerUser(String email, String rawPassword) {
+    public User registerUser(String email, String rawPassword, String roleString) {
 
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("Email already exists");
@@ -29,10 +29,20 @@ public class UserService {
 
         String hashedPassword = passwordEncoder.encode(rawPassword);
 
+        // Parse role string
+        User.Role role = User.Role.CLIENT;
+        if (roleString != null && !roleString.trim().isEmpty()) {
+            try {
+                role = User.Role.valueOf(roleString.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid role: " + roleString);
+            }
+        }
+
         User user = User.builder()
                 .email(email)
                 .password(hashedPassword)
-                .role(User.Role.CLIENT)       // Default role
+                .role(role)
                 .status(User.Status.APPROVED) // Default status
                 .build();
 
