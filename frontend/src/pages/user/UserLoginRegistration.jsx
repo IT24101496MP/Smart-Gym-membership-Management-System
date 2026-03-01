@@ -13,7 +13,7 @@ const UserLoginRegistration = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -41,7 +41,7 @@ const UserLoginRegistration = () => {
 
     setError("");
 
-    if (!formData.username || !formData.password || !formData.confirmPassword) {
+    if (!formData.email || !formData.password || !formData.confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
@@ -59,7 +59,7 @@ const UserLoginRegistration = () => {
     setLoading(true);
     try {
       const payload = {
-        email: formData.username,
+        email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       };
@@ -116,12 +116,12 @@ const UserLoginRegistration = () => {
             {successMsg && <div className="success-message">{successMsg}</div>}
 
             <div className="form-group">
-              <label>Username</label>
+              <label>Email</label>
               <input
-                type="text"
-                name="username"
-                placeholder="Enter username"
-                value={formData.username}
+                type="email"
+                name="email"
+                placeholder="Enter email address"
+                value={formData.email}
                 onChange={handleInputChange}
               />
             </div>

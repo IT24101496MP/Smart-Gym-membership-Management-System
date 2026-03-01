@@ -146,14 +146,14 @@ textarea {
 .photo-preview-wrapper {
   width: 180px;
   height: 180px;
-  border: 2px solid var(--color-accent);
+  border: 2px solid #DC2F2F;
   border-radius: 12px;
   margin-top: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--card-bg);
+  background-color: #ffffff;
 }
 
 .photo-preview-wrapper img {
@@ -167,7 +167,8 @@ textarea {
 .photo-preview {
   width: 120px;
   height: 120px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   border-radius: 8px;
   margin-top: 12px;
   border: 2px solid #eee;

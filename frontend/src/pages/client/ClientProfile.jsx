@@ -13,21 +13,16 @@ const ClientProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
   const [editData, setEditData] = useState({});
   const [newProfileFile, setNewProfileFile] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
   const sigCanvas = useRef(null);
-  const [signaturePreview, setSignaturePreview] = useState(null);
 
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
-    if (!userId) {
-      navigate("/login");
-      return;
-    }
-    fetchClientData();
+    if (!userId) navigate("/login");
+    else fetchClientData();
   }, [userId, navigate]);
 
   const fetchClientData = async () => {
@@ -49,9 +44,7 @@ const ClientProfile = () => {
           emergencyContactRelationship: data.emergencyContactRelationship || "",
           emergencyContactNumber: data.emergencyContactNumber || "",
         });
-      } else {
-        setError("Failed to load profile data");
-      }
+      } else setError("Failed to load profile data");
     } catch (err) {
       setError("Server error occurred");
       console.error(err);
@@ -62,7 +55,7 @@ const ClientProfile = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
+    setEditData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleProfileFile = (e) => {
@@ -72,49 +65,38 @@ const ClientProfile = () => {
     else setProfilePreview(null);
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    setSuccessMessage("");
-  };
-
+  const handleEdit = () => { setIsEditing(true); setSuccessMessage(""); };
   const handleCancel = () => {
     setIsEditing(false);
-    if (client) {
-      setEditData({
-        firstName: client.firstName || "",
-        lastName: client.lastName || "",
-        age: client.age || "",
-        gender: client.gender || "",
-        mobileNumber: client.mobileNumber || "",
-        landPhone: client.landPhone || "",
-        address: client.address || "",
-        bloodGroup: client.bloodGroup || "",
-        emergencyContactName: client.emergencyContactName || "",
-        emergencyContactRelationship: client.emergencyContactRelationship || "",
-        emergencyContactNumber: client.emergencyContactNumber || "",
-      });
-    }
+    if (client) setEditData({
+      firstName: client.firstName || "",
+      lastName: client.lastName || "",
+      age: client.age || "",
+      gender: client.gender || "",
+      mobileNumber: client.mobileNumber || "",
+      landPhone: client.landPhone || "",
+      address: client.address || "",
+      bloodGroup: client.bloodGroup || "",
+      emergencyContactName: client.emergencyContactName || "",
+      emergencyContactRelationship: client.emergencyContactRelationship || "",
+      emergencyContactNumber: client.emergencyContactNumber || "",
+    });
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    setError("");
-    setSuccessMessage("");
-
+    setSaving(true); setError(""); setSuccessMessage("");
     try {
       const formPayload = new FormData();
-      Object.keys(editData).forEach((key) => {
+      Object.keys(editData).forEach(key => {
         if (editData[key] !== undefined && editData[key] !== null) formPayload.append(key, editData[key]);
       });
       formPayload.append("updatedBy", userId);
 
-      // append profile picture file if user selected one
       if (newProfileFile) formPayload.append("profilePicture", newProfileFile);
 
-      // append signature if user drew a new one
       if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
         const signatureDataUrl = sigCanvas.current.toDataURL("image/png");
-        const blob = await fetch(signatureDataUrl).then((res) => res.blob());
+        const blob = await fetch(signatureDataUrl).then(res => res.blob());
         const file = new File([blob], "signature.png", { type: "image/png" });
         formPayload.append("digitalSignature", file);
       }
@@ -134,19 +116,14 @@ const ClientProfile = () => {
         setError("Update failed: " + errorText);
       }
     } catch (err) {
-      setError("Server error occurred");
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+      // show the actual error to help diagnose
+      setError("Server error occurred: " + (err.message || err));
+      console.error("Save failed", err);
+    } finally { setSaving(false); }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    navigate("/login");
-  };
+  const handleLogout = () => { localStorage.removeItem("userId"); navigate("/login"); };
 
-  // Robust conversion to base64 for different server shapes
   const bytesToBase64 = (bytes) => {
     if (!bytes) return null;
     let arr;
@@ -157,9 +134,7 @@ const ClientProfile = () => {
     else return null;
 
     let binary = "";
-    for (let i = 0; i < arr.length; i++) {
-      binary += String.fromCharCode(arr[i]);
-    }
+    for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
     return btoa(binary);
   };
 
@@ -181,63 +156,44 @@ const ClientProfile = () => {
 
   const renderFieldInput = (field) => {
     if (!isEditing) return <span>{client?.[field] || "-"}</span>;
-
-    if (field === "gender") {
-      return (
-        <select name={field} value={editData[field]} onChange={handleChange}>
-          <option value="">Select</option>
-          {["Male", "Female", "Prefer not to say"].map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (field === "bloodGroup") {
-      return (
-        <select name={field} value={editData[field]} onChange={handleChange}>
-          <option value="">Select</option>
-          {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (field === "address") {
-      return <textarea name={field} value={editData[field]} onChange={handleChange} />;
-    }
-
-    if (field === "age") {
-      return <input type="number" name={field} value={editData[field]} onChange={handleChange} />;
-    }
-
+    if (field === "gender") return (
+      <select name={field} value={editData[field]} onChange={handleChange}>
+        <option value="">Select</option>
+        {["Male", "Female", "Prefer not to say"].map(opt => (<option key={opt} value={opt}>{opt}</option>))}
+      </select>
+    );
+    if (field === "bloodGroup") return (
+      <select name={field} value={editData[field]} onChange={handleChange}>
+        <option value="">Select</option>
+        {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(opt => (<option key={opt} value={opt}>{opt}</option>))}
+      </select>
+    );
+    if (field === "address") return <textarea name={field} value={editData[field]} onChange={handleChange} />;
+    if (field === "age") return <input type="number" name={field} value={editData[field]} onChange={handleChange} />;
     return <input type="text" name={field} value={editData[field]} onChange={handleChange} />;
   };
 
-  if (loading) {
-    return (
-      <div className="profile-page">
-        <div className="profile-container">
-          <div className="loading-state">Loading profile...</div>
-        </div>
+  if (loading) return (
+    <div className="profile-page">
+      <div className="profile-container">
+        <div className="loading-state">Loading profile...</div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="profile-page">
       <div className="profile-container">
+
         {/* Header */}
-        <div className="profile-header">
+        <div className="profile-header-wrapper">
           <div className="header-left">
-            <div className="header-accent" />
-            <div>
-              <h1>My Profile</h1>
-              <p>Manage your personal information</p>
-            </div>
+            <h1>My Profile</h1>
+            <p>Manage your personal information</p>
           </div>
-          <img src={logo} alt="Fat2Fit Logo" className="header-logo" />
+          <div className="header-right">
+            <img src={logo} alt="Fat2Fit Logo" className="header-logo" />
+          </div>
         </div>
 
         {/* Messages */}
@@ -247,62 +203,42 @@ const ClientProfile = () => {
         {/* Top Section */}
         <div className="profile-top-section">
           <div className="profile-picture-section">
-            {isEditing ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
-                <div>
-                  <img
-                    src={profilePreview || getProfilePictureUrl()}
-                    alt="Profile"
-                    className="profile-avatar"
-                  />
-                </div>
-                <input type="file" accept="image/*" onChange={handleProfileFile} />
-              </div>
-            ) : getProfilePictureUrl() ? (
-              <img src={getProfilePictureUrl()} alt="Profile" className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar-placeholder">
-                <FaUser size={60} />
-              </div>
-            )}
+            <div className="profile-avatar-frame">
+              <img
+                src={profilePreview || getProfilePictureUrl() || ""}
+                alt="Profile"
+                className="profile-avatar-img"
+              />
+            </div>
+            {isEditing && <input type="file" accept="image/*" onChange={handleProfileFile} />}
             <div className="profile-name">
               <h2>{client.firstName} {client.lastName}</h2>
-              <p className="member-since">
-                Member since {new Date(client.createdAt).toLocaleDateString()}
-              </p>
+              <p className="member-since">Member since {new Date(client.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
 
           <div className="profile-actions">
             {!isEditing ? (
               <>
-                <button className="edit-button" onClick={handleEdit}>
-                  <FaEdit /> Edit Profile
-                </button>
-                <button className="logout-button" onClick={handleLogout}>
-                  <FaSignOutAlt /> Logout
-                </button>
+                <button className="edit-button" onClick={handleEdit}><FaEdit /> Edit Profile</button>
+                <button className="logout-button" onClick={handleLogout}><FaSignOutAlt /> Logout</button>
               </>
             ) : (
               <>
-                <button className="save-button" onClick={handleSave} disabled={saving}>
-                  <FaSave /> {saving ? "Saving..." : "Save Changes"}
-                </button>
-                <button className="cancel-button" onClick={handleCancel}>
-                  <FaTimes /> Cancel
-                </button>
+                <button className="save-button" onClick={handleSave} disabled={saving}><FaSave /> {saving ? "Saving..." : "Save Changes"}</button>
+                <button className="cancel-button" onClick={handleCancel}><FaTimes /> Cancel</button>
               </>
             )}
           </div>
         </div>
 
-        {/* Profile Details */}
+        {/* Details */}
         <div className="profile-details">
           <div className="section-title">Personal Information</div>
           <div className="details-grid">
-            {["firstName", "lastName", "age", "gender", "mobileNumber", "landPhone", "address", "bloodGroup"].map((field) => (
-              <div className={`detail-item ${field === "address" ? "full-width" : ""}`} key={field}>
-                <label>{field === "mobileNumber" ? "Mobile Number" : field === "landPhone" ? "Land Phone" : field === "bloodGroup" ? "Blood Group" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
+            {["firstName","lastName","age","gender","mobileNumber","landPhone","address","bloodGroup"].map(field => (
+              <div className={`detail-item ${field==="address"?"full-width":""}`} key={field}>
+                <label>{field==="mobileNumber"?"Mobile Number":field==="landPhone"?"Land Phone":field==="bloodGroup"?"Blood Group":field.charAt(0).toUpperCase()+field.slice(1)}</label>
                 {renderFieldInput(field)}
               </div>
             ))}
@@ -310,9 +246,9 @@ const ClientProfile = () => {
 
           <div className="section-title">Emergency Contact</div>
           <div className="details-grid">
-            {["emergencyContactName", "emergencyContactRelationship", "emergencyContactNumber"].map((field) => (
+            {["emergencyContactName","emergencyContactRelationship","emergencyContactNumber"].map(field => (
               <div className="detail-item" key={field}>
-                <label>{field === "emergencyContactName" ? "Contact Name" : field === "emergencyContactRelationship" ? "Relationship" : "Contact Number"}</label>
+                <label>{field==="emergencyContactName"?"Contact Name":field==="emergencyContactRelationship"?"Relationship":"Contact Number"}</label>
                 {renderFieldInput(field)}
               </div>
             ))}
@@ -323,20 +259,13 @@ const ClientProfile = () => {
               <div className="section-title">Digital Signature</div>
               <div className="signature-display">
                 {isEditing ? (
-                  <div style={{ width: "100%" }}>
-                    <SignatureCanvas
-                      ref={sigCanvas}
-                      penColor="black"
-                      canvasProps={{ className: "signature-canvas-edit", width: 500, height: 140 }}
-                    />
-                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                      <button type="button" className="clear-signature" onClick={() => { sigCanvas.current.clear(); setSignaturePreview(null); }}>
-                        Clear
-                      </button>
-                    </div>
-                  </div>
+                  <SignatureCanvas
+                    ref={sigCanvas}
+                    penColor="black"
+                    canvasProps={{ className:"signature-canvas-edit", width:500, height:140 }}
+                  />
                 ) : (
-                  <img src={getSignatureUrl()} alt="Digital Signature" />
+                  <img src={getSignatureUrl()} alt="Digital Signature"/>
                 )}
               </div>
             </>
