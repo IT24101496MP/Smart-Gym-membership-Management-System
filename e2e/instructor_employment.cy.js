@@ -11,7 +11,7 @@ describe("Instructor Employment Assignment", () => {
       "signature"
     ].join(".");
 
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
@@ -19,7 +19,7 @@ describe("Instructor Employment Assignment", () => {
       }
     });
 
-    cy.intercept("GET", "http://localhost:8081/api/instructor/1", {
+    cy.intercept("GET", "http://localhost:8080/api/instructor/1", {
       statusCode: 200,
       body: {
         id: 1,
@@ -34,8 +34,7 @@ describe("Instructor Employment Assignment", () => {
       }
     });
 
-    // Return FULL instructor object after employment update
-    cy.intercept("PUT", "http://localhost:8081/api/instructor/1/employment", {
+    cy.intercept("PUT", "http://localhost:8080/api/instructor/1/employment", {
       statusCode: 200,
       body: {
         id: 1,
