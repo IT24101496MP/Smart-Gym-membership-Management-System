@@ -1,4 +1,4 @@
-describe("Login Render Debug (/login blank in Cypress)", () => {
+describe("Login Render Debug", () => {
   const FRONTEND = "http://localhost:5173";
 
   function visitWithCapture() {
