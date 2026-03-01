@@ -19,8 +19,6 @@ describe("Client Registration Page ", () => {
     }).as("clientRegister");
 
     cy.visit("http://localhost:5173/client-registration");
-
-    // Fill only required fields based on your validateForm()
     cy.get("input[name='firstName']").type("John");
     cy.get("input[name='lastName']").type("Cena");
     cy.get("input[name='age']").type("24");
