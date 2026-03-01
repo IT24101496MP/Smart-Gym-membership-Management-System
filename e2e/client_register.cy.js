@@ -23,10 +23,8 @@ describe("Client Registration", () => {
 
     cy.window().then((win) => {
       cy.stub(win, "alert").as("alert");
-      // ❌ don't stub win.location.reload (not configurable)
     });
-
-    // Fill required fields per validateForm()
+    
     cy.get('input[name="firstName"]').type("John");
     cy.get('input[name="lastName"]').type("Cena");
     cy.get('input[name="age"]').type("25");
@@ -39,11 +37,7 @@ describe("Client Registration", () => {
     cy.get('input[name="confirmPassword"]').type("Aa1@aaaa");
 
     cy.contains("button", "Register").click();
-
-    // ✅ confirm request happened
     cy.wait("@reg").its("response.statusCode").should("eq", 200);
-
-    // ✅ confirm alert happened (this is your success indicator)
     cy.get("@alert").should("have.been.called");
   });
 });
