@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../../assets/Fat2fit Logo.jpg";
 import "./ActiveMembers.css";
 
 const ActiveMembers = () => {
@@ -14,17 +15,18 @@ const ActiveMembers = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMembers();
+    fetchAllMembers();
   }, []);
 
-  const fetchMembers = async () => {
+  const fetchAllMembers = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/client/active");
+      const response = await fetch("http://localhost:8080/api/client");
       if (response.ok) {
         const data = await response.json();
         setAllMembers(data);
         setActiveMembers(data.filter(m => m.status === "Active"));
+        setInactiveMembers(data.filter(m => m.status === "Inactive"));
         setError("");
       } else {
         setError("Failed to load members");
@@ -37,39 +39,15 @@ const ActiveMembers = () => {
     }
   };
 
-  const fetchAllMembers = async () => {
-    // Fetch all members including inactive ones
-    try {
-      const response = await fetch("http://localhost:8080/api/client");
-      if (response.ok) {
-        const data = await response.json();
-        setAllMembers(data);
-        setActiveMembers(data.filter(m => m.status === "Active"));
-        setInactiveMembers(data.filter(m => m.status === "Inactive"));
-      }
-    } catch (err) {
-      console.error("Error fetching all members:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllMembers();
-  }, []);
-
   const handleDeactivate = async (id) => {
-    if (!window.confirm("Are you sure you want to deactivate this member?")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to deactivate this member?")) return;
 
     try {
       const response = await fetch(
         `http://localhost:8080/api/client/${id}/deactivate`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Role": role,
-          },
+          headers: { "Content-Type": "application/json", "Role": role },
         }
       );
 
@@ -77,7 +55,6 @@ const ActiveMembers = () => {
         setSuccessMsg("Member deactivated successfully");
         setTimeout(() => setSuccessMsg(""), 3000);
 
-        // Update local state
         const updatedMembers = allMembers.map(m =>
           m.clientId === id || m.id === id ? { ...m, status: "Inactive" } : m
         );
@@ -96,19 +73,14 @@ const ActiveMembers = () => {
   };
 
   const handleActivate = async (id) => {
-    if (!window.confirm("Are you sure you want to activate this member?")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to activate this member?")) return;
 
     try {
       const response = await fetch(
         `http://localhost:8080/api/client/${id}/activate`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Role": role,
-          },
+          headers: { "Content-Type": "application/json", "Role": role },
         }
       );
 
@@ -136,11 +108,7 @@ const ActiveMembers = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
   const displayMembers = currentTab === "active" ? activeMembers : inactiveMembers;
@@ -148,7 +116,10 @@ const ActiveMembers = () => {
   return (
     <div className="active-members-container">
       <div className="page-header">
-        <div className="header-title">Fitness Members</div>
+        <div className="header-left">
+          <img src={logo} alt="Fat2Fit Logo" className="logo-img" />
+          <div className="header-title">Fitness Members</div>
+        </div>
         <button className="back-button" onClick={() => navigate("/login")}>
           ← Back to Login
         </button>
@@ -178,10 +149,7 @@ const ActiveMembers = () => {
         ) : displayMembers.length === 0 ? (
           <div className="no-members">
             <div className="no-members-icon">👥</div>
-            <p>
-              No {currentTab === "active" ? "active" : "deactivated"} members
-              found
-            </p>
+            <p>No {currentTab === "active" ? "active" : "deactivated"} members found</p>
           </div>
         ) : (
           <table className="members-table">
@@ -203,13 +171,7 @@ const ActiveMembers = () => {
                   <td>{member.email || "N/A"}</td>
                   <td>{formatDate(member.createdAt)}</td>
                   <td>
-                    <span
-                      className={
-                        member.status === "Active"
-                          ? "status-active"
-                          : "status-inactive"
-                      }
-                    >
+                    <span className={member.status === "Active" ? "status-active" : "status-inactive"}>
                       {member.status}
                     </span>
                   </td>
@@ -219,18 +181,14 @@ const ActiveMembers = () => {
                         {member.status === "Active" ? (
                           <button
                             className="deactivate-button"
-                            onClick={() =>
-                              handleDeactivate(member.clientId || member.id)
-                            }
+                            onClick={() => handleDeactivate(member.clientId || member.id)}
                           >
                             Deactivate
                           </button>
                         ) : (
                           <button
                             className="activate-button"
-                            onClick={() =>
-                              handleActivate(member.clientId || member.id)
-                            }
+                            onClick={() => handleActivate(member.clientId || member.id)}
                           >
                             Activate
                           </button>
@@ -249,4 +207,3 @@ const ActiveMembers = () => {
 };
 
 export default ActiveMembers;
-
