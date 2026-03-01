@@ -5,21 +5,16 @@ describe("Login Render Debug", () => {
     cy.visit(`${FRONTEND}/login`, {
       failOnStatusCode: false,
       onBeforeLoad(win) {
-        // capture console errors
         win.__cypressConsoleErrors = [];
         const origError = win.console.error;
         win.console.error = (...args) => {
           win.__cypressConsoleErrors.push(args.map(String).join(" "));
           origError.apply(win.console, args);
         };
-
-        // capture unhandled rejections
         win.__cypressRejections = [];
         win.addEventListener("unhandledrejection", (e) => {
           win.__cypressRejections.push(String(e.reason || e));
         });
-
-        // capture window errors
         win.__cypressWindowErrors = [];
         win.addEventListener("error", (e) => {
           win.__cypressWindowErrors.push(String(e.message || e.error || e));
