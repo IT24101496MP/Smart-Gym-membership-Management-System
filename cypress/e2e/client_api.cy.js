@@ -1,4 +1,4 @@
-describe("Backend API - ClientController (8081) [E2E-only]", () => {
+describe("Backend API - Client", () => {
   const API = "http://localhost:8080";
 
   it("GET /api/client/{id} ", () => {
