@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder
 
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorEmploymentAssignment;
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
