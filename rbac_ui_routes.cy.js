@@ -1,6 +1,6 @@
 describe("RBAC - UI + API (4+ tests)", () => {
   const FRONTEND = "http://localhost:5173";
-  const API = "http://localhost:8081";
+  const API = "http://localhost:8080";
 
   // 🔴 Put REAL DB users here (must exist)
   const users = {
