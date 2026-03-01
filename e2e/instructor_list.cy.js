@@ -1,4 +1,4 @@
-describe("Instructor - List Page", () => {
+describe("Instructor_List Page", () => {
   const APP = "http://localhost:5173";
 
   const makeJwt = (payload) => {
@@ -20,7 +20,6 @@ describe("Instructor - List Page", () => {
   };
 
   it("shows instructors list and allows searching + filtering", () => {
-    // Visit once so window exists
     cy.visit(`${APP}/login`);
     setAuth("ADMIN");
 
@@ -67,18 +66,15 @@ describe("Instructor - List Page", () => {
     cy.contains("Nimal Perera").should("be.visible");
     cy.contains("Kamal Silva").should("be.visible");
 
-    // Search
     cy.get('input[placeholder*="Search"]').type("nimal");
     cy.contains("Nimal Perera").should("be.visible");
     cy.contains("Kamal Silva").should("not.exist");
 
-    // Clear search + filter APPROVED
     cy.get('input[placeholder*="Search"]').clear();
     cy.contains("button", "APPROVED").click();
     cy.contains("Kamal Silva").should("be.visible");
     cy.contains("Nimal Perera").should("not.exist");
 
-    // Clicking Review navigates to /instructor/:id
     cy.contains("a", "Review").first().click();
     cy.location("pathname").should("match", /^\/instructor\/\d+$/);
   });
