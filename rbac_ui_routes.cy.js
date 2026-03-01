@@ -2,7 +2,6 @@ describe("RBAC - UI + API (4+ tests)", () => {
   const FRONTEND = "http://localhost:5173";
   const API = "http://localhost:8080";
 
-  // 🔴 Put REAL DB users here (must exist)
   const users = {
     admin: { identifier: "admin@example.com", password: "Password123!" },
     client: { identifier: "client@example.com", password: "Password123!" },
@@ -29,18 +28,12 @@ describe("RBAC - UI + API (4+ tests)", () => {
       });
   }
 
-  // -----------------------
-  // ✅ TEST 1 (UI)
-  // -----------------------
   it("UI: /user loads without token (route not protected in UI)", () => {
     cy.clearLocalStorage();
     cy.visit(`${FRONTEND}/user`, { failOnStatusCode: false });
     cy.location("pathname", { timeout: 15000 }).should("eq", "/user");
   });
 
-  // -----------------------
-  // ✅ TEST 2 (API - no token)
-  // -----------------------
   it("API: No token -> GET /api/instructor returns 401/403", () => {
     cy.request({
       method: "GET",
@@ -51,9 +44,6 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  // -----------------------
-  // ✅ TEST 3 (API - admin allowed)
-  // -----------------------
   it("API: ADMIN can access GET /api/instructor (ADMIN only)", () => {
     apiLoginOrNull("admin", users.admin).then((token) => {
       if (!token) return; // skip if credentials not ready
@@ -69,9 +59,6 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  // -----------------------
-  // ✅ TEST 4 (API - client blocked)
-  // -----------------------
   it("API: CLIENT cannot access GET /api/instructor (ADMIN only)", () => {
     apiLoginOrNull("client", users.client).then((token) => {
       if (!token) return;
@@ -87,9 +74,6 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  // -----------------------
-  // ✅ TEST 5 (API - instructor allowed on /api/instructor/{id})
-  // -----------------------
   it("API: INSTRUCTOR can access GET /api/instructor/{id} (ADMIN or INSTRUCTOR)", () => {
     apiLoginOrNull("instructor", users.instructor).then((token) => {
       if (!token) return;
