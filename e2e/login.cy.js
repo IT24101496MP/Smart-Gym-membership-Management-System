@@ -1,4 +1,4 @@
-describe("Login Page - Basic QA", () => {
+describe("Login Page", () => {
 
   const FRONTEND = "http://localhost:5173";
 
