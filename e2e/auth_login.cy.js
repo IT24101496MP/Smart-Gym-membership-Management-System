@@ -1,4 +1,4 @@
-describe("Auth - Login", () => {
+describe("Auth_Login", () => {
   const APP = "http://localhost:5173";
 
   const makeJwt = (payload) => {
@@ -8,7 +8,7 @@ describe("Auth - Login", () => {
         .replace(/\+/g, "-")
         .replace(/\//g, "_");
     const header = { alg: "none", typ: "JWT" };
-    return `${b64(header)}.${b64(payload)}.`; // no signature
+    return `${b64(header)}.${b64(payload)}.`;
   };
 
   const clearAuth = () => {
