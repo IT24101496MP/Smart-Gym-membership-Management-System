@@ -1,4 +1,4 @@
-describe("Public Pages (absolute URL)", () => {
+describe("Public Pages", () => {
   const FRONTEND = "http://localhost:5173";
 
   it("Login page loads", () => {
