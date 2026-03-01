@@ -20,12 +20,12 @@ describe("Client Registration", () => {
   });
 
   it("submits form successfully and redirects to profile", () => {
-    cy.intercept("POST", "http://localhost:8081/api/client/register", {
+    cy.intercept("POST", "http://localhost:8080/api/client/register", {
       statusCode: 200,
       body: { clientId: 101, token: "fake-jwt-token" },
     }).as("clientRegister");
     
-    cy.intercept("GET", "http://localhost:8081/api/client/user/101", {
+    cy.intercept("GET", "http://localhost:8080/api/client/user/101", {
       statusCode: 200,
       body: {
         clientId: 101,
