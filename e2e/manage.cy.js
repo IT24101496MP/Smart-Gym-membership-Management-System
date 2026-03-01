@@ -1,4 +1,4 @@
-describe("Manage Page (role-based)", () => {
+describe("Manage Page ", () => {
   const APP = "http://localhost:5173";
 
   const makeJwt = (payload) => {
