@@ -1,4 +1,4 @@
-describe("Protected Routes - After Login", () => {
+describe("Protected Routes ", () => {
 
   const FRONTEND = "http://localhost:5173";
 
