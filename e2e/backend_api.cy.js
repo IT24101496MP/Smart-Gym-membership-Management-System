@@ -1,7 +1,5 @@
-// cypress/e2e/backend_api.cy.js
-
 describe("Backend API E2E - Fat2Fit", () => {
-  const API = "http://localhost:8081";
+  const API = "http://localhost:8080";
   const FRONTEND = "http://localhost:5173";
 
   const uniqEmail = () => `qa_${Date.now()}@example.com`;
