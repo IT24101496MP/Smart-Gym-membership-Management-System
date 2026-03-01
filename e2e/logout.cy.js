@@ -11,8 +11,7 @@ describe("Logout", () => {
       "signature"
     ].join(".");
 
-    // Mock login
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
@@ -20,8 +19,7 @@ describe("Logout", () => {
       }
     });
 
-    // Mock profile fetch (/api/auth/me)
-    cy.intercept("GET", "http://localhost:8081/api/auth/me", {
+    cy.intercept("GET", "http://localhost:8080/api/auth/me", {
       statusCode: 200,
       body: {
         id: 1,
