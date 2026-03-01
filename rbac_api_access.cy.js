@@ -28,7 +28,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
       });
   }
 
-  it("No token -> protected endpoints return 401/403", () => {
+  it("Protected endpoints return 401/403", () => {
     cy.request({
       method: "GET",
       url: `${API}/api/instructor`,
@@ -38,7 +38,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
     });
   });
 
-  it("ADMIN can access GET /api/instructor (ADMIN only)", () => {
+  it("ADMIN can access GET /api/instructor", () => {
     loginOrSkip("admin", users.admin).then((token) => {
       if (!token) return;
 
@@ -53,7 +53,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
     });
   });
 
-  it("CLIENT cannot access GET /api/instructor (ADMIN only)", () => {
+  it("CLIENT cannot access GET /api/instructor", () => {
     loginOrSkip("client", users.client).then((token) => {
       if (!token) return;
 
@@ -68,7 +68,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
     });
   });
 
-  it("INSTRUCTOR can access GET /api/instructor/{id} (ADMIN or INSTRUCTOR)", () => {
+  it("INSTRUCTOR can access GET /api/instructor/{id}", () => {
     loginOrSkip("instructor", users.instructor).then((token) => {
       if (!token) return;
 
@@ -84,7 +84,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
     });
   });
 
-  it("CLIENT can access GET /api/client/{id} (ADMIN or CLIENT)", () => {
+  it("CLIENT can access GET /api/client/{id}", () => {
     loginOrSkip("client", users.client).then((token) => {
       if (!token) return;
 
@@ -99,7 +99,7 @@ describe("RBAC - Backend API Access (Spring Security)", () => {
     });
   });
 
-  it("INSTRUCTOR cannot access GET /api/client/{id} (ADMIN or CLIENT only)", () => {
+  it("INSTRUCTOR cannot access GET /api/client/{id}", () => {
     loginOrSkip("instructor", users.instructor).then((token) => {
       if (!token) return;
 
