@@ -1,6 +1,4 @@
-/// <reference types="cypress" />
-
-const API = "http://localhost:8081";
+const API = "http://localhost:8080";
 const FRONTEND = "http://localhost:5173";
 
 function getEnv(keys) {
@@ -12,7 +10,6 @@ function uniqueEmail(prefix = "client.ok") {
 }
 
 function uniqueSriLankaMobile() {
-  // 0 + 9 digits => 10 digits total. Make it random to avoid duplicates.
   const n = Math.floor(100000000 + Math.random() * 900000000); // 9 digits
   return `0${n}`;
 }
@@ -40,7 +37,6 @@ function formRegisterClient(overrides = {}) {
   Object.entries(data).forEach(([k, v]) => {
     if (v === null || v === undefined) return;
 
-    // Skip empty optional fields
     if (
       typeof v === "string" &&
       v.trim() === "" &&
@@ -123,7 +119,7 @@ describe("Backend API", () => {
     });
   });
 
-  it("POST /api/client/register - invalid phone should return 400 (NOT 401)", () => {
+  it("POST /api/client/register - invalid phone should return 400 ", () => {
     const fd = formRegisterClient({ phoneNumber: "777777" });
 
     postMultipart(`${API}/api/client/register`, fd).then(async (resp) => {
@@ -133,7 +129,7 @@ describe("Backend API", () => {
     });
   });
 
-  it("POST /api/client/register - invalid gender should return 400 (NOT 401)", () => {
+  it("POST /api/client/register - invalid gender should return 400 ", () => {
     const fd = formRegisterClient({ gender: "MALEE" });
 
     postMultipart(`${API}/api/client/register`, fd).then(async (resp) => {
@@ -143,9 +139,8 @@ describe("Backend API", () => {
     });
   });
 
-  it("POST /api/client/register - success should return 200/201 (prints 409 reason if conflict)", () => {
+  it("POST /api/client/register - success should return 200/201 ", () => {
     const fd = formRegisterClient({
-      // force unique every run
       email: uniqueEmail("client.ok"),
       phoneNumber: uniqueSriLankaMobile(),
       gender: "MALE",
@@ -153,8 +148,6 @@ describe("Backend API", () => {
 
     postMultipart(`${API}/api/client/register`, fd).then(async (resp) => {
       const text = await resp.text();
-
-      // If conflict, show exact backend reason in Cypress error
       if (resp.status === 409) {
         throw new Error(
           `Expected success but got 409 Conflict. Backend response: ${text}`
@@ -163,17 +156,15 @@ describe("Backend API", () => {
 
       expect([200, 201]).to.include(resp.status);
 
-      // optional JSON parse (if backend returns JSON)
       try {
         const json = JSON.parse(text);
         expect(json).to.be.an("object");
       } catch {
-        // ok if plain text
       }
     });
   });
 
-  it("GET /api/auth/me - works with admin token (SKIPS if no env creds)", () => {
+  it("GET /api/auth/me - works with admin token ", () => {
     adminLogin().then((tokens) => {
       if (!tokens) {
         cy.log("Skipping: ADMIN_IDENTIFIER / ADMIN_PASSWORD not set.");
@@ -194,7 +185,7 @@ describe("Backend API", () => {
     });
   });
 
-  it("ADMIN: approve instructor + assign employment (SKIPS if no env creds)", () => {
+  it("ADMIN: approve instructor + assign employment ", () => {
     adminLogin().then((tokens) => {
       if (!tokens) {
         cy.log("Skipping: ADMIN_IDENTIFIER / ADMIN_PASSWORD not set.");
