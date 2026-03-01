@@ -71,6 +71,14 @@ const UserLoginRegistration = () => {
       });
 
       if (res.ok) {
+        try {
+          const data = await res.json();
+          if (data && data.token) localStorage.setItem("token", data.token);
+          const id = (data && (data.userId || data.id || data.user_id)) || null;
+          if (id) localStorage.setItem("userId", String(id));
+        } catch (err) {
+          // non-json response; ignore
+        }
         setSuccessMsg("Account created successfully. Redirecting to client registration...");
         setTimeout(() => navigate("/client-registration"), 1000);
       } else {

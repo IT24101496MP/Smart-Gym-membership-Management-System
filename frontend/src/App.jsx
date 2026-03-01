@@ -3,9 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
 
+
 import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import ClientProfile from "./pages/client/ClientProfile";
+
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
 
@@ -28,10 +31,19 @@ function App() {
             }
           />
 
+          {/* Client Registration */}
           <Route path="/client-registration" element={<ClientRegistrationPage />} />
-          <Route path="/profile" element={<ClientProfile />} />
 
-          {/* Redirect root to login */}
+          {/* Protected Profile Page */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ClientProfile />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Catch all unknown routes */}
