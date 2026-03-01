@@ -1,4 +1,4 @@
-describe("Manage Page - Role Based Testing", () => {
+describe("Manage Page", () => {
 
   const FRONTEND = "http://localhost:5173";
 
@@ -11,7 +11,7 @@ describe("Manage Page - Role Based Testing", () => {
       "signature"
     ].join(".");
 
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
