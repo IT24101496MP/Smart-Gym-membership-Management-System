@@ -25,12 +25,12 @@ describe("Login Render Debug", () => {
     cy.wait(1500);
   }
 
-  it("Test 1: Should stay on /login (no unexpected redirect)", () => {
+  it("Should stay on /login (no unexpected redirect)", () => {
     visitWithCapture();
     cy.location("pathname", { timeout: 20000 }).should("eq", "/login");
   });
 
-  it("Test 2: Should render something (body not blank OR show Vite overlay)", () => {
+  it("Should render something (body not blank OR show Vite overlay)", () => {
     visitWithCapture();
 
     cy.document().then((doc) => {
@@ -59,7 +59,7 @@ describe("Login Render Debug", () => {
     });
   });
 
-  it("Test 3: Should have login form elements OR report captured console errors", () => {
+  it("Should have login form elements OR report captured console errors", () => {
     visitWithCapture();
 
     cy.window().then((win) => {
