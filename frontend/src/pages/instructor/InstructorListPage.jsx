@@ -16,7 +16,7 @@ const InstructorListPage = () => {
         const { data } = await api.get('/api/instructor');
         setInstructors(data);
       } catch (err) {
-        setError(err.response?.data || err.message);
+        setError(err.response?.data?.message || err.message || 'Failed to load instructors.');
       } finally {
         setLoading(false);
       }
@@ -26,11 +26,11 @@ const InstructorListPage = () => {
   }, []);
 
   const filteredInstructors = instructors.filter((instructor) => {
-    const fullName = `${instructor.firstName} ${instructor.lastName}`.toLowerCase();
+    const fullName = `${instructor.firstName ?? ''} ${instructor.lastName ?? ''}`.toLowerCase();
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.phoneNumber.includes(searchTerm);
+      (instructor.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (instructor.phoneNumber ?? '').includes(searchTerm);
     const matchesStatus =
       statusFilter === 'ALL' || instructor.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -144,7 +144,7 @@ const InstructorListPage = () => {
                       <td className="col-id">{index + 1}</td>
                       <td className="col-name">
                         <div className="avatar">
-                          {instructor.firstName.charAt(0)}{instructor.lastName.charAt(0)}
+                          {(instructor.firstName ?? '?').charAt(0)}{(instructor.lastName ?? '?').charAt(0)}
                         </div>
                         <div>
                           <div className="name-primary">

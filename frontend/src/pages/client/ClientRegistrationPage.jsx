@@ -16,6 +16,7 @@ const ClientRegistrationPage = () => {
     age: "",
     dateOfBirth: "",
     gender: "",
+    email: "",
     phoneNumber: "",
     landPhone: "",
     address: "",
@@ -208,17 +209,18 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Phone Number *</label>
-            <input
-              type="text"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="e.g., 0712345678"
-            />
-            <button type="button" onClick={() => clearField("phoneNumber")}>Clear</button>
-          </div>
+          <div className="form-row">
+            <div className="form-group clearable">
+              <label>Phone Number *</label>
+              <input
+                type="text"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="e.g., 0712345678"
+              />
+              <button type="button" onClick={() => clearField("phoneNumber")}>Clear</button>
+            </div>
 
             <div className="form-group clearable">
               <label>Land Phone</label>
@@ -231,6 +233,18 @@ const ClientRegistrationPage = () => {
               />
               <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
             </div>
+          </div>
+
+          <div className="form-group clearable full-width">
+            <label>Email *</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="e.g., john@example.com"
+            />
+            <button type="button" onClick={() => clearField("email")}>Clear</button>
           </div>
 
           <div className="full-width">
