@@ -1,4 +1,4 @@
-describe("Instructor - Detail Page (Review + Employment)", () => {
+describe("Instructor - Detail Page", () => {
   const APP = "http://localhost:5173";
 
   const makeJwt = (payload) => {
