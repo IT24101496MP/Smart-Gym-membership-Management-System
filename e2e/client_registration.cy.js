@@ -20,13 +20,11 @@ describe("Client Registration", () => {
   });
 
   it("submits form successfully and redirects to profile", () => {
-    // 1) Stub the register request
     cy.intercept("POST", "http://localhost:8081/api/client/register", {
       statusCode: 200,
       body: { clientId: 101, token: "fake-jwt-token" },
     }).as("clientRegister");
-
-    // 2) Stub the profile fetch that happens AFTER redirect to /profile
+    
     cy.intercept("GET", "http://localhost:8081/api/client/user/101", {
       statusCode: 200,
       body: {
@@ -61,13 +59,10 @@ describe("Client Registration", () => {
 
     cy.wait("@clientRegister");
 
-    // success banner happens before redirect
     cy.contains("Client registered successfully!").should("be.visible");
 
-    // confirm redirect
     cy.location("pathname", { timeout: 6000 }).should("eq", "/profile");
 
-    // confirm profile loaded using stubbed API
     cy.wait("@getProfile");
     cy.contains("John Cena").should("be.visible");
   });
