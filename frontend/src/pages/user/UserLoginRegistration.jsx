@@ -12,6 +12,7 @@ import "./UserLoginRegistration.css";
 const UserLoginRegistration = () => {
   const navigate = useNavigate();
 
+  const [selectedRole, setSelectedRole] = useState("CLIENT");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,10 +25,21 @@ const UserLoginRegistration = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Initialize role in localStorage on mount
+  React.useEffect(() => {
+    localStorage.setItem("role", "CLIENT");
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError("");
+  };
+
+  const handleRoleChange = (e) => {
+    const role = e.target.value;
+    setSelectedRole(role);
+    localStorage.setItem("role", role);
   };
 
   const isStrongPassword = (password) => {
@@ -62,6 +74,7 @@ const UserLoginRegistration = () => {
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
+        role: selectedRole,
       };
 
       const res = await fetch("http://localhost:8080/api/user/register", {
@@ -71,16 +84,26 @@ const UserLoginRegistration = () => {
       });
 
       if (res.ok) {
+        let responseData = null;
         try {
-          const data = await res.json();
-          if (data && data.token) localStorage.setItem("token", data.token);
-          const id = (data && (data.userId || data.id || data.user_id)) || null;
+          responseData = await res.json();
+          if (responseData && responseData.token) localStorage.setItem("token", responseData.token);
+          const id = (responseData && (responseData.userId || responseData.id || responseData.user_id)) || null;
           if (id) localStorage.setItem("userId", String(id));
+          // Store the saved role from the response
+          if (responseData && responseData.role) localStorage.setItem("role", responseData.role);
         } catch (err) {
           // non-json response; ignore
         }
-        setSuccessMsg("Account created successfully. Redirecting to client registration...");
-        setTimeout(() => navigate("/client-registration"), 1000);
+        setSuccessMsg("Account created successfully. Redirecting...");
+        setTimeout(() => {
+          const savedRole = localStorage.getItem("role") || selectedRole;
+          if (savedRole === "ADMIN" || savedRole === "INSTRUCTOR") {
+            navigate("/active-members");
+          } else {
+            navigate("/client-registration");
+          }
+        }, 1000);
       } else {
         const txt = await res.text();
         setError(txt || `Registration failed (${res.status})`);
@@ -173,6 +196,15 @@ const UserLoginRegistration = () => {
             </div>
 
             <div className="signup-center">
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ marginRight: "8px" }}>Simulate Role:</label>
+                <select value={selectedRole} onChange={handleRoleChange}>
+                  <option value="CLIENT">Client</option>
+                  <option value="INSTRUCTOR">Instructor</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+
               <button
                 className="submit-button"
                 onClick={handleSubmit}

@@ -7,6 +7,8 @@ import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props
 import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import ClientProfile from "./pages/client/ClientProfile";
+import ActiveMembers from "./pages/admin/ActiveMembers";
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -33,6 +35,15 @@ function App() {
 
           {/* Client Registration */}
           <Route path="/client-registration" element={<ClientRegistrationPage />} />
+
+          <Route
+            path="/active-members"
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <ActiveMembers />
+              </RoleProtectedRoute>
+            }
+          />
 
           {/* Protected Profile Page */}
           <Route
