@@ -43,10 +43,12 @@ public class InstructorService {
     }
 
     public ResponseEntity<?> registerInstructor(InstructorRegister instructor){
+
         if(instructorRepository.existsByEmailOrPhoneNumber(instructor.getEmail(), instructor.getPhoneNumber())){
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Instructor with same email or phone number already exists");
         }
+
         instructorRepository.save(instructorRegisterToInstructor(instructor));
         return ResponseEntity.ok().build();
     }

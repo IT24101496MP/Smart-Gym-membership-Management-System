@@ -1,10 +1,12 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
 
 
 import UserLoginRegistration from "./pages/user/UserLoginRegistration";
+import InstructorRegistrationPage from "./pages/instructor/InstructorRegistrationPage";
+import InstructorListPage from "./pages/instructor/InstructorListPage";
+import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
 import ClientProfile from "./pages/client/ClientProfile";
 
@@ -33,6 +35,10 @@ function App() {
 
           {/* Client Registration */}
           <Route path="/client-registration" element={<ClientRegistrationPage />} />
+          <Route path="/profile" element={<ClientProfile />} />
+          <Route path="/instructor" element={<InstructorListPage />} />
+          <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
+          <Route path="/instructor/:id" element={<InstructorDetailPage />} />
 
           {/* Protected Profile Page */}
           <Route
