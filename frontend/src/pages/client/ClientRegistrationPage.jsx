@@ -101,6 +101,7 @@ const ClientRegistrationPage = () => {
           const data = await response.json();
           const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || (data.client && (data.client.clientId || data.client.id)) || null;
           if (id) localStorage.setItem("userId", String(id));
+          if (data && data.token) localStorage.setItem("token", data.token);
         } catch (err) {
           const txt = await response.text();
           console.warn("Non-JSON registration response:", response.status, txt);

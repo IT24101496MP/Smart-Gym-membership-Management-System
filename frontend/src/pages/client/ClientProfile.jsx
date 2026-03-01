@@ -122,7 +122,11 @@ const ClientProfile = () => {
     } finally { setSaving(false); }
   };
 
-  const handleLogout = () => { localStorage.removeItem("userId"); navigate("/login"); };
+  const handleLogout = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   const bytesToBase64 = (bytes) => {
     if (!bytes) return null;
