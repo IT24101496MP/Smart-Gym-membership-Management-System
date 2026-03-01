@@ -84,10 +84,10 @@ public class ClientController {
         if (emergencyContactNumber != null && !emergencyContactNumber.trim().isEmpty()
                 && !emergencyContactNumber.matches("0\\d{9}"))
             return ResponseEntity.badRequest().body("Invalid emergency contact number");
-
+        
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$"))
             return ResponseEntity.badRequest().body("Invalid email");
-
+        
         byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty())
                 ? profilePicture.getBytes() : null;
         byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty())

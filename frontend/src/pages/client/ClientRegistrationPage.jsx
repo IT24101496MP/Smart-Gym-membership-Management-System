@@ -16,7 +16,6 @@ const ClientRegistrationPage = () => {
     gender: "",
     phoneNumber: "",
     landPhone: "",
-    email: "",
     address: "",
     password: "",
     confirmPassword: "",
@@ -232,18 +231,6 @@ const ClientRegistrationPage = () => {
               placeholder="e.g., 0112345678"
             />
             <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
-          </div>
-
-          <div className="form-group clearable">
-            <label>Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="e.g., john.cena@example.com"
-            />
-            <button type="button" onClick={() => clearField("email")}>Clear</button>
           </div>
 
           <div className="form-group clearable">
