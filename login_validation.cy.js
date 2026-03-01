@@ -50,7 +50,6 @@ describe("Login Render Debug", () => {
         );
       }
 
-      // If body is still blank, fail clearly
       if (!bodyText) {
         throw new Error(
           "Body is blank on /login in Cypress."
