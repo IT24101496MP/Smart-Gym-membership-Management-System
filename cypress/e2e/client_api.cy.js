@@ -7,9 +7,6 @@ describe("Backend API - Client", () => {
       url: `${API}/api/client/1`,
       failOnStatusCode: false,
     }).then((res) => {
-      // If secured: 401/403
-      // If not secured and not found: 404
-      // If exists: 200
       expect([200, 401, 403, 404]).to.include(res.status);
     });
   });
