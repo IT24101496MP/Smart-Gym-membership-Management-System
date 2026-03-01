@@ -1,5 +1,5 @@
 describe("RBAC - Backend API Access (Spring Security)", () => {
-  const API = "http://localhost:8081";
+  const API = "http://localhost:8080";
 
   // 🔴 put REAL accounts here (must exist in DB)
   const users = {
