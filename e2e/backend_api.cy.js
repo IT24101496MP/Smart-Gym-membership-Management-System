@@ -67,7 +67,6 @@ describe("Backend API E2E - Fat2Fit", () => {
 
       const text = await resp.text();
 
-      // If security blocks, skip the rest
       if (resp.status === 401) {
         noteAuthBlocked("POST /api/client/register");
         return;
