@@ -49,6 +49,9 @@ public class InstructorController {
             @RequestBody InstructorRegister instructorRegister,
             @RequestParam Long updatedBy
     ) {
+        if (updatedBy == null) {
+            return ResponseEntity.badRequest().body("updatedBy parameter is required");
+        }
         try {
             Instructor updated = instructorService.updateInstructorProfile(id, instructorRegister, updatedBy);
             return ResponseEntity.ok(updated);

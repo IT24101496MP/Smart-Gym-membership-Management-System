@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorEmploymentAssignment;
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorRegister;
@@ -60,6 +61,7 @@ public class InstructorService {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Instructor not found"));
     }
 
+    @Transactional
     public Instructor updateInstructorProfile(int id, InstructorRegister dto, Long updatedBy) {
         Instructor existing = instructorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Instructor not found"));

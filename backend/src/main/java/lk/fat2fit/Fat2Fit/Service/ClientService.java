@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -58,6 +59,7 @@ public class ClientService {
                 .orElseThrow(() -> new RuntimeException("Client not found"));
     }
 
+    @Transactional
     public Client updateClientProfile(int id, ClientRegister dto, Long updatedBy) {
         Client existing = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
@@ -99,24 +101,19 @@ public class ClientService {
         if (!Objects.equals(existing.getBloodGroup(), dto.getBloodGroup())) existing.setBloodGroup(dto.getBloodGroup());
 
         if (dto.getProfilePicture() != null) {
-            compareAndLog(
-                    existing.getProfilePicture() != null ? new String(existing.getProfilePicture()) : null,
-                    new String(dto.getProfilePicture()),
-                    "profilePicture",
-                    existing.getClientId(),
-                    updatedBy
-            );
+            // don't attempt to convert entire byte array to string; just note change and size
+            String oldDesc = existing.getProfilePicture() != null ?
+                    "[binary " + existing.getProfilePicture().length + " bytes]" : null;
+            String newDesc = "[binary " + dto.getProfilePicture().length + " bytes]";
+            compareAndLog(oldDesc, newDesc, "profilePicture", existing.getClientId(), updatedBy);
             existing.setProfilePicture(dto.getProfilePicture());
         }
 
         if (dto.getDigitalSignature() != null) {
-            compareAndLog(
-                    existing.getDigitalSignature() != null ? new String(existing.getDigitalSignature()) : null,
-                    new String(dto.getDigitalSignature()),
-                    "digitalSignature",
-                    existing.getClientId(),
-                    updatedBy
-            );
+            String oldDesc = existing.getDigitalSignature() != null ?
+                    "[binary " + existing.getDigitalSignature().length + " bytes]" : null;
+            String newDesc = "[binary " + dto.getDigitalSignature().length + " bytes]";
+            compareAndLog(oldDesc, newDesc, "digitalSignature", existing.getClientId(), updatedBy);
             existing.setDigitalSignature(dto.getDigitalSignature());
         }
 

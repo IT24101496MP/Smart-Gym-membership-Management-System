@@ -28,16 +28,18 @@ public class AuditLog {
     @Column(name = "profile_type", nullable = false)
     private String profileType;
 
-    @Column(name = "updated_by", nullable = false)
+    // allow null in case no user id is available (front‑end was not able to send one)
+    @Column(name = "updated_by")
     private Long updatedBy;
 
     @Column(name = "field_name", nullable = false)
     private String fieldName;
 
-    @Column(name = "old_value", columnDefinition = "TEXT")
+    // use LONGTEXT so very large values (e.g. stringified blobs) don't overflow
+    @Column(name = "old_value", columnDefinition = "LONGTEXT")
     private String oldValue;
 
-    @Column(name = "new_value", columnDefinition = "TEXT")
+    @Column(name = "new_value", columnDefinition = "LONGTEXT")
     private String newValue;
 
     @CreationTimestamp

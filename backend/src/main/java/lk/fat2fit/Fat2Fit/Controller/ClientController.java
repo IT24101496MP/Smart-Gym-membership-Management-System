@@ -6,6 +6,7 @@ import lk.fat2fit.Fat2Fit.Service.ClientService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -118,6 +119,9 @@ public class ClientController {
             @RequestParam(required = false) MultipartFile digitalSignature,
             @RequestParam Long updatedBy
     ) throws IOException {
+        if (updatedBy == null) {
+            return ResponseEntity.badRequest().body("updatedBy parameter is required");
+        }
 
         byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty()) ? profilePicture.getBytes() : null;
         byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty()) ? digitalSignature.getBytes() : null;
@@ -142,7 +146,10 @@ public class ClientController {
             Client updatedClient = clientService.updateClientProfile(id, clientRegister, updatedBy);
             return ResponseEntity.ok(updatedClient);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            logger.error("Error updating client profile", e);
+            // return 500 to differentiate from not-found
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Server error during update: " + e.getMessage());
         }
     }
 }
