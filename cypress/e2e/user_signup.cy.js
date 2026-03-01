@@ -1,4 +1,4 @@
-describe("User Sign Up Page (/login)", () => {
+describe("User Sign Up Page ", () => {
 
   it("shows error when submitting empty fields", () => {
     cy.visit("http://localhost:5173/login");
