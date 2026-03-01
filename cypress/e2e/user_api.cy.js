@@ -1,4 +1,4 @@
-describe("Backend API - UserController (PORT 8081)", () => {
+describe("Backend API - User", () => {
   const API = "http://localhost:8081";
 
   it("POST /api/user/register -  validation error", () => {
