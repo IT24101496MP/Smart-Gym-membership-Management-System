@@ -1,4 +1,4 @@
-describe("RBAC - UI + API (4+ tests)", () => {
+describe("RBAC ", () => {
   const FRONTEND = "http://localhost:5173";
   const API = "http://localhost:8080";
 
@@ -28,13 +28,13 @@ describe("RBAC - UI + API (4+ tests)", () => {
       });
   }
 
-  it("UI: /user loads without token (route not protected in UI)", () => {
+  it("user loads without token", () => {
     cy.clearLocalStorage();
     cy.visit(`${FRONTEND}/user`, { failOnStatusCode: false });
     cy.location("pathname", { timeout: 15000 }).should("eq", "/user");
   });
 
-  it("API: No token -> GET /api/instructor returns 401/403", () => {
+  it("GET /api/instructor returns 401/403", () => {
     cy.request({
       method: "GET",
       url: `${API}/api/instructor`,
@@ -44,7 +44,7 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  it("API: ADMIN can access GET /api/instructor (ADMIN only)", () => {
+  it("ADMIN can access GET /api/instructor", () => {
     apiLoginOrNull("admin", users.admin).then((token) => {
       if (!token) return; // skip if credentials not ready
 
@@ -59,7 +59,7 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  it("API: CLIENT cannot access GET /api/instructor (ADMIN only)", () => {
+  it("CLIENT cannot access GET /api/instructor ", () => {
     apiLoginOrNull("client", users.client).then((token) => {
       if (!token) return;
 
@@ -74,7 +74,7 @@ describe("RBAC - UI + API (4+ tests)", () => {
     });
   });
 
-  it("API: INSTRUCTOR can access GET /api/instructor/{id} (ADMIN or INSTRUCTOR)", () => {
+  it("INSTRUCTOR can access GET /api/instructor/{id}", () => {
     apiLoginOrNull("instructor", users.instructor).then((token) => {
       if (!token) return;
 
@@ -84,7 +84,6 @@ describe("RBAC - UI + API (4+ tests)", () => {
         headers: { Authorization: `Bearer ${token}` },
         failOnStatusCode: false
       }).then((res) => {
-        // Allowed endpoint can be 200 OR 404 (if id doesn't exist), but NOT 401/403
         expect([401, 403]).to.not.include(res.status);
       });
     });
