@@ -1,5 +1,6 @@
 package lk.fat2fit.Fat2Fit.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,10 +9,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
+import lk.fat2fit.Fat2Fit.Entity.ClientBodyMetrics;
+import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.User;
+import lk.fat2fit.Fat2Fit.Repository.ClientBodyMetricsRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +28,7 @@ public class ManageService {
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
+    private final ClientBodyMetricsRepository metricsRepository;
     
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -30,7 +37,7 @@ public class ManageService {
     }
 
     private UserDetailResponse toDetailResponse(User u) {
-        return UserDetailResponse.builder()
+        UserDetailResponse.UserDetailResponseBuilder builder = UserDetailResponse.builder()
                 .id(u.getId())
                 .firstName(u.getFirstName())
                 .lastName(u.getLastName())
@@ -48,8 +55,19 @@ public class ManageService {
                 .role(u.getRole())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
-                .updatedAt(u.getUpdatedAt())
-                .build();
+                .updatedAt(u.getUpdatedAt());
+
+        // Populate instructor-specific fields when applicable
+        if (u instanceof Instructor ins) {
+            builder.instructorStatus(ins.getStatus());
+            if (ins.getEmployment() != null) {
+                builder.employmentType(ins.getEmployment().getEmploymentType())
+                       .workingHoursPerWeek(ins.getEmployment().getWorkingHoursPerWeek())
+                       .salary(ins.getEmployment().getSalary());
+            }
+        }
+
+        return builder.build();
     }
 
     private void applyEdits(User user, UserEditRequest req, boolean allowIsActive) {
@@ -158,6 +176,63 @@ public class ManageService {
         applyEdits(client, req, true);
         clientRepository.save(client);
         return ResponseEntity.ok(toDetailResponse(client));
+    }
+
+    // ── Admin / Instructor: get client body metrics ───────────────────────────
+
+    public ResponseEntity<?> getClientMetrics(int clientId) {
+        if (!clientRepository.existsById(clientId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+        ClientBodyMetrics m = metricsRepository.findByClientId(clientId)
+                .orElse(ClientBodyMetrics.builder().build()); // return empty shell if not yet set
+        return ResponseEntity.ok(toMetricsResponse(clientId, m));
+    }
+
+    // ── Admin / Instructor: save client body metrics ──────────────────────────
+
+    public ResponseEntity<?> saveClientMetrics(int clientId, ClientMetricsRequest req) {
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        ClientBodyMetrics metrics = metricsRepository.findByClientId(clientId)
+                .orElse(ClientBodyMetrics.builder()
+                        .client(clientOpt.get())
+                        .fitnessGoals(new HashSet<>())
+                        .build());
+
+        if (req.getWeightKg() != null)       metrics.setWeightKg(req.getWeightKg());
+        if (req.getHeightCm() != null)       metrics.setHeightCm(req.getHeightCm());
+        if (req.getHipSizeCm() != null)      metrics.setHipSizeCm(req.getHipSizeCm());
+        if (req.getBreastSizeCm() != null)   metrics.setBreastSizeCm(req.getBreastSizeCm());
+        if (req.getWaistSizeCm() != null)    metrics.setWaistSizeCm(req.getWaistSizeCm());
+        if (req.getArmSizeCm() != null)      metrics.setArmSizeCm(req.getArmSizeCm());
+        if (req.getShoulderSizeCm() != null) metrics.setShoulderSizeCm(req.getShoulderSizeCm());
+        if (req.getButtSizeCm() != null)     metrics.setButtSizeCm(req.getButtSizeCm());
+        if (req.getFitnessGoals() != null)   metrics.setFitnessGoals(req.getFitnessGoals());
+        metrics.setOtherGoalSpecification(req.getOtherGoalSpecification());
+
+        metricsRepository.save(metrics);
+        return ResponseEntity.ok(toMetricsResponse(clientId, metrics));
+    }
+
+    private ClientMetricsResponse toMetricsResponse(int clientId, ClientBodyMetrics m) {
+        return ClientMetricsResponse.builder()
+                .clientId(clientId)
+                .weightKg(m.getWeightKg())
+                .heightCm(m.getHeightCm())
+                .hipSizeCm(m.getHipSizeCm())
+                .breastSizeCm(m.getBreastSizeCm())
+                .waistSizeCm(m.getWaistSizeCm())
+                .armSizeCm(m.getArmSizeCm())
+                .shoulderSizeCm(m.getShoulderSizeCm())
+                .buttSizeCm(m.getButtSizeCm())
+                .fitnessGoals(m.getFitnessGoals())
+                .otherGoalSpecification(m.getOtherGoalSpecification())
+                .updatedAt(m.getUpdatedAt())
+                .build();
     }
 
     // ── Client: edit own personal details ─────────────────────────────────────

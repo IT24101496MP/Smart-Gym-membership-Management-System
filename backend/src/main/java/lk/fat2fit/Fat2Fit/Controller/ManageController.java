@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Service.ManageService;
 import lombok.RequiredArgsConstructor;
@@ -58,12 +59,31 @@ public class ManageController {
 
     /**
      * PUT /api/manage/clients/{id}
-     * Admin or Instructor: edit a client's details.
+     * Admin ONLY: edit a client's personal details.
      */
     @PutMapping("/clients/{id}")
     public ResponseEntity<?> editClient(@PathVariable int id,
                                         @RequestBody UserEditRequest req) {
         return manageService.editClient(id, req);
+    }
+
+    /**
+     * GET /api/manage/clients/{id}/metrics
+     * Admin or Instructor: view a client's body metrics & fitness goals.
+     */
+    @GetMapping("/clients/{id}/metrics")
+    public ResponseEntity<?> getClientMetrics(@PathVariable int id) {
+        return manageService.getClientMetrics(id);
+    }
+
+    /**
+     * PUT /api/manage/clients/{id}/metrics
+     * Admin or Instructor: create/update a client's body metrics & fitness goals.
+     */
+    @PutMapping("/clients/{id}/metrics")
+    public ResponseEntity<?> saveClientMetrics(@PathVariable int id,
+                                               @RequestBody ClientMetricsRequest req) {
+        return manageService.saveClientMetrics(id, req);
     }
 
     /**

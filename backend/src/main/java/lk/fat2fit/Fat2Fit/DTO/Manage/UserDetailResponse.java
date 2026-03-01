@@ -1,12 +1,15 @@
 package lk.fat2fit.Fat2Fit.DTO.Manage;
 
+import lk.fat2fit.Fat2Fit.Entity.Enum.EmploymentType;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
+import lk.fat2fit.Fat2Fit.Entity.Enum.ProfileStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -33,4 +36,10 @@ public class UserDetailResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // ── Instructor-only fields (null for non-instructors) ────────────────────
+    private ProfileStatus instructorStatus;
+    private EmploymentType employmentType;
+    private Integer workingHoursPerWeek;
+    private BigDecimal salary;
 }

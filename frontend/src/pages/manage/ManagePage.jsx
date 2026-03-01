@@ -8,6 +8,50 @@ import "./ManagePage.css";
 
 const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"];
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const EMPLOYMENT_TYPES = [
+  { value: "FULL_TIME", label: "Full Time" },
+  { value: "PART_TIME", label: "Part Time" },
+  { value: "CONTRACT",  label: "Contract" },
+];
+
+const FITNESS_GOALS = [
+  { value: "FAT_BURNING",          label: "Fat Burning" },
+  { value: "CARDIO_TRAINING",      label: "Cardio Training" },
+  { value: "MUSCLE_STRENGTHENING", label: "Muscle Strengthening" },
+  { value: "ENDURANCE_DEVELOPING", label: "Endurance Developing" },
+  { value: "MUSCLE_GAIN",          label: "Muscle Gain" },
+  { value: "SLIM_FIT_TRAINING",    label: "Slim Fit Training" },
+  { value: "SKILL_DEVELOPING",     label: "Skill Developing" },
+  { value: "BMI_MAINTAINING",      label: "BMI Maintaining" },
+  { value: "PHYSICAL_FITNESS",     label: "Physical Fitness" },
+  { value: "OTHERS",               label: "Others (Specify)" },
+];
+
+const emptyMetrics = () => ({
+  weightKg: "",
+  heightCm: "",
+  hipSizeCm: "",
+  breastSizeCm: "",
+  waistSizeCm: "",
+  armSizeCm: "",
+  shoulderSizeCm: "",
+  buttSizeCm: "",
+  fitnessGoals: [],
+  otherGoalSpecification: "",
+});
+
+const metricsToForm = (m) => ({
+  weightKg: m.weightKg ?? "",
+  heightCm: m.heightCm ?? "",
+  hipSizeCm: m.hipSizeCm ?? "",
+  breastSizeCm: m.breastSizeCm ?? "",
+  waistSizeCm: m.waistSizeCm ?? "",
+  armSizeCm: m.armSizeCm ?? "",
+  shoulderSizeCm: m.shoulderSizeCm ?? "",
+  buttSizeCm: m.buttSizeCm ?? "",
+  fitnessGoals: m.fitnessGoals ?? [],
+  otherGoalSpecification: m.otherGoalSpecification ?? "",
+});
 
 const emptyEdit = () => ({
   firstName: "",
@@ -190,9 +234,355 @@ const EditModal = ({ user, onClose, onSave, showIsActive }) => {
   );
 };
 
+// ── Employment Modal (ADMIN only, for INSTRUCTOR) ──────────────────────────────
+
+const emptyEmpForm = () => ({
+  employmentType: "",
+  workingHoursPerWeek: "",
+  salary: "",
+  isActive: "",
+});
+
+const EmploymentModal = ({ user, onClose, onSaved }) => {
+  const [form, setForm] = useState(emptyEmpForm());
+  const [savedForm, setSavedForm] = useState(emptyEmpForm()); // snapshot for cancel
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    api.get(`/api/instructor/${user.id}`)
+      .then(({ data }) => {
+        const filled = {
+          employmentType: data.employment?.employmentType || "",
+          workingHoursPerWeek: data.employment?.workingHoursPerWeek ?? "",
+          salary: data.employment?.salary ?? "",
+          isActive: data.isActive !== null ? String(data.isActive) : "",
+        };
+        const hasEmp = !!data.employment?.employmentType;
+        setForm(filled);
+        setSavedForm(filled);
+        setEditing(!hasEmp); // auto-open edit mode if no employment set yet
+      })
+      .catch(() => setApiError("Failed to load employment details."))
+      .finally(() => setLoading(false));
+  }, [user.id]);
+
+  const set = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const handleCancelEdit = () => {
+    setForm(savedForm);
+    setErrors({});
+    setEditing(false);
+  };
+
+  const validate = () => {
+    const errs = {};
+    if (!form.employmentType) errs.employmentType = "Required.";
+    const hrs = Number(form.workingHoursPerWeek);
+    if (form.workingHoursPerWeek === "" || isNaN(hrs) || hrs < 1 || hrs > 168)
+      errs.workingHoursPerWeek = "Enter 1–168.";
+    const sal = Number(form.salary);
+    if (form.salary === "" || isNaN(sal) || sal < 0)
+      errs.salary = "Enter a valid salary.";
+    if (form.isActive === "") errs.isActive = "Required.";
+    return errs;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setApiError("");
+    setSaving(true);
+    try {
+      const payload = {
+        employmentType: form.employmentType,
+        workingHoursPerWeek: Number(form.workingHoursPerWeek),
+        salary: Number(form.salary),
+        isActive: form.isActive === "true",
+      };
+      await api.put(`/api/instructor/${user.id}/employment`, payload);
+      setSavedForm(form);
+      setEditing(false);
+      onSaved({ id: user.id, payload });
+    } catch (err) {
+      setApiError(err.response?.data?.message || err.response?.data || "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const readonlyCls = editing ? "" : " emp-input--readonly";
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Employment — {user.firstName} {user.lastName}</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {!loading && !editing && (
+              <button className="btn-edit-inline" onClick={() => setEditing(true)}>✎ Edit</button>
+            )}
+            <button className="modal-close" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        {loading ? (
+          <p style={{ padding: "1rem" }}>Loading…</p>
+        ) : (
+          <form className="edit-form" onSubmit={handleSubmit}>
+            {apiError && <p className="modal-error">{apiError}</p>}
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Employment Type{editing && <span className="req"> *</span>}</label>
+                <select name="employmentType" value={form.employmentType} onChange={set}
+                  disabled={!editing} className={`emp-select${readonlyCls}`}>
+                  <option value="">—</option>
+                  {EMPLOYMENT_TYPES.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                {errors.employmentType && <p className="field-error">{errors.employmentType}</p>}
+              </div>
+              <div className="form-group">
+                <label>Employment Status{editing && <span className="req"> *</span>}</label>
+                <select name="isActive" value={form.isActive} onChange={set}
+                  disabled={!editing} className={`emp-select${readonlyCls}`}>
+                  <option value="">—</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+                {errors.isActive && <p className="field-error">{errors.isActive}</p>}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Working Hours / Week{editing && <span className="req"> *</span>}</label>
+                <input type="number" name="workingHoursPerWeek" min="1" max="168"
+                  value={form.workingHoursPerWeek} onChange={set} placeholder="e.g. 40"
+                  disabled={!editing} className={readonlyCls.trim()} />
+                {errors.workingHoursPerWeek && <p className="field-error">{errors.workingHoursPerWeek}</p>}
+              </div>
+              <div className="form-group">
+                <label>Salary (LKR){editing && <span className="req"> *</span>}</label>
+                <input type="number" name="salary" min="0" step="0.01"
+                  value={form.salary} onChange={set} placeholder="e.g. 75000.00"
+                  disabled={!editing} className={readonlyCls.trim()} />
+                {errors.salary && <p className="field-error">{errors.salary}</p>}
+              </div>
+            </div>
+
+            {editing && (
+              <div className="modal-actions">
+                {savedForm.employmentType && (
+                  <button type="button" className="btn-cancel" onClick={handleCancelEdit}>Cancel</button>
+                )}
+                <button type="submit" className="btn-save" disabled={saving}>
+                  {saving ? "Saving…" : savedForm.employmentType ? "Save Changes" : "Assign Employment"}
+                </button>
+              </div>
+            )}
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Client Metrics Modal (ADMIN + INSTRUCTOR) ─────────────────────────────────
+
+const ClientMetricsModal = ({ user, onClose, onSaved }) => {
+  const [form, setForm] = useState(emptyMetrics());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get(`/api/manage/clients/${user.id}/metrics`)
+      .then(({ data }) => setForm(metricsToForm(data)))
+      .catch(() => setForm(emptyMetrics()))
+      .finally(() => setLoading(false));
+  }, [user.id]);
+
+  const setField = (field) => (e) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const toggleGoal = (goal) => {
+    setForm((prev) => {
+      const has = prev.fitnessGoals.includes(goal);
+      return {
+        ...prev,
+        fitnessGoals: has
+          ? prev.fitnessGoals.filter((g) => g !== goal)
+          : [...prev.fitnessGoals, goal],
+      };
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        weightKg: form.weightKg === "" ? null : form.weightKg,
+        heightCm: form.heightCm === "" ? null : form.heightCm,
+        hipSizeCm: form.hipSizeCm === "" ? null : form.hipSizeCm,
+        breastSizeCm: form.breastSizeCm === "" ? null : form.breastSizeCm,
+        waistSizeCm: form.waistSizeCm === "" ? null : form.waistSizeCm,
+        armSizeCm: form.armSizeCm === "" ? null : form.armSizeCm,
+        shoulderSizeCm: form.shoulderSizeCm === "" ? null : form.shoulderSizeCm,
+        buttSizeCm: form.buttSizeCm === "" ? null : form.buttSizeCm,
+      };
+      const { data } = await api.put(`/api/manage/clients/${user.id}/metrics`, payload);
+      onSaved(data);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data || "Failed to save metrics.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Body Metrics — {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        {loading ? (
+          <p style={{ padding: "1rem" }}>Loading…</p>
+        ) : (
+          <form className="edit-form" onSubmit={handleSubmit}>
+            {error && <p className="modal-error">{error}</p>}
+
+            <div className="form-section-label">Body Measurements</div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.01" min="0" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" />
+              </div>
+              <div className="form-group">
+                <label>Height (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Hip Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.hipSizeCm} onChange={setField("hipSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Breast Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.breastSizeCm} onChange={setField("breastSizeCm")} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Waist Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.waistSizeCm} onChange={setField("waistSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Arm Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.armSizeCm} onChange={setField("armSizeCm")} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Shoulder Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.shoulderSizeCm} onChange={setField("shoulderSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Butt Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.buttSizeCm} onChange={setField("buttSizeCm")} />
+              </div>
+            </div>
+
+            <div className="form-section-label">Fitness Requirements</div>
+            <div className="fitness-goals-grid">
+              {FITNESS_GOALS.map(({ value, label }) => (
+                <label key={value} className="goal-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.fitnessGoals.includes(value)}
+                    onChange={() => toggleGoal(value)}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+
+            {form.fitnessGoals.includes("OTHERS") && (
+              <div className="form-row">
+                <div className="form-group full">
+                  <label>Specify Other Goal</label>
+                  <input
+                    value={form.otherGoalSpecification}
+                    onChange={setField("otherGoalSpecification")}
+                    placeholder="Describe the fitness goal…"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn-save" disabled={saving}>
+                {saving ? "Saving…" : "Save Metrics"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Search + Filter Toolbar ──────────────────────────────────────────────────────
+
+const Toolbar = ({ search, onSearch, roleFilter, onRoleFilter, viewerRole }) => {
+  const roles = viewerRole === "ADMIN"
+    ? ["ALL", "ADMIN", "INSTRUCTOR", "CLIENT"]
+    : ["ALL", "CLIENT"];
+  return (
+    <div className="manage-toolbar">
+      <input
+        className="manage-search"
+        type="text"
+        placeholder="Search by name, email or phone…"
+        value={search}
+        onChange={(e) => onSearch(e.target.value)}
+      />
+      <div className="manage-filter-group">
+        {roles.map((r) => (
+          <button
+            key={r}
+            className={`manage-filter-btn${roleFilter === r ? " manage-filter-btn--active" : ""}`}
+            onClick={() => onRoleFilter(r)}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── User / Client Table ───────────────────────────────────────────────────────
 
-const UserTable = ({ users, onEdit, title }) => (
+const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, viewerRole, navigate }) => (
   <div className="table-container">
     <h2 className="section-title">{title}</h2>
     {users.length === 0 ? (
@@ -228,8 +618,21 @@ const UserTable = ({ users, onEdit, title }) => (
                     {u.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td>
-                  <button className="btn-edit" onClick={() => onEdit(u)}>Edit</button>
+                <td className="cell-actions">
+                  {/* Personal details edit: ADMIN only */}
+                  {viewerRole === "ADMIN" && (
+                    <button className="btn-edit" onClick={() => onEdit(u)}>Edit</button>
+                  )}
+                  {/* Body metrics: ADMIN + INSTRUCTOR for clients only */}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-metrics" onClick={() => onEditMetrics(u)}>Metrics</button>
+                  )}
+                  {/* Instructor actions: ADMIN only */}
+                  {viewerRole === "ADMIN" && u.role === "INSTRUCTOR" && (
+                    u.instructorStatus === "APPROVED"
+                      ? <button className="btn-employment" onClick={() => onEditEmployment(u)}>Employment</button>
+                      : <button className="btn-review" onClick={() => navigate(`/instructor/${u.id}`)}>Review</button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -377,7 +780,11 @@ const ManagePage = () => {
   const [selfUser, setSelfUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [editing, setEditing] = useState(null); // user being edited in modal
+  const [editing, setEditing] = useState(null);              // personal-details modal
+  const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
+  const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
 
   // Fetch data based on role
   useEffect(() => {
@@ -406,6 +813,35 @@ const ManagePage = () => {
 
   const handleEdit = (user) => setEditing(user);
   const closeModal = () => setEditing(null);
+  const handleOpenMetrics = (user) => setEditingMetrics(user);
+  const closeMetricsModal = () => setEditingMetrics(null);
+  const handleOpenEmployment = (user) => setEditingEmployment(user);
+  const closeEmploymentModal = () => setEditingEmployment(null);
+
+  const handleEmploymentSaved = ({ id, payload }) => {
+    setUsers((prev) => prev.map((u) =>
+      u.id === id
+        ? {
+            ...u,
+            isActive: payload.isActive,
+            employmentType: payload.employmentType,
+            workingHoursPerWeek: payload.workingHoursPerWeek,
+            salary: payload.salary,
+          }
+        : u
+    ));
+  };
+
+  // ── derived filtered list ────────────────────────────────────────────────────────
+  const visibleUsers = users.filter((u) => {
+    const term = search.toLowerCase();
+    const matchesSearch =
+      `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase().includes(term) ||
+      (u.email ?? "").toLowerCase().includes(term) ||
+      (u.phoneNumber ?? "").includes(search);
+    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   const handleSaveUser = useCallback(
     async (form) => {
@@ -471,13 +907,26 @@ const ManagePage = () => {
           </div>
         </div>
 
-        {/* Admin / Instructor: user table */}
+        {/* Admin / Instructor: toolbar + user table */}
         {(role === "ADMIN" || role === "INSTRUCTOR") && (
-          <UserTable
-            users={users}
-            onEdit={handleEdit}
-            title={tableTitle}
-          />
+          <>
+            <Toolbar
+              search={search}
+              onSearch={setSearch}
+              roleFilter={roleFilter}
+              onRoleFilter={setRoleFilter}
+              viewerRole={role}
+            />
+            <UserTable
+              users={visibleUsers}
+              onEdit={handleEdit}
+              onEditMetrics={handleOpenMetrics}
+              onEditEmployment={handleOpenEmployment}
+              viewerRole={role}
+              navigate={navigate}
+              title={`${tableTitle} (${visibleUsers.length})`}
+            />
+          </>
         )}
 
         {/* Client: own profile edit form */}
@@ -489,13 +938,31 @@ const ManagePage = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Personal Details Modal */}
       {editing && (
         <EditModal
           user={editing}
           onClose={closeModal}
           onSave={handleSaveUser}
-          showIsActive={role === "ADMIN" || role === "INSTRUCTOR"}
+          showIsActive={role === "ADMIN"}
+        />
+      )}
+
+      {/* Edit Body Metrics Modal */}
+      {editingMetrics && (
+        <ClientMetricsModal
+          user={editingMetrics}
+          onClose={closeMetricsModal}
+          onSaved={() => {}}
+        />
+      )}
+
+      {/* Edit Employment Modal */}
+      {editingEmployment && (
+        <EmploymentModal
+          user={editingEmployment}
+          onClose={closeEmploymentModal}
+          onSaved={handleEmploymentSaved}
         />
       )}
     </div>
