@@ -18,7 +18,7 @@ describe("Login Page", () => {
   });
 
   it("Shows error for invalid login", () => {
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 401,
       body: "Invalid credentials"
     });
@@ -31,7 +31,7 @@ describe("Login Page", () => {
     cy.get("[role='alert']").should("exist");
   });
 
-  it("Successful login redirects to /profile (mocked)", () => {
+  it("Successful login redirects to /profile", () => {
 
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
 
@@ -46,7 +46,7 @@ describe("Login Page", () => {
       "signature"
     ].join(".");
 
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
