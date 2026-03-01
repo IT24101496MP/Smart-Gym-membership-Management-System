@@ -171,6 +171,27 @@
   background: #a93226;
 }
 
+.btn-metrics {
+  padding: 0.35rem 0.9rem;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-metrics:hover {
+  background: #c0392b;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
 .empty-msg {
   text-align: center;
   color: #888;
@@ -198,6 +219,34 @@
   max-height: 90vh;
   overflow-y: auto;
   padding: 2rem;
+}
+
+.modal-card--wide {
+  max-width: 860px;
+}
+
+/* ── Fitness goals grid ──────────────────────────────────────────────────────── */
+.fitness-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.goal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  cursor: pointer;
+  user-select: none;
+}
+.goal-checkbox input[type="checkbox"] {
+  accent-color: #c0392b;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
 
 .modal-header {

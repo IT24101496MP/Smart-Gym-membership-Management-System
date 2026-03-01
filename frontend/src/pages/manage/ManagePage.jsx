@@ -9,6 +9,45 @@ import "./ManagePage.css";
 const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"];
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+const FITNESS_GOALS = [
+  { value: "FAT_BURNING",          label: "Fat Burning" },
+  { value: "CARDIO_TRAINING",      label: "Cardio Training" },
+  { value: "MUSCLE_STRENGTHENING", label: "Muscle Strengthening" },
+  { value: "ENDURANCE_DEVELOPING", label: "Endurance Developing" },
+  { value: "MUSCLE_GAIN",          label: "Muscle Gain" },
+  { value: "SLIM_FIT_TRAINING",    label: "Slim Fit Training" },
+  { value: "SKILL_DEVELOPING",     label: "Skill Developing" },
+  { value: "BMI_MAINTAINING",      label: "BMI Maintaining" },
+  { value: "PHYSICAL_FITNESS",     label: "Physical Fitness" },
+  { value: "OTHERS",               label: "Others (Specify)" },
+];
+
+const emptyMetrics = () => ({
+  weightKg: "",
+  heightCm: "",
+  hipSizeCm: "",
+  breastSizeCm: "",
+  waistSizeCm: "",
+  armSizeCm: "",
+  shoulderSizeCm: "",
+  buttSizeCm: "",
+  fitnessGoals: [],
+  otherGoalSpecification: "",
+});
+
+const metricsToForm = (m) => ({
+  weightKg: m.weightKg ?? "",
+  heightCm: m.heightCm ?? "",
+  hipSizeCm: m.hipSizeCm ?? "",
+  breastSizeCm: m.breastSizeCm ?? "",
+  waistSizeCm: m.waistSizeCm ?? "",
+  armSizeCm: m.armSizeCm ?? "",
+  shoulderSizeCm: m.shoulderSizeCm ?? "",
+  buttSizeCm: m.buttSizeCm ?? "",
+  fitnessGoals: m.fitnessGoals ?? [],
+  otherGoalSpecification: m.otherGoalSpecification ?? "",
+});
+
 const emptyEdit = () => ({
   firstName: "",
   lastName: "",
@@ -190,9 +229,161 @@ const EditModal = ({ user, onClose, onSave, showIsActive }) => {
   );
 };
 
+// ── Client Metrics Modal (ADMIN + INSTRUCTOR) ─────────────────────────────────
+
+const ClientMetricsModal = ({ user, onClose, onSaved }) => {
+  const [form, setForm] = useState(emptyMetrics());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get(`/api/manage/clients/${user.id}/metrics`)
+      .then(({ data }) => setForm(metricsToForm(data)))
+      .catch(() => setForm(emptyMetrics()))
+      .finally(() => setLoading(false));
+  }, [user.id]);
+
+  const setField = (field) => (e) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const toggleGoal = (goal) => {
+    setForm((prev) => {
+      const has = prev.fitnessGoals.includes(goal);
+      return {
+        ...prev,
+        fitnessGoals: has
+          ? prev.fitnessGoals.filter((g) => g !== goal)
+          : [...prev.fitnessGoals, goal],
+      };
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        weightKg: form.weightKg === "" ? null : form.weightKg,
+        heightCm: form.heightCm === "" ? null : form.heightCm,
+        hipSizeCm: form.hipSizeCm === "" ? null : form.hipSizeCm,
+        breastSizeCm: form.breastSizeCm === "" ? null : form.breastSizeCm,
+        waistSizeCm: form.waistSizeCm === "" ? null : form.waistSizeCm,
+        armSizeCm: form.armSizeCm === "" ? null : form.armSizeCm,
+        shoulderSizeCm: form.shoulderSizeCm === "" ? null : form.shoulderSizeCm,
+        buttSizeCm: form.buttSizeCm === "" ? null : form.buttSizeCm,
+      };
+      const { data } = await api.put(`/api/manage/clients/${user.id}/metrics`, payload);
+      onSaved(data);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data || "Failed to save metrics.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Body Metrics — {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        {loading ? (
+          <p style={{ padding: "1rem" }}>Loading…</p>
+        ) : (
+          <form className="edit-form" onSubmit={handleSubmit}>
+            {error && <p className="modal-error">{error}</p>}
+
+            <div className="form-section-label">Body Measurements</div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.01" min="0" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" />
+              </div>
+              <div className="form-group">
+                <label>Height (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Hip Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.hipSizeCm} onChange={setField("hipSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Breast Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.breastSizeCm} onChange={setField("breastSizeCm")} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Waist Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.waistSizeCm} onChange={setField("waistSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Arm Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.armSizeCm} onChange={setField("armSizeCm")} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Shoulder Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.shoulderSizeCm} onChange={setField("shoulderSizeCm")} />
+              </div>
+              <div className="form-group">
+                <label>Butt Size (cm)</label>
+                <input type="number" step="0.01" min="0" value={form.buttSizeCm} onChange={setField("buttSizeCm")} />
+              </div>
+            </div>
+
+            <div className="form-section-label">Fitness Requirements</div>
+            <div className="fitness-goals-grid">
+              {FITNESS_GOALS.map(({ value, label }) => (
+                <label key={value} className="goal-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.fitnessGoals.includes(value)}
+                    onChange={() => toggleGoal(value)}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+
+            {form.fitnessGoals.includes("OTHERS") && (
+              <div className="form-row">
+                <div className="form-group full">
+                  <label>Specify Other Goal</label>
+                  <input
+                    value={form.otherGoalSpecification}
+                    onChange={setField("otherGoalSpecification")}
+                    placeholder="Describe the fitness goal…"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn-save" disabled={saving}>
+                {saving ? "Saving…" : "Save Metrics"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── User / Client Table ───────────────────────────────────────────────────────
 
-const UserTable = ({ users, onEdit, title }) => (
+const UserTable = ({ users, onEdit, onEditMetrics, title, viewerRole }) => (
   <div className="table-container">
     <h2 className="section-title">{title}</h2>
     {users.length === 0 ? (
@@ -228,8 +419,15 @@ const UserTable = ({ users, onEdit, title }) => (
                     {u.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td>
-                  <button className="btn-edit" onClick={() => onEdit(u)}>Edit</button>
+                <td className="cell-actions">
+                  {/* Personal details edit: ADMIN only */}
+                  {viewerRole === "ADMIN" && (
+                    <button className="btn-edit" onClick={() => onEdit(u)}>Edit</button>
+                  )}
+                  {/* Body metrics: ADMIN + INSTRUCTOR for clients only */}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-metrics" onClick={() => onEditMetrics(u)}>Metrics</button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -377,7 +575,8 @@ const ManagePage = () => {
   const [selfUser, setSelfUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [editing, setEditing] = useState(null); // user being edited in modal
+  const [editing, setEditing] = useState(null);        // personal-details modal
+  const [editingMetrics, setEditingMetrics] = useState(null); // metrics modal
 
   // Fetch data based on role
   useEffect(() => {
@@ -406,6 +605,8 @@ const ManagePage = () => {
 
   const handleEdit = (user) => setEditing(user);
   const closeModal = () => setEditing(null);
+  const handleOpenMetrics = (user) => setEditingMetrics(user);
+  const closeMetricsModal = () => setEditingMetrics(null);
 
   const handleSaveUser = useCallback(
     async (form) => {
@@ -476,6 +677,8 @@ const ManagePage = () => {
           <UserTable
             users={users}
             onEdit={handleEdit}
+            onEditMetrics={handleOpenMetrics}
+            viewerRole={role}
             title={tableTitle}
           />
         )}
@@ -489,13 +692,22 @@ const ManagePage = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Personal Details Modal */}
       {editing && (
         <EditModal
           user={editing}
           onClose={closeModal}
           onSave={handleSaveUser}
-          showIsActive={role === "ADMIN" || role === "INSTRUCTOR"}
+          showIsActive={role === "ADMIN"}
+        />
+      )}
+
+      {/* Edit Body Metrics Modal */}
+      {editingMetrics && (
+        <ClientMetricsModal
+          user={editingMetrics}
+          onClose={closeMetricsModal}
+          onSaved={() => {}}
         />
       )}
     </div>
