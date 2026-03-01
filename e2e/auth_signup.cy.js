@@ -1,4 +1,4 @@
-describe("Auth - Signup", () => {
+describe("Auth_Signup", () => {
   const FRONTEND = "http://localhost:5173";
 
   const clearAuth = () => {
