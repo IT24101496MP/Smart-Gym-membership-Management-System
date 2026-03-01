@@ -22,7 +22,7 @@ describe("Client Profile", () => {
   });
 
   it("loads profile data when logged in", () => {
-    cy.intercept("GET", "http://localhost:8081/api/client/user/101", {
+    cy.intercept("GET", "http://localhost:8080/api/client/user/101", {
       statusCode: 200,
       body: {
         clientId: 101,
@@ -42,7 +42,7 @@ describe("Client Profile", () => {
   });
 
   it("logs out and redirects to /login", () => {
-    cy.intercept("GET", "http://localhost:8081/api/client/user/101", {
+    cy.intercept("GET", "http://localhost:8080/api/client/user/101", {
       statusCode: 200,
       body: {
         clientId: 101,
