@@ -1,4 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
+
+
+import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 import InstructorRegistrationPage from "./pages/instructor/InstructorRegistrationPage";
 import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
@@ -8,71 +13,103 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import UserListPage from "./pages/user/UserListPage";
+import ClientProfile from "./pages/client/ClientProfile";
+import ActiveMembers from "./pages/admin/ActiveMembers";
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
+
+  const handleFacebookLogin = (response) => {
+    console.log("Facebook login response:", response);
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <BrowserRouter>
+        <Routes>
 
-        {/* Only Logged in User */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Login/Signup Page */}
+          <Route
+            path="/login"
+            element={
+              <UserLoginRegistration
+                onFacebookLogin={handleFacebookLogin}
+              />
+            }
+          />
 
-        {/* ADMIN-only */}
-        <Route
-          path="/user"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <UserListPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* public pages */}
+          <Route path="/client-registration" element={<ClientRegistrationPage />} />
+          <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
+            
+          {/* ADMIN-only */}
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <UserListPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/instructor"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <InstructorListPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/instructor"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <InstructorListPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/instructor/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <InstructorDetailPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/instructor/:id"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <InstructorDetailPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* ADMIN and INSTRUCTOR*/}
-        {/* <Route
-          path="/instructor/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
-              <InstructorDetailPage />
-            </ProtectedRoute>
-          }
-        /> */}
+          <Route
+            path="/active-members"
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <ActiveMembers />
+              </RoleProtectedRoute>
+            }
+          />
 
-        {/* Fallback */}
-        <Route path="/" element={<Navigate to="/profile" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Protected Profile Page */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ClientProfile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Only Logged in User */}
+          <Route
+            path="/profile-me
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+          {/* Catch all unknown routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 
