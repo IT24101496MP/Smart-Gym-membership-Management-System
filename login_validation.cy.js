@@ -25,12 +25,12 @@ describe("Login Render Debug", () => {
     cy.wait(1500);
   }
 
-  it("Should stay on /login (no unexpected redirect)", () => {
+  it("Should stay on /login", () => {
     visitWithCapture();
     cy.location("pathname", { timeout: 20000 }).should("eq", "/login");
   });
 
-  it("Should render something (body not blank OR show Vite overlay)", () => {
+  it("Should render something", () => {
     visitWithCapture();
 
     cy.document().then((doc) => {
@@ -53,7 +53,7 @@ describe("Login Render Debug", () => {
       // If body is still blank, fail clearly
       if (!bodyText) {
         throw new Error(
-          "Body is blank on /login in Cypress (React likely crashed before render)."
+          "Body is blank on /login in Cypress."
         );
       }
     });
@@ -73,11 +73,10 @@ describe("Login Render Debug", () => {
         rej.slice(0, 5).forEach((e) => cy.log(`unhandledrejection: ${e}`));
         winErrs.slice(0, 5).forEach((e) => cy.log(`window.error: ${e}`));
 
-        throw new Error("Errors detected while loading /login. See logs above.");
+        throw new Error("Errors detected while loading /login");
       }
     });
 
-    // If no errors, then check for the expected login DOM
     cy.get('input[name="identifier"]', { timeout: 20000 }).should("exist");
     cy.get('input[name="password"]', { timeout: 20000 }).should("exist");
     cy.get('button[type="submit"]', { timeout: 20000 }).should("exist");
