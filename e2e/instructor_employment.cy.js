@@ -1,4 +1,4 @@
-describe("Instructor Employment Assignment - Basic QA", () => {
+describe("Instructor Employment Assignment", () => {
 
   const FRONTEND = "http://localhost:5173";
 
@@ -19,7 +19,6 @@ describe("Instructor Employment Assignment - Basic QA", () => {
       }
     });
 
-    // IMPORTANT: include firstName + lastName to avoid charAt crash
     cy.intercept("GET", "http://localhost:8081/api/instructor/1", {
       statusCode: 200,
       body: {
