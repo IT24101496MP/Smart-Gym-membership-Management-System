@@ -15,6 +15,7 @@ import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.ClientBodyMetrics;
+import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.User;
 import lk.fat2fit.Fat2Fit.Repository.ClientBodyMetricsRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
@@ -36,7 +37,7 @@ public class ManageService {
     }
 
     private UserDetailResponse toDetailResponse(User u) {
-        return UserDetailResponse.builder()
+        UserDetailResponse.UserDetailResponseBuilder builder = UserDetailResponse.builder()
                 .id(u.getId())
                 .firstName(u.getFirstName())
                 .lastName(u.getLastName())
@@ -54,8 +55,19 @@ public class ManageService {
                 .role(u.getRole())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
-                .updatedAt(u.getUpdatedAt())
-                .build();
+                .updatedAt(u.getUpdatedAt());
+
+        // Populate instructor-specific fields when applicable
+        if (u instanceof Instructor ins) {
+            builder.instructorStatus(ins.getStatus());
+            if (ins.getEmployment() != null) {
+                builder.employmentType(ins.getEmployment().getEmploymentType())
+                       .workingHoursPerWeek(ins.getEmployment().getWorkingHoursPerWeek())
+                       .salary(ins.getEmployment().getSalary());
+            }
+        }
+
+        return builder.build();
     }
 
     private void applyEdits(User user, UserEditRequest req, boolean allowIsActive) {
