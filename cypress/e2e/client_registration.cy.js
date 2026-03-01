@@ -5,13 +5,10 @@ describe("Client Registration Page ", () => {
     cy.visit("http://localhost:5173/client-registration");
 
     cy.contains("button", "Register").click();
-
-    // ✅ This is the only error text your UI actually displays
     cy.get("div.error-message")
       .should("be.visible")
       .and("contain.text", "Please fix the errors below");
 
-    // ✅ Ensure the API request was NOT sent (client-side validation blocked submit)
     cy.get("@clientRegister.all").should("have.length", 0);
   });
 
