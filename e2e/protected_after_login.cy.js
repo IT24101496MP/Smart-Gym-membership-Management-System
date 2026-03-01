@@ -11,7 +11,7 @@ describe("Protected Routes ", () => {
       "signature"
     ].join(".");
 
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
@@ -37,7 +37,7 @@ describe("Protected Routes ", () => {
     cy.location("pathname").should("include", "/instructor");
   });
 
-  it("CLIENT cannot access /instructor (redirect to /unauthorized)", () => {
+  it("CLIENT cannot access /instructor", () => {
     loginMock("CLIENT");
     cy.visit(`${FRONTEND}/instructor`, { failOnStatusCode: false });
     cy.location("pathname").should("include", "/unauthorized");
