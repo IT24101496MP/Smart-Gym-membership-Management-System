@@ -1,4 +1,4 @@
-describe("Client Profile Page (/profile)", () => {
+describe("Client Profile Page", () => {
 
   beforeEach(() => {
     window.localStorage.setItem("userId", "123");
