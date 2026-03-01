@@ -76,9 +76,7 @@ describe("Instructor - Detail Page", () => {
 
     cy.visit(`${APP}/login`);
     setAuth("ADMIN");
-
-    // IMPORTANT:
-    // isActive is true -> empForm.isActive becomes "true" -> so "Employment status is required." will NOT appear.
+    
     const approvedInstructor = {
       id,
       firstName: "Kasun",
@@ -128,22 +126,17 @@ describe("Instructor - Detail Page", () => {
 
     cy.contains("Employment Assignment").should("be.visible");
 
-    // Trigger validation
     cy.contains("button", "Assign Employment Details").click();
 
-    // These 3 are guaranteed when empty
     cy.contains("Employment type is required.").should("be.visible");
     cy.contains("Enter hours between 1 and 168.").should("be.visible");
     cy.contains("Enter a valid non-negative salary.").should("be.visible");
-
-    // DO NOT assert "Employment status is required." because isActive can already be pre-filled ("true"/"false")
 
     // Fill the form
     cy.get('select[name="employmentType"]').select("FULL_TIME");
     cy.get('input[name="workingHoursPerWeek"]').clear().type("40");
     cy.get('input[name="salary"]').clear().type("75000");
 
-    // Only set status if dropdown exists (some UI states may disable/hide it)
     cy.get("body").then(($body) => {
       if ($body.find('select[name="isActive"]').length) {
         cy.get('select[name="isActive"]').select("Active");
