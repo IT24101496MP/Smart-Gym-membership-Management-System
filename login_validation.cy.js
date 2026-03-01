@@ -1,4 +1,4 @@
-describe("Login Render Debug", () => {
+describe("Login validation", () => {
   const FRONTEND = "http://localhost:5173";
 
   function visitWithCapture() {
