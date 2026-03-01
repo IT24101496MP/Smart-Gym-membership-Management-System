@@ -1,8 +1,6 @@
 describe("Backend API Tests - Basic QA", () => {
 
-  const API = "http://localhost:8081";
-
-  // ---------------- AUTH ----------------
+  const API = "http://localhost:8080";
 
   it("Login returns 200 or 401", () => {
     cy.request({
