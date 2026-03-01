@@ -57,7 +57,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/manage/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/manage/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/manage/clients").hasAnyRole("ADMIN", "INSTRUCTOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        // Personal details edit: ADMIN only
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/metrics").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/metrics").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/**").hasRole("ADMIN")
                         .requestMatchers("/api/manage/me").authenticated()
 
                         // ADMIN or INSTRUCTOR
