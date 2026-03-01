@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -24,6 +25,56 @@ public class ClientController {
 
     private static String emptyToNull(String value) {
         return (value == null || value.trim().isEmpty()) ? null : value;
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<Client>> getAllClients() {
+        return ResponseEntity.ok(clientService.getAllClients());
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Client>> getActiveClients() {
+        return ResponseEntity.ok(clientService.getActiveClients());
+    }
+
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<String> deactivateClient(
+            @PathVariable int id,
+            @RequestHeader("Role") String role) {
+
+        if (!"ADMIN".equals(role) && !"INSTRUCTOR".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Unauthorized: Only admin or instructor can deactivate.");
+        }
+
+        try {
+            clientService.deactivateClient(id);
+            return ResponseEntity.ok("Member deactivated successfully");
+        } catch (Exception e) {
+            logger.error("Error deactivating client", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Deactivation failed");
+        }
+    }
+
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<String> activateClient(
+            @PathVariable int id,
+            @RequestHeader("Role") String role) {
+
+        if (!"ADMIN".equals(role) && !"INSTRUCTOR".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Unauthorized: Only admin or instructor can activate.");
+        }
+
+        try {
+            clientService.activateClient(id);
+            return ResponseEntity.ok("Member activated successfully");
+        } catch (Exception e) {
+            logger.error("Error activating client", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Activation failed");
+        }
     }
 
     @PostMapping(value = "/register", consumes = {"multipart/form-data"})

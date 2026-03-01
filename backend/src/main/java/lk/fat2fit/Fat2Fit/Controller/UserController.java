@@ -34,7 +34,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Passwords do not match");
             }
 
-            User user = userService.registerUser(dto.getEmail(), dto.getPassword());
+            User user = userService.registerUser(dto.getEmail(), dto.getPassword(), dto.getRole());
             return ResponseEntity.ok(buildUserResponse(user));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
