@@ -1,5 +1,5 @@
-describe("Backend API - InstructorController (8081) [E2E-only]", () => {
-  const API = "http://localhost:8081";
+describe("Backend API - Instructor", () => {
+  const API = "http://localhost:8080";
 
   it("GET /api/instructor ", () => {
     cy.request({
