@@ -25,7 +25,6 @@ const UserLoginRegistration = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Initialize role in localStorage on mount
   React.useEffect(() => {
     localStorage.setItem("role", "CLIENT");
   }, []);
@@ -90,10 +89,8 @@ const UserLoginRegistration = () => {
           if (responseData && responseData.token) localStorage.setItem("token", responseData.token);
           const id = (responseData && (responseData.userId || responseData.id || responseData.user_id)) || null;
           if (id) localStorage.setItem("userId", String(id));
-          // Store the saved role from the response
           if (responseData && responseData.role) localStorage.setItem("role", responseData.role);
         } catch (err) {
-          // non-json response; ignore
         }
         setSuccessMsg("Account created successfully. Redirecting...");
         setTimeout(() => {
@@ -196,7 +193,7 @@ const UserLoginRegistration = () => {
             </div>
 
             <div className="signup-center">
-              <div style={{ marginBottom: "12px" }}>
+              <div className="simulate-role-wrapper">
                 <label style={{ marginRight: "8px" }}>Simulate Role:</label>
                 <select value={selectedRole} onChange={handleRoleChange}>
                   <option value="CLIENT">Client</option>
