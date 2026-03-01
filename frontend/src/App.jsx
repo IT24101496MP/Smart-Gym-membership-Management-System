@@ -12,6 +12,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import ManagePage from "./pages/manage/ManagePage";
 import UserListPage from "./pages/user/UserListPage";
 import ClientProfile from "./pages/client/ClientProfile";
 import ActiveMembers from "./pages/admin/ActiveMembers";
@@ -91,12 +92,12 @@ function App() {
             }
           />
           
-          {/* Only Logged in User */}
+          {/* All authenticated roles – role-aware manage page */}
           <Route
-            path="/profile-me
+            path="/manage"
             element={
-              <ProtectedRoute>
-                <ProfilePage />
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "CLIENT"]}>
+                <ManagePage />
               </ProtectedRoute>
             }
           />

@@ -53,6 +53,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
 
+                        // Manage endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/manage/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers("/api/manage/me").authenticated()
+
                         // ADMIN or INSTRUCTOR
                         .requestMatchers(HttpMethod.GET, "/api/instructor/**").hasAnyRole("ADMIN", "INSTRUCTOR")
                         
