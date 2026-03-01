@@ -1,4 +1,4 @@
-describe("Backend API Tests - Basic QA", () => {
+describe("Backend API Tests", () => {
 
   const API = "http://localhost:8080";
 
@@ -26,7 +26,7 @@ describe("Backend API Tests - Basic QA", () => {
     });
   });
 
- it("Client register without authentication should fail (403/401)", () => {
+ it("Client register without authentication should fail", () => {
   cy.request({
     method: "POST",
     url: `${API}/api/client/register`,
@@ -36,8 +36,6 @@ describe("Backend API Tests - Basic QA", () => {
     expect([400, 401, 403, 415]).to.include(res.status);
   });
 });
-
-  // ---------------- INSTRUCTOR ----------------
 
   it("GET instructors without token should fail", () => {
     cy.request({
