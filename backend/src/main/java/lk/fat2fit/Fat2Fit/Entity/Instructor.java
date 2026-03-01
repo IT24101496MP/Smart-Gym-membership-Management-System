@@ -39,6 +39,6 @@ public class Instructor extends User {
     @Builder.Default
     private ProfileStatus status = ProfileStatus.PENDING;
 
-    @OneToOne(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "instructor", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Employment employment;
 }

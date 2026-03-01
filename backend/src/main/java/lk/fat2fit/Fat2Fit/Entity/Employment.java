@@ -1,5 +1,6 @@
 package lk.fat2fit.Fat2Fit.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lk.fat2fit.Fat2Fit.Entity.Enum.EmploymentType;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class Employment {
     @Column(name = "id")
     private int id;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "instructor_id", nullable = false, unique = true)
     private Instructor instructor;

@@ -49,13 +49,12 @@ public class UserController {
                                         @RequestBody SwitchRoleRequest request) {
         return userService.switchRole(id, request);
     }
-}
+
     private Map<String, Object> buildUserResponse(User user) {
         Map<String, Object> response = new HashMap<>();
         response.put("userId", user.getId());
         response.put("email", user.getEmail());
         response.put("role", user.getRole().name());
-        response.put("status", user.getStatus().name());
         return response;
     }
 
