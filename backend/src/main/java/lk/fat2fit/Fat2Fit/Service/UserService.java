@@ -11,14 +11,11 @@ import lk.fat2fit.Fat2Fit.DTO.User.SwitchRoleRequest;
 import lk.fat2fit.Fat2Fit.DTO.User.UserSummaryResponse;
 import lk.fat2fit.Fat2Fit.Entity.User;
 import lk.fat2fit.Fat2Fit.Repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lk.fat2fit.Fat2Fit.Entity.User;
-import lk.fat2fit.Fat2Fit.Repository.UserRepository;
+import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -26,6 +23,7 @@ import java.util.regex.Pattern;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final  PasswordEncoder passwordEncoder;
 
     /**
      * Returns a summary of every registered user (id, name, email, role, status).
@@ -81,8 +79,7 @@ public class UserService {
                 user.getCreatedAt()
         ));
     }
-}
-    private final PasswordEncoder passwordEncoder;
+
     public User registerUser(String email, String rawPassword, String roleString) {
 
         if (userRepository.existsByEmail(email)) {
@@ -98,10 +95,10 @@ public class UserService {
         String hashedPassword = passwordEncoder.encode(rawPassword);
 
         // Parse role string
-        User.Role role = User.Role.CLIENT;
+        Role role = Role.CLIENT;
         if (roleString != null && !roleString.trim().isEmpty()) {
             try {
-                role = User.Role.valueOf(roleString.toUpperCase());
+                role = Role.valueOf(roleString.toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid role: " + roleString);
             }
@@ -111,7 +108,6 @@ public class UserService {
                 .email(email)
                 .password(hashedPassword)
                 .role(role)
-                .status(User.Status.APPROVED) // Default status
                 .build();
 
         return userRepository.save(user);
@@ -124,8 +120,7 @@ public class UserService {
                     User user = User.builder()
                             .email(email)
                             .password("")
-                            .role(User.Role.CLIENT)
-                            .status(User.Status.APPROVED)
+                            .role(Role.CLIENT)
                             .build();
                     return userRepository.save(user);
                 });
@@ -133,7 +128,7 @@ public class UserService {
 
     public List<User> getAllClients() {
         return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == User.Role.CLIENT)
+                .filter(u -> u.getRole() == Role.CLIENT)
                 .toList();
     }
     private boolean isStrongPassword(String password) {

@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional;
 
 import lk.fat2fit.Fat2Fit.DTO.Instructor.InstructorEmploymentAssignment;
@@ -117,7 +116,7 @@ public class InstructorService {
     }
 
     public ResponseEntity<?> updateInstructorStatus(int id, String status){
-        Instructor.ProfileStatus newStatus;
+        ProfileStatus newStatus;
         try {
             newStatus = ProfileStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {

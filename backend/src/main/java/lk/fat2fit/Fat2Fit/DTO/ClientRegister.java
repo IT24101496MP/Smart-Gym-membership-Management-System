@@ -19,6 +19,7 @@ public class ClientRegister {
     private int age;
     private LocalDate dateOfBirth;
     private Gender gender;
+    private String email;
     private String phoneNumber;
     private String landPhone;
     private String address;
