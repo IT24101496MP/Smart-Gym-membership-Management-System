@@ -9,9 +9,17 @@ html, body, #root {
   box-sizing: border-box;
 }
 
+:root {
+  --color-dark: #363636;
+  --color-accent: #DC2F2F;
+  --color-accent2: #FF894C;
+  --color-bg: #F8F8F8;
+  --card-bg: #ffffff;
+}
+
 .registration-page {
   min-height: 100vh;
-  background-color: #F8F8F8;
+  background-color: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,19 +28,20 @@ html, body, #root {
 
 .registration-container {
   width: 100%;
-  max-width: 720px;
-  background: #ffffff;
+  max-width: 900px;
+  background: var(--card-bg);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .registration-header {
-  background-color: #363636;
-  padding: 28px 36px;
+  background-color: var(--color-dark);
+  padding: 24px 36px 36px 36px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
+  position: relative;
 }
 
 .header-left {
@@ -44,7 +53,7 @@ html, body, #root {
 .header-accent {
   width: 10px;
   height: 65px;
-  background-color: #DC2F2F;
+  background-color: var(--color-accent);
   border-radius: 4px;
 }
 
@@ -61,8 +70,11 @@ html, body, #root {
 }
 
 .header-logo {
-  height: 70px;
+  height: 60px;
   object-fit: contain;
+  position: absolute;
+  right: 24px;
+  top: 12px;
 }
 
 .registration-form {
@@ -75,18 +87,23 @@ html, body, #root {
 .form-section-title {
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #FF894C;
-  padding-bottom: 8px;
+  color: var(--color-accent2);
+  padding-bottom: 10px;
   border-bottom: 1px solid #eeeeee;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .form-group {
@@ -97,28 +114,28 @@ html, body, #root {
 
 .form-group label {
   font-size: 1rem;
-  font-weight: 650;
-  color: #363636;
+  font-weight: 600;
+  color: #222222;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   padding: 11px 14px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background-color: #fafafa;
-  transition: all 0.2s ease;
+  border: 1.5px solid #e6e6e6;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background-color: #fbfbfb;
+  transition: all 0.18s ease;
   outline: none;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #DC2F2F;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(220, 47, 47, 0.15);
+  border-color: var(--color-accent);
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.06);
 }
 
 textarea {
@@ -142,15 +159,26 @@ textarea {
 .photo-preview-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: contain;   /* Show full image */
+  object-fit: contain;
   object-position: center;
   display: block;
 }
 
+.photo-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 8px;
+  margin-top: 12px;
+  border: 2px solid #eee;
+  display: block;
+}
+
 .signature-wrapper {
-  border: 2px dashed #DC2F2F;
+  border: 2px dashed var(--color-accent);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card-bg);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -159,15 +187,16 @@ textarea {
 
 .signature-canvas {
   border-radius: 8px;
-  background: #ffffff;
-  width: 400px;
-  height: 120px;
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 500px;
+  height: 150px;
   margin-bottom: 6px;
 }
 
 .clear-signature {
   align-self: flex-end;
-  background-color: #FF7043;
+  background-color: var(--color-accent2);
   border: none;
   color: white;
   padding: 6px 14px;
@@ -184,18 +213,20 @@ textarea {
 }
 
 .submit-button {
-  background-color: #DC2F2F;
+  background-color: var(--color-accent);
   color: #ffffff;
-  padding: 8px 20px;
+  padding: 10px 22px;
   border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1.0rem;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 1.02rem;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(220,47,47,0.12);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #b71f1f;
+  filter: brightness(0.95);
+  transform: translateY(-1px);
 }
 
 .submit-button:disabled {
@@ -211,7 +242,7 @@ textarea {
 }
 
 .signin-prompt a {
-  color: #DC2F2F;
+  color: var(--color-accent);
   font-weight: 700;
   text-decoration: none;
 }
@@ -221,10 +252,23 @@ textarea {
 }
 
 .form-group.clearable input,
-.form-group.clearable textarea,
 .form-group.clearable select {
   width: 100%;
-  padding-right: 70px; /* space for Clear button */
+  padding-right: 70px;
+}
+
+.form-group.clearable textarea {
+  width: 100%;
+  padding-right: 14px;
+}
+
+.full-width textarea {
+  width: 100%;
+  min-height: 180px;
+  font-size: 1rem;
+  padding: 14px;
+  border-radius: 12px;
+  resize: vertical;
 }
 
 .form-group.clearable button {
@@ -260,4 +304,27 @@ textarea {
   .submit-button {
     width: 100%;
   }
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.success-message {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 500;
 }

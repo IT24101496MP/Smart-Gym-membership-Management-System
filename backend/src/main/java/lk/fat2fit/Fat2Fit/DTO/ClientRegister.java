@@ -21,7 +21,6 @@ public class ClientRegister {
     private Gender gender;
     private String phoneNumber;
     private String landPhone;
-    private String email;
     private String address;
     private String password;
 
