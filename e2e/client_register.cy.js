@@ -9,8 +9,6 @@ describe("Client Registration", () => {
     cy.intercept("POST", "**/api/client/register").as("reg");
 
     cy.contains("button", "Register").click();
-
-    // If validation prevents submit, request should NOT happen
     cy.wait(800);
     cy.get("@reg.all").then((calls) => {
       expect(calls || []).to.have.length(0);
