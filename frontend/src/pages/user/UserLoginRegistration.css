@@ -144,11 +144,34 @@
   color: #DC2F2F;
 }
 
-/* Button */
 .signup-center {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   margin: 15px 0;
+  gap: 17px;
+}
+
+.simulate-role-wrapper label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #363636;
+}
+
+.simulate-role-wrapper select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e0e0e0;
+  background-color: #fafafa;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.simulate-role-wrapper select:focus {
+  border-color: #DC2F2F;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(220, 47, 47, 0.15);
 }
 
 .submit-button {
@@ -157,6 +180,7 @@
   padding: 12px 40px;
   border: none;
   border-radius: 8px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
