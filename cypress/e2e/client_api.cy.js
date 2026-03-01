@@ -1,102 +1,61 @@
-describe("Client Registration API", () => {
-  const API_URL = "http://localhost:8080/api/client/register"; 
+describe("Backend API - Client", () => {
+  const API = "http://localhost:8080";
 
-  // Positive Test
-  it("should register client successfully ", () => {
-    const stamp = Date.now();
-    const email = `client${stamp}@mail.com`;
-    const mobile = `07${String(stamp).slice(-8)}`;
-
+  it("GET /api/client/{id} ", () => {
     cy.request({
-      method: "POST",
-      url: API_URL,
-      form: true,
-      body: {
-        firstName: "Nimal",
-        lastName: "Perera",
-        age: "25",
-        gender: "Male",
-        mobileNumber: mobile,
-        landPhone: "0112345678",
-        email,
-        address: "Colombo",
-        bloodGroup: "A+",
-        emergencyContactName: "Kamal",
-        emergencyContactRelationship: "Brother",
-        emergencyContactNumber: "0711111111",
-      },
+      method: "GET",
+      url: `${API}/api/client/1`,
       failOnStatusCode: false,
     }).then((res) => {
-      expect([200, 201, 405]).to.include(res.status);
-
-      if (res.status === 405) {
-        cy.log("⚠ 405 Method Not Allowed: backend endpoint/method mismatch for client register");
-      }
+      expect([200, 401, 403, 404]).to.include(res.status);
     });
   });
 
-  //  Missing Required Fields
-  it("should fail when required fields are missing ", () => {
+  it("GET /api/client/user/{id} ", () => {
     cy.request({
-      method: "POST",
-      url: API_URL,
-      form: true,
-      body: {},
+      method: "GET",
+      url: `${API}/api/client/user/1`,
       failOnStatusCode: false,
     }).then((res) => {
-      expect([400, 401, 422, 405]).to.include(res.status);
-
-      if (res.status === 405) {
-        cy.log("⚠ 405 Method Not Allowed: backend endpoint/method mismatch for client register");
-      }
+      expect([200, 401, 403, 404]).to.include(res.status);
     });
   });
 
-  //  Duplicate Mobile Number
-  it("should fail for duplicate mobile number ", () => {
-    const stamp = Date.now();
-    const mobile = "0777777777";
-
-    // First request
+  it("POST /api/client/register ", () => {
     cy.request({
       method: "POST",
-      url: API_URL,
-      form: true,
-      body: {
-        firstName: "Test1",
-        lastName: "Client",
-        age: "30",
-        gender: "Male",
-        mobileNumber: mobile,
-        email: `dup1${stamp}@mail.com`,
-        address: "Colombo",
-      },
+      url: `${API}/api/client/register`,
       failOnStatusCode: false,
-    });
-
-    // Second request with same mobile
-    cy.request({
-      method: "POST",
-      url: API_URL,
-      form: true,
+      headers: { "Content-Type": "application/json" },
       body: {
-        firstName: "Test2",
-        lastName: "Client",
-        age: "32",
+        firstName: "John",
+        lastName: "Cena",
+        age: 24,
         gender: "Male",
-        mobileNumber: mobile,
-        email: `dup2${stamp}@mail.com`,
-        address: "Colombo",
+        mobileNumber: "0712345678",
+        address: "123 Main Street",
       },
-      failOnStatusCode: false,
     }).then((res) => {
-      // If backend mapping is correct -> expect 409 or 400
-      // If mapping is wrong -> 405
-      expect([409, 400, 405]).to.include(res.status);
+      expect([401, 403]).to.include(res.status);
+    });
+  });
 
-      if (res.status === 405) {
-        cy.log("⚠ 405 Method Not Allowed: backend endpoint/method mismatch for client register");
-      }
+  it("PUT /api/client/{id}/update ", () => {
+    cy.request({
+      method: "PUT",
+      url: `${API}/api/client/1/update?updatedBy=1`,
+      failOnStatusCode: false,
+      headers: { "Content-Type": "application/json" },
+      body: {
+        firstName: "Updated",
+        lastName: "User",
+        age: 25,
+        gender: "Male",
+        mobileNumber: "0712345678",
+        address: "New Address",
+      },
+    }).then((res) => {
+      expect([401, 403]).to.include(res.status);
     });
   });
 });

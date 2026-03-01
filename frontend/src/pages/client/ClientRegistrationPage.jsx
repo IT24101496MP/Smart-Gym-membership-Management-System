@@ -1,10 +1,11 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import SignatureCanvas from "react-signature-canvas";
 import logo from "../../assets/Fat2fit Logo.jpg";
 import "./ClientRegistrationPage.css";
 
 const ClientRegistrationPage = () => {
+  const navigate = useNavigate();
   const sigCanvas = useRef(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -26,6 +27,7 @@ const ClientRegistrationPage = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -95,14 +97,25 @@ const ClientRegistrationPage = () => {
       });
 
       if (response.ok) {
-        alert("Client registered successfully!");
-        window.location.reload();
+        try {
+          const data = await response.json();
+          const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || (data.client && (data.client.clientId || data.client.id)) || null;
+          if (id) localStorage.setItem("userId", String(id));
+        } catch (err) {
+          const txt = await response.text();
+          console.warn("Non-JSON registration response:", response.status, txt);
+        }
+
+        setSuccessMsg("Client registered successfully!");
+        setTimeout(() => navigate("/profile"), 1000);
       } else {
-        const error = await response.text();
-        alert("Registration failed: " + error);
+        const errorText = await response.text();
+        console.error("Registration failed", response.status, errorText);
+        alert("Registration failed: " + errorText);
       }
     } catch (error) {
       alert("Server error occurred.");
+      console.error(error);
     }
     setIsSubmitting(false);
   };
@@ -121,6 +134,10 @@ const ClientRegistrationPage = () => {
           </div>
           <img src={logo} alt="Fat2Fit Logo" className="header-logo" />
         </div>
+
+        {/* Messages */}
+        {successMsg && <div className="success-message">{successMsg}</div>}
+        {Object.keys(errors).length > 0 && Object.values(errors).some(e => e) && <div className="error-message">Please fix the errors below</div>}
 
         {/* Form */}
         <form className="registration-form" onSubmit={handleSubmit}>
@@ -177,39 +194,43 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Mobile Number *</label>
-            <input
-              type="text"
-              name="mobileNumber"
-              value={formData.mobileNumber}
-              onChange={handleChange}
-              placeholder="e.g., 0712345678"
-            />
-            <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
+          <div className="form-row">
+            <div className="form-group clearable">
+              <label>Mobile Number *</label>
+              <input
+                type="text"
+                name="mobileNumber"
+                value={formData.mobileNumber}
+                onChange={handleChange}
+                placeholder="e.g., 0712345678"
+              />
+              <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
+            </div>
+
+            <div className="form-group clearable">
+              <label>Land Phone</label>
+              <input
+                type="text"
+                name="landPhone"
+                value={formData.landPhone}
+                onChange={handleChange}
+                placeholder="e.g., 0112345678"
+              />
+              <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
+            </div>
           </div>
 
-          <div className="form-group clearable">
-            <label>Land Phone</label>
-            <input
-              type="text"
-              name="landPhone"
-              value={formData.landPhone}
-              onChange={handleChange}
-              placeholder="e.g., 0112345678"
-            />
-            <button type="button" onClick={() => clearField("landPhone")}>Clear</button>
-          </div>
-
-          <div className="form-group clearable">
-            <label>Address *</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="e.g., 123 Main Street, Kiribathgoda"
-            />
-            <button type="button" onClick={() => clearField("address")}>Clear</button>
+          <div className="full-width">
+            <div className="form-group clearable">
+              <label>Address *</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="e.g., 123 Main Street"
+              />
+              <button type="button" onClick={() => clearField("address")}>Clear</button>
+            </div>
           </div>
 
           <div className="form-row">
@@ -217,14 +238,9 @@ const ClientRegistrationPage = () => {
               <label>Blood Group</label>
               <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                 <option value="">Select</option>
-                <option>A+</option>
-                <option>A-</option>
-                <option>B+</option>
-                <option>B-</option>
-                <option>O+</option>
-                <option>O-</option>
-                <option>AB+</option>
-                <option>AB-</option>
+                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
               <button type="button" onClick={() => clearField("bloodGroup")}>Clear</button>
             </div>
@@ -232,17 +248,11 @@ const ClientRegistrationPage = () => {
             <div className="form-group clearable">
               <label>Profile Picture</label>
               <input type="file" name="profilePicture" accept="image/*" onChange={handleChange} />
+              {photoPreview && <img src={photoPreview} alt="Preview" className="photo-preview" />}
               <button type="button" onClick={() => clearField("profilePicture")}>Clear</button>
-
-              {photoPreview && (
-                <div className="photo-preview-wrapper">
-                  <img src={photoPreview} alt="Profile Preview" className="photo-preview" />
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Emergency Contact */}
           <p className="form-section-title">Emergency Contact</p>
           <div className="form-row">
             <div className="form-group clearable">
@@ -270,7 +280,7 @@ const ClientRegistrationPage = () => {
             </div>
           </div>
 
-          <div className="form-group clearable">
+          <div className="form-group clearable full-width">
             <label>Contact Number</label>
             <input
               type="text"
@@ -282,13 +292,12 @@ const ClientRegistrationPage = () => {
             <button type="button" onClick={() => clearField("emergencyContactNumber")}>Clear</button>
           </div>
 
-          {/* Signature */}
           <p className="form-section-title">Digital Signature</p>
           <div className="signature-wrapper">
             <SignatureCanvas
               ref={sigCanvas}
               penColor="black"
-              canvasProps={{ className: "signature-canvas", width: 500, height: 200 }}
+              canvasProps={{ className: "signature-canvas" }}
             />
             <button type="button" className="clear-signature" onClick={clearSignature}>
               Clear Signature
@@ -300,10 +309,6 @@ const ClientRegistrationPage = () => {
               {isSubmitting ? "Submitting..." : "Register"}
             </button>
           </div>
-
-          <p className="signin-prompt">
-            Already registered? <Link to="/login">Sign in</Link>
-          </p>
         </form>
       </div>
     </div>

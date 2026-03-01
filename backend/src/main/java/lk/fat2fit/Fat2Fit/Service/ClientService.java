@@ -7,15 +7,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ClientService {
 
     private final ClientRepository clientRepository;
-
+    private final AuditLogService auditLogService;
     private Client clientRegisterToClient(ClientRegister clientRegister) {
         return Client.builder()
                 .firstName(clientRegister.getFirstName())
@@ -41,17 +43,87 @@ public class ClientService {
     }
 
     public ResponseEntity<?> registerClient(ClientRegister clientRegister) {
-
         boolean mobileExists = clientRepository.existsByMobileNumber(clientRegister.getMobileNumber());
-
         if (mobileExists) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("This mobile number already exists.");
         }
 
-        clientRepository.save(clientRegisterToClient(clientRegister));
-
+        Client saved = clientRepository.save(clientRegisterToClient(clientRegister));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Client registered successfully");
+            .body(saved);
+    }
+
+    public Client getClientById(int id) {
+        return clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+    }
+
+    @Transactional
+    public Client updateClientProfile(int id, ClientRegister dto, Long updatedBy) {
+        Client existing = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        compareAndLog(existing.getFirstName(), dto.getFirstName(), "firstName", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getFirstName(), dto.getFirstName())) existing.setFirstName(dto.getFirstName());
+
+        compareAndLog(existing.getLastName(), dto.getLastName(), "lastName", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getLastName(), dto.getLastName())) existing.setLastName(dto.getLastName());
+
+        compareAndLog(String.valueOf(existing.getAge()), String.valueOf(dto.getAge()), "age", existing.getClientId(), updatedBy);
+        if (existing.getAge() != dto.getAge()) existing.setAge(dto.getAge());
+
+        compareAndLog(existing.getGender(), dto.getGender(), "gender", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getGender(), dto.getGender())) existing.setGender(dto.getGender());
+
+        compareAndLog(existing.getMobileNumber(), dto.getMobileNumber(), "mobileNumber", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getMobileNumber(), dto.getMobileNumber())) existing.setMobileNumber(dto.getMobileNumber());
+
+        compareAndLog(existing.getAddress(), dto.getAddress(), "address", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getAddress(), dto.getAddress())) existing.setAddress(dto.getAddress());
+
+        compareAndLog(existing.getLandPhone(), dto.getLandPhone(), "landPhone", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getLandPhone(), dto.getLandPhone())) existing.setLandPhone(dto.getLandPhone());
+
+        compareAndLog(existing.getEmergencyContactName(), dto.getEmergencyContactName(), "emergencyContactName", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getEmergencyContactName(), dto.getEmergencyContactName()))
+            existing.setEmergencyContactName(dto.getEmergencyContactName());
+
+        compareAndLog(existing.getEmergencyContactRelationship(), dto.getEmergencyContactRelationship(), "emergencyContactRelationship", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getEmergencyContactRelationship(), dto.getEmergencyContactRelationship()))
+            existing.setEmergencyContactRelationship(dto.getEmergencyContactRelationship());
+
+        compareAndLog(existing.getEmergencyContactNumber(), dto.getEmergencyContactNumber(), "emergencyContactNumber", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getEmergencyContactNumber(), dto.getEmergencyContactNumber()))
+            existing.setEmergencyContactNumber(dto.getEmergencyContactNumber());
+
+        compareAndLog(existing.getBloodGroup(), dto.getBloodGroup(), "bloodGroup", existing.getClientId(), updatedBy);
+        if (!Objects.equals(existing.getBloodGroup(), dto.getBloodGroup())) existing.setBloodGroup(dto.getBloodGroup());
+
+        if (dto.getProfilePicture() != null) {
+            // don't attempt to convert entire byte array to string; just note change and size
+            String oldDesc = existing.getProfilePicture() != null ?
+                    "[binary " + existing.getProfilePicture().length + " bytes]" : null;
+            String newDesc = "[binary " + dto.getProfilePicture().length + " bytes]";
+            compareAndLog(oldDesc, newDesc, "profilePicture", existing.getClientId(), updatedBy);
+            existing.setProfilePicture(dto.getProfilePicture());
+        }
+
+        if (dto.getDigitalSignature() != null) {
+            String oldDesc = existing.getDigitalSignature() != null ?
+                    "[binary " + existing.getDigitalSignature().length + " bytes]" : null;
+            String newDesc = "[binary " + dto.getDigitalSignature().length + " bytes]";
+            compareAndLog(oldDesc, newDesc, "digitalSignature", existing.getClientId(), updatedBy);
+            existing.setDigitalSignature(dto.getDigitalSignature());
+        }
+
+        existing.setUpdatedAt(LocalDateTime.now());
+        return clientRepository.save(existing);
+    }
+
+    private void compareAndLog(String oldValue, String newValue, String field, int profileId, Long updatedBy) {
+        if (!Objects.equals(oldValue, newValue)) {
+            auditLogService.logChange(profileId, "CLIENT", updatedBy, field, oldValue, newValue);
+        }
     }
 }

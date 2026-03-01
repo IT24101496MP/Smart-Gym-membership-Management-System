@@ -1,11 +1,16 @@
 package lk.fat2fit.Fat2Fit.Controller;
 
 import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
+import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Service.ClientService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -15,8 +20,8 @@ import java.io.IOException;
 public class ClientController {
 
     private final ClientService clientService;
+    private final Logger logger = LoggerFactory.getLogger(ClientController.class);
 
-    // Utility method to convert empty strings to null
     private static String emptyToNull(String value) {
         return (value == null || value.trim().isEmpty()) ? null : value;
     }
@@ -38,47 +43,19 @@ public class ClientController {
             @RequestParam(required = false) MultipartFile digitalSignature
     ) throws IOException {
 
-        // Validation
-        if (firstName == null || firstName.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("First name is required");
-        }
-
-        if (lastName == null || lastName.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Last name is required");
-        }
-
-        if (age <= 0) {
-            return ResponseEntity.badRequest().body("Invalid age");
-        }
-
-        if (!gender.matches("Male|Female|Prefer not to say")) {
-            return ResponseEntity.badRequest().body("Invalid gender");
-        }
-
-        if (address == null || address.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Address is required");
-        }
-
-        if (!mobileNumber.matches("0\\d{9}")) {
-            return ResponseEntity.badRequest().body("Invalid mobile number");
-        }
-
-        if (landPhone != null && !landPhone.trim().isEmpty() && !landPhone.matches("0\\d{9}")) {
+        if (firstName == null || firstName.trim().isEmpty()) return ResponseEntity.badRequest().body("First name is required");
+        if (lastName == null || lastName.trim().isEmpty()) return ResponseEntity.badRequest().body("Last name is required");
+        if (age <= 0) return ResponseEntity.badRequest().body("Invalid age");
+        if (!gender.matches("Male|Female|Prefer not to say")) return ResponseEntity.badRequest().body("Invalid gender");
+        if (address == null || address.trim().isEmpty()) return ResponseEntity.badRequest().body("Address is required");
+        if (!mobileNumber.matches("0\\d{9}")) return ResponseEntity.badRequest().body("Invalid mobile number");
+        if (landPhone != null && !landPhone.trim().isEmpty() && !landPhone.matches("0\\d{9}"))
             return ResponseEntity.badRequest().body("Invalid land phone");
-        }
-
-        if (emergencyContactNumber != null && !emergencyContactNumber.trim().isEmpty() &&
-                !emergencyContactNumber.matches("0\\d{9}")) {
+        if (emergencyContactNumber != null && !emergencyContactNumber.trim().isEmpty() && !emergencyContactNumber.matches("0\\d{9}"))
             return ResponseEntity.badRequest().body("Invalid emergency contact number");
-        }
 
-        byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty())
-                ? profilePicture.getBytes()
-                : null;
-
-        byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty())
-                ? digitalSignature.getBytes()
-                : null;
+        byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty()) ? profilePicture.getBytes() : null;
+        byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty()) ? digitalSignature.getBytes() : null;
 
         ClientRegister clientRegister = ClientRegister.builder()
                 .firstName(firstName.trim())
@@ -96,6 +73,83 @@ public class ClientController {
                 .digitalSignature(signatureBytes)
                 .build();
 
-        return clientService.registerClient(clientRegister);
+        try {
+            return clientService.registerClient(clientRegister);
+        } catch (Exception e) {
+            logger.error("Error registering client", e);
+            return ResponseEntity.status(500).body("Server error during registration: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getClientById(@PathVariable int id) {
+        try {
+            Client client = clientService.getClientById(id);
+            return ResponseEntity.ok(client);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getClientByUserId(@PathVariable int id) {
+        try {
+            Client client = clientService.getClientById(id);
+            return ResponseEntity.ok(client);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> updateClientProfile(
+            @PathVariable int id,
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam int age,
+            @RequestParam String gender,
+            @RequestParam String mobileNumber,
+            @RequestParam String address,
+            @RequestParam(required = false) String landPhone,
+            @RequestParam(required = false) String emergencyContactName,
+            @RequestParam(required = false) String emergencyContactRelationship,
+            @RequestParam(required = false) String emergencyContactNumber,
+            @RequestParam(required = false) String bloodGroup,
+            @RequestParam(required = false) MultipartFile profilePicture,
+            @RequestParam(required = false) MultipartFile digitalSignature,
+            @RequestParam Long updatedBy
+    ) throws IOException {
+        if (updatedBy == null) {
+            return ResponseEntity.badRequest().body("updatedBy parameter is required");
+        }
+
+        byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty()) ? profilePicture.getBytes() : null;
+        byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty()) ? digitalSignature.getBytes() : null;
+
+        ClientRegister clientRegister = ClientRegister.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .age(age)
+                .gender(gender)
+                .mobileNumber(mobileNumber)
+                .address(address)
+                .landPhone(emptyToNull(landPhone))
+                .emergencyContactName(emptyToNull(emergencyContactName))
+                .emergencyContactRelationship(emptyToNull(emergencyContactRelationship))
+                .emergencyContactNumber(emptyToNull(emergencyContactNumber))
+                .bloodGroup(emptyToNull(bloodGroup))
+                .profilePicture(profileBytes)
+                .digitalSignature(signatureBytes)
+                .build();
+
+        try {
+            Client updatedClient = clientService.updateClientProfile(id, clientRegister, updatedBy);
+            return ResponseEntity.ok(updatedClient);
+        } catch (RuntimeException e) {
+            logger.error("Error updating client profile", e);
+            // return 500 to differentiate from not-found
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Server error during update: " + e.getMessage());
+        }
     }
 }

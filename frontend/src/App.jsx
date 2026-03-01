@@ -1,29 +1,50 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
+
+import UserLoginRegistration from "./pages/user/UserLoginRegistration";
 import InstructorRegistrationPage from "./pages/instructor/InstructorRegistrationPage";
 import InstructorListPage from "./pages/instructor/InstructorListPage";
 import InstructorDetailPage from "./pages/instructor/InstructorDetailPage";
 import ClientRegistrationPage from "./pages/client/ClientRegistrationPage";
+import ClientProfile from "./pages/client/ClientProfile";
 
 function App() {
+
+  const handleFacebookLogin = (response) => {
+    console.log("Facebook login response:", response);
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/client/register" element={<ClientRegistrationPage />} />
-        <Route path="/" element={<Navigate to="/client/register" replace />} />
-        <Route
-          path="/login"
-          element={
-            <div style={{ textAlign: "center", marginTop: "50px" }}>
-              <h1>Login Page</h1>
-              <p>This is a placeholder login page.</p>
-            </div>
-          }
-        />
-        <Route path="/instructor" element={<InstructorListPage />} />
-        <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
-        <Route path="/instructor/:id" element={<InstructorDetailPage />} />
-      </Routes>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <BrowserRouter>
+        <Routes>
+
+          {/* Login/Signup Page */}
+          <Route
+            path="/login"
+            element={
+              <UserLoginRegistration
+                onFacebookLogin={handleFacebookLogin}
+              />
+            }
+          />
+
+          <Route path="/client-registration" element={<ClientRegistrationPage />} />
+          <Route path="/profile" element={<ClientProfile />} />
+          <Route path="/instructor" element={<InstructorListPage />} />
+          <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
+          <Route path="/instructor/:id" element={<InstructorDetailPage />} />
+
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Catch all unknown routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 
