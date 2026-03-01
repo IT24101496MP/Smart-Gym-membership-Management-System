@@ -37,7 +37,7 @@ describe("Auth_Signup", () => {
   });
 
   it("signs up successfully and redirects to client registration", () => {
-    cy.intercept("POST", "http://localhost:8081/api/user/register", {
+    cy.intercept("POST", "http://localhost:8080/api/user/register", {
       statusCode: 200,
       body: { userId: 101, token: "fake-jwt-token" },
     }).as("registerUser");
