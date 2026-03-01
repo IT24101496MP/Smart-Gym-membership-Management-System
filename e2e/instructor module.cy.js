@@ -1,4 +1,4 @@
-describe("Instructor Module - Basic QA", () => {
+describe("Instructor", () => {
 
   const FRONTEND = "http://localhost:5173";
 
@@ -11,8 +11,7 @@ describe("Instructor Module - Basic QA", () => {
       "signature"
     ].join(".");
 
-    // Mock login
-    cy.intercept("POST", "http://localhost:8081/api/auth/login", {
+    cy.intercept("POST", "http://localhost:8080/api/auth/login", {
       statusCode: 200,
       body: {
         accessToken: fakeToken,
@@ -20,8 +19,7 @@ describe("Instructor Module - Basic QA", () => {
       }
     });
 
-    // Mock instructor list
-    cy.intercept("GET", "http://localhost:8081/api/instructor", {
+    cy.intercept("GET", "http://localhost:8080/api/instructor", {
       statusCode: 200,
       body: [
         {
@@ -39,8 +37,7 @@ describe("Instructor Module - Basic QA", () => {
       ]
     });
 
-    // Mock instructor detail
-    cy.intercept("GET", "http://localhost:8081/api/instructor/1", {
+    cy.intercept("GET", "http://localhost:8080/api/instructor/1", {
       statusCode: 200,
       body: {
         id: 1,
@@ -57,13 +54,11 @@ describe("Instructor Module - Basic QA", () => {
       }
     });
 
-    // Mock approve
-    cy.intercept("PUT", "http://localhost:8081/api/instructor/1/status?status=APPROVED", {
+    cy.intercept("PUT", "http://localhost:8080/api/instructor/1/status?status=APPROVED", {
       statusCode: 200
     });
 
-    // Mock reject
-    cy.intercept("PUT", "http://localhost:8081/api/instructor/1/status?status=REJECTED", {
+    cy.intercept("PUT", "http://localhost:8080/api/instructor/1/status?status=REJECTED", {
       statusCode: 200
     });
 
