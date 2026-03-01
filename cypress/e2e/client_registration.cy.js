@@ -1,6 +1,5 @@
 describe("Client Registration Page ", () => {
   it("shows validation error banner when required fields missing", () => {
-    // Spy on network to ensure form is NOT submitted when validation fails
     cy.intercept("POST", "**/api/client/register").as("clientRegister");
 
     cy.visit("http://localhost:5173/client-registration");
