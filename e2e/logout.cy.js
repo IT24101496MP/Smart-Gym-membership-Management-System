@@ -1,4 +1,4 @@
-describe("Logout Flow", () => {
+describe("Logout", () => {
 
   const FRONTEND = "http://localhost:5173";
 
