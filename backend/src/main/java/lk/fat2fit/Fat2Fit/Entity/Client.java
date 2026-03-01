@@ -3,19 +3,20 @@ package lk.fat2fit.Fat2Fit.Entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 @Entity
+<<<<<<< HEAD
+@Table(name = "Client")
+@PrimaryKeyJoinColumn(name = "id")
+public class Client extends User {
+=======
 @Table(name = "Clients")
 public class Client {
 
@@ -85,15 +86,10 @@ public class Client {
     @Column(name = "profile_picture", columnDefinition = "LONGBLOB")
     private byte[] profilePicture;
 
+>>>>>>> testing
     @Lob
     @Column(name = "digital_signature", columnDefinition = "LONGBLOB")
     private byte[] digitalSignature;
 
-    @CreationTimestamp
-    @Column(name = "Created_at", updatable = false, columnDefinition = "DATETIME")
-    private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "Updated_at", columnDefinition = "DATETIME")
-    private LocalDateTime updatedAt;
 }

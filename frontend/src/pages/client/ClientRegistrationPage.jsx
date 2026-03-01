@@ -13,10 +13,13 @@ const ClientRegistrationPage = () => {
     firstName: "",
     lastName: "",
     age: "",
+    dateOfBirth: "",
     gender: "",
-    mobileNumber: "",
+    phoneNumber: "",
     landPhone: "",
     address: "",
+    password: "",
+    confirmPassword: "",
     bloodGroup: "",
     emergencyContactName: "",
     emergencyContactRelationship: "",
@@ -61,9 +64,15 @@ const ClientRegistrationPage = () => {
     if (!formData.firstName.trim()) newErrors.firstName = "First name required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
     if (!formData.age) newErrors.age = "Age required";
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth required";
     if (!formData.gender) newErrors.gender = "Gender required";
-    if (!formData.mobileNumber.trim()) newErrors.mobileNumber = "Mobile required";
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = "Phone number required";
+    if (!formData.email.trim()) newErrors.email = "Email required";
     if (!formData.address.trim()) newErrors.address = "Address required";
+    if (!formData.password) newErrors.password = "Password required";
+    else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters";
+    if (!formData.confirmPassword) newErrors.confirmPassword = "Please confirm your password";
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
     return newErrors;
   };
 
@@ -79,7 +88,8 @@ const ClientRegistrationPage = () => {
     try {
       const formPayload = new FormData();
       Object.keys(formData).forEach((key) => {
-        if (formData[key]) {
+        if (key === "confirmPassword") return;
+        if (formData[key] !== null && formData[key] !== "") {
           formPayload.append(key, formData[key]);
         }
       });
@@ -97,26 +107,22 @@ const ClientRegistrationPage = () => {
       });
 
       if (response.ok) {
-        try {
-          const data = await response.json();
-          const id = (data && (data.clientId || data.id || data.client_id || data.userId || data.user_id)) || (data.client && (data.client.clientId || data.client.id)) || null;
-          if (id) localStorage.setItem("userId", String(id));
-          if (data && data.token) localStorage.setItem("token", data.token);
-        } catch (err) {
-          const txt = await response.text();
-          console.warn("Non-JSON registration response:", response.status, txt);
-        }
-
-        setSuccessMsg("Client registered successfully!");
-        setTimeout(() => navigate("/profile"), 1000);
+        alert("Registration successful!\nWelcome to Fat2Fit! Your client account has been created. You can now log in with your email and password.");
+        window.location.reload();
       } else {
-        const errorText = await response.text();
-        console.error("Registration failed", response.status, errorText);
-        alert("Registration failed: " + errorText);
+        const message = await response.text();
+        console.error("Registration failed:", message);
+        if (response.status === 409) {
+          alert(`Registration failed: ${message}`);
+        } else if (response.status === 400) {
+          alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
+        } else {
+          alert(`Registration failed (${response.status}): ${message || 'An unexpected error occurred. Please try again.'}`);
+        }
       }
     } catch (error) {
-      alert("Server error occurred.");
-      console.error(error);
+      console.error("Error:", error);
+      alert("Unable to connect to the server.\nPlease check your internet connection and try again.");
     }
     setIsSubmitting(false);
   };
@@ -184,29 +190,42 @@ const ClientRegistrationPage = () => {
             </div>
 
             <div className="form-group clearable">
-              <label>Gender *</label>
-              <select name="gender" value={formData.gender} onChange={handleChange}>
-                <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Prefer not to say</option>
-              </select>
-              <button type="button" onClick={() => clearField("gender")}>Clear</button>
+              <label>Date of Birth *</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+              />
+              <button type="button" onClick={() => clearField("dateOfBirth")}>Clear</button>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group clearable">
-              <label>Mobile Number *</label>
-              <input
-                type="text"
-                name="mobileNumber"
-                value={formData.mobileNumber}
-                onChange={handleChange}
-                placeholder="e.g., 0712345678"
-              />
-              <button type="button" onClick={() => clearField("mobileNumber")}>Clear</button>
+              <label>Gender *</label>
+              <select name="gender" value={formData.gender} onChange={handleChange}>
+                <option value="">Select</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+                <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+              </select>
+              <button type="button" onClick={() => clearField("gender")}>Clear</button>
             </div>
+          </div>
+
+          <div className="form-group clearable">
+            <label>Phone Number *</label>
+            <input
+              type="text"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="e.g., 0712345678"
+            />
+            <button type="button" onClick={() => clearField("phoneNumber")}>Clear</button>
+          </div>
 
             <div className="form-group clearable">
               <label>Land Phone</label>
@@ -291,6 +310,33 @@ const ClientRegistrationPage = () => {
               placeholder="e.g., 0712345678"
             />
             <button type="button" onClick={() => clearField("emergencyContactNumber")}>Clear</button>
+          </div>
+
+          {/* Signature */}
+          <p className="form-section-title">Account Security</p>
+          <div className="form-row">
+            <div className="form-group clearable">
+              <label>Password *</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Min. 8 characters"
+              />
+              <button type="button" onClick={() => clearField("password")}>Clear</button>
+            </div>
+            <div className="form-group clearable">
+              <label>Confirm Password *</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Re-enter password"
+              />
+              <button type="button" onClick={() => clearField("confirmPassword")}>Clear</button>
+            </div>
           </div>
 
           <p className="form-section-title">Digital Signature</p>

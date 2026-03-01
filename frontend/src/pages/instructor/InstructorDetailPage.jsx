@@ -35,11 +35,12 @@ const InstructorDetailPage = () => {
         const data = await res.json();
         setInstructor(data);
         // Pre-populate form with existing values if present
-        const hasEmp = !!data.employmentType;
+        const emp = data.employment;
+        const hasEmp = !!emp?.employmentType;
         setEmpForm({
-          employmentType: data.employmentType || '',
-          workingHoursPerWeek: data.workingHoursPerWeek ?? '',
-          salary: data.salary ?? '',
+          employmentType: emp?.employmentType || '',
+          workingHoursPerWeek: emp?.workingHoursPerWeek ?? '',
+          salary: emp?.salary ?? '',
           isActive: data.isActive !== null ? String(data.isActive) : '',
         });
         // Start in edit mode only when no employment has been assigned yet
@@ -125,9 +126,9 @@ const InstructorDetailPage = () => {
   const cancelEmpEdit = () => {
     // Reset form to the last saved values from instructor state
     setEmpForm({
-      employmentType: instructor.employmentType || '',
-      workingHoursPerWeek: instructor.workingHoursPerWeek ?? '',
-      salary: instructor.salary ?? '',
+      employmentType: instructor.employment?.employmentType || '',
+      workingHoursPerWeek: instructor.employment?.workingHoursPerWeek ?? '',
+      salary: instructor.employment?.salary ?? '',
       isActive: instructor.isActive !== null ? String(instructor.isActive) : '',
     });
     setEmpErrors({});
@@ -225,8 +226,12 @@ const InstructorDetailPage = () => {
             <div className="info-grid">
               <InfoRow label="First Name"   value={instructor.firstName} />
               <InfoRow label="Last Name"    value={instructor.lastName} />
+              <InfoRow label="Age"          value={instructor.age > 0 ? instructor.age : '—'} />
+              <InfoRow label="Date of Birth" value={instructor.dateOfBirth ? new Date(instructor.dateOfBirth).toLocaleDateString('en-GB') : '—'} />
+              <InfoRow label="Gender"       value={instructor.gender?.replace('_', ' ')} />
               <InfoRow label="Email"        value={instructor.email} />
               <InfoRow label="Phone"        value={instructor.phoneNumber} />
+              <InfoRow label="Land Phone"   value={instructor.landPhone} />
               <InfoRow label="Address"      value={instructor.address} span />
             </div>
           </section>
@@ -283,7 +288,7 @@ const InstructorDetailPage = () => {
             <section className="detail-section emp-section">
               <div className="emp-section__header">
                 <h2 className="section-title emp-section__title">Employment Assignment</h2>
-                {instructor.employmentType && !empEditing && (
+                {instructor.employment?.employmentType && !empEditing && (
                   <button
                     type="button"
                     className="btn btn--edit-emp"
@@ -379,7 +384,7 @@ const InstructorDetailPage = () => {
 
                 {empEditing && (
                   <div className="emp-form__footer">
-                    {instructor.employmentType && (
+                    {instructor.employment?.employmentType && (
                       <button
                         type="button"
                         className="btn btn--outline"
@@ -391,22 +396,13 @@ const InstructorDetailPage = () => {
                     )}
                     <button type="submit" className="btn btn--save" disabled={empLoading}>
                       {empLoading ? <span className="btn-spinner" /> : null}
-                      {instructor.employmentType ? 'Save Changes' : 'Assign Employment Details'}
+                      {instructor.employment?.employmentType ? 'Save Changes' : 'Assign Employment Details'}
                     </button>
                   </div>
                 )}
               </form>
             </section>
           )}
-
-          {/* Prompt when not yet approved */}
-          {!isApproved && (
-            <div className="emp-locked">
-              <span className="emp-locked__icon">🔒</span>
-              <p>Employment details can only be assigned after the instructor is <strong>approved</strong>.</p>
-            </div>
-          )}
-
         </div>
 
       </div>
