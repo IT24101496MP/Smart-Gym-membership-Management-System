@@ -19,9 +19,8 @@ describe("Manage Page", () => {
       }
     });
 
-    // Mock backend responses based on role
     if (role === "ADMIN") {
-      cy.intercept("GET", "http://localhost:8081/api/manage/users", {
+      cy.intercept("GET", "http://localhost:8080/api/manage/users", {
         statusCode: 200,
         body: [
           { id: 1, firstName: "John", lastName: "Doe", email: "john@example.com", phoneNumber: "0712345678", role: "CLIENT", isActive: true }
@@ -30,7 +29,7 @@ describe("Manage Page", () => {
     }
 
     if (role === "INSTRUCTOR") {
-      cy.intercept("GET", "http://localhost:8081/api/manage/clients", {
+      cy.intercept("GET", "http://localhost:8080/api/manage/clients", {
         statusCode: 200,
         body: [
           { id: 2, firstName: "Jane", lastName: "Smith", email: "jane@example.com", phoneNumber: "0771234567", role: "CLIENT", isActive: true }
@@ -39,7 +38,7 @@ describe("Manage Page", () => {
     }
 
     if (role === "CLIENT") {
-      cy.intercept("GET", "http://localhost:8081/api/manage/me", {
+      cy.intercept("GET", "http://localhost:8080/api/manage/me", {
         statusCode: 200,
         body: {
           id: 3,
