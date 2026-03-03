@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './InstructorListPage.css';
+import api from '../../utils/api';
 
 const InstructorListPage = () => {
   const [instructors, setInstructors] = useState([]);
@@ -12,14 +13,10 @@ const InstructorListPage = () => {
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/instructor');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch instructors (${response.status})`);
-        }
-        const data = await response.json();
+        const { data } = await api.get('/api/instructor');
         setInstructors(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || 'Failed to load instructors.');
       } finally {
         setLoading(false);
       }
@@ -29,11 +26,11 @@ const InstructorListPage = () => {
   }, []);
 
   const filteredInstructors = instructors.filter((instructor) => {
-    const fullName = `${instructor.firstName} ${instructor.lastName}`.toLowerCase();
+    const fullName = `${instructor.firstName ?? ''} ${instructor.lastName ?? ''}`.toLowerCase();
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.phoneNumber.includes(searchTerm);
+      (instructor.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (instructor.phoneNumber ?? '').includes(searchTerm);
     const matchesStatus =
       statusFilter === 'ALL' || instructor.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -147,7 +144,7 @@ const InstructorListPage = () => {
                       <td className="col-id">{index + 1}</td>
                       <td className="col-name">
                         <div className="avatar">
-                          {instructor.firstName.charAt(0)}{instructor.lastName.charAt(0)}
+                          {(instructor.firstName ?? '?').charAt(0)}{(instructor.lastName ?? '?').charAt(0)}
                         </div>
                         <div>
                           <div className="name-primary">

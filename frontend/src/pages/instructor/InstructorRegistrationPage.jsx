@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { publicApi } from '../../utils/api';
 import './InstructorRegistrationPage.css';
 
 const InstructorRegistrationPage = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    age: '',
+    dateOfBirth: '',
+    gender: '',
     email: '',
     phoneNumber: '',
+    landPhone: '',
     address: '',
     qualification: '',
     yearsOfExperience: '',
@@ -42,6 +47,15 @@ const InstructorRegistrationPage = () => {
     }
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
+    }
+    if (!formData.age || Number(formData.age) <= 0) {
+      newErrors.age = 'Valid age is required';
+    }
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required';
+    }
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
     }
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -84,35 +98,35 @@ const InstructorRegistrationPage = () => {
     
     try {
       const { confirmPassword: _, ...payload } = formData;
-      const response = await fetch('http://localhost:8080/api/instructor/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      await publicApi.post('/api/instructor/register', payload);
+      alert('Application submitted successfully!\nYour instructor profile is now under review. You will be notified by email once an admin approves your account.');
+      setFormData({
+        firstName: '',
+        lastName: '',
+        age: '',
+        dateOfBirth: '',
+        gender: '',
+        email: '',
+        phoneNumber: '',
+        landPhone: '',
+        address: '',
+        qualification: '',
+        yearsOfExperience: '',
+        areasOfSpecialization: '',
+        password: '',
+        confirmPassword: ''
       });
-
-      if (response.ok) {
-        alert('Form submitted for review successfully!');
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phoneNumber: '',
-          address: '',
-          qualification: '',
-          yearsOfExperience: '',
-          areasOfSpecialization: '',
-          password: '',
-          confirmPassword: ''
-        });
-      } else {
-        const error = await response.text();
-        alert(`Registration failed: ${error}`);
-      }
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred during registration');
+      const status  = error.response?.status;
+      const message = error.response?.data || 'An unexpected error occurred. Please try again.';
+      console.error('Registration failed:', message);
+      if (status === 409) {
+        alert(`Registration failed: ${message}`);
+      } else if (status === 400) {
+        alert(`Registration failed: Invalid data submitted.\nDetails: ${message}`);
+      } else {
+        alert(`Registration failed (${status ?? 'Network Error'}): ${message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -168,6 +182,70 @@ const InstructorRegistrationPage = () => {
 
           <div className="form-row">
             <div className="form-group">
+              <label htmlFor="age">Age <span className="required-star">*</span></label>
+              <input
+                type="number"
+                id="age"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                placeholder="e.g., 30"
+                min="18"
+                className={errors.age ? 'error-field' : ''}
+              />
+              {errors.age && <span className="error-message">{errors.age}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="dateOfBirth">Date of Birth <span className="required-star">*</span></label>
+              <input
+                type="date"
+                id="dateOfBirth"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className={errors.dateOfBirth ? 'error-field' : ''}
+              />
+              {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="gender">Gender <span className="required-star">*</span></label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className={errors.gender ? 'error-field' : ''}
+              >
+                <option value="">Select</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+                <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+              </select>
+              {errors.gender && <span className="error-message">{errors.gender}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phoneNumber">Phone Number <span className="required-star">*</span></label>
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="e.g., 0771234567"
+                className={errors.phoneNumber ? 'error-field' : ''}
+              />
+              {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
               <label htmlFor="email">Email <span className="required-star">*</span></label>
               <input
                 type="email"
@@ -182,17 +260,15 @@ const InstructorRegistrationPage = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="phoneNumber">Phone Number <span className="required-star">*</span></label>
+              <label htmlFor="landPhone">Land Phone</label>
               <input
                 type="tel"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                id="landPhone"
+                name="landPhone"
+                value={formData.landPhone}
                 onChange={handleChange}
-                placeholder="+94 77 123 4567"
-                className={errors.phoneNumber ? 'error-field' : ''}
+                placeholder="e.g., 0112345678"
               />
-              {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
             </div>
           </div>
 
@@ -234,7 +310,6 @@ const InstructorRegistrationPage = () => {
                 name="yearsOfExperience"
                 value={formData.yearsOfExperience}
                 onChange={handleChange}
-                defaultValue="0"
                 placeholder="5"
                 min="0"
                 max="50"
