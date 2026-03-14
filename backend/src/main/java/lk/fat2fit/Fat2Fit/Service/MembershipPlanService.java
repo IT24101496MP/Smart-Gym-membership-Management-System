@@ -31,7 +31,7 @@ public class MembershipPlanService {
         MembershipPlan plan = MembershipPlan.builder()
                 .planName(request.getPlanName().trim())
                 .description(emptyToNull(request.getDescription()))
-                .durationMonths(request.getDurationMonths())
+            .durationDays(request.getDurationDays())
                 .monthlyPrice(scaleMoney(request.getMonthlyPrice()))
                 .admissionFee(scaleMoney(request.getAdmissionFee()))
                 .maximumMembers(request.getMaximumMembers())
@@ -73,7 +73,7 @@ public class MembershipPlanService {
         MembershipPlan plan = existingOpt.get();
         plan.setPlanName(request.getPlanName().trim());
         plan.setDescription(emptyToNull(request.getDescription()));
-        plan.setDurationMonths(request.getDurationMonths());
+        plan.setDurationDays(request.getDurationDays());
         plan.setMonthlyPrice(scaleMoney(request.getMonthlyPrice()));
         plan.setAdmissionFee(scaleMoney(request.getAdmissionFee()));
         plan.setMaximumMembers(request.getMaximumMembers());
@@ -107,7 +107,7 @@ public class MembershipPlanService {
                 .id(plan.getId())
                 .planName(plan.getPlanName())
                 .description(plan.getDescription())
-                .durationMonths(plan.getDurationMonths())
+            .durationDays(plan.getDurationDays())
                 .monthlyPrice(plan.getMonthlyPrice())
                 .admissionFee(plan.getAdmissionFee())
                 .maximumMembers(plan.getMaximumMembers())
@@ -122,11 +122,11 @@ public class MembershipPlanService {
         if (request.getPlanName() == null || request.getPlanName().trim().isEmpty()) {
             return "Plan name is required.";
         }
-        if (request.getDurationMonths() == null) {
+        if (request.getDurationDays() == null) {
             return "Duration is required.";
         }
-        if (request.getDurationMonths() <= 0) {
-            return "Duration must be a positive number of months.";
+        if (request.getDurationDays() <= 0) {
+            return "Duration must be a positive number of days.";
         }
         if (request.getMonthlyPrice() == null) {
             return "Monthly price is required.";

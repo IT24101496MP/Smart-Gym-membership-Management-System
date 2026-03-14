@@ -48,7 +48,6 @@ public class ClientController {
             @RequestParam(required = false) String emergencyContactRelationship,
             @RequestParam(required = false) String emergencyContactNumber,
             @RequestParam(required = false) String bloodGroup,
-            @RequestParam(required = false) Integer membershipPlanId,
             @RequestParam(required = false) MultipartFile profilePicture,
             @RequestParam(required = false) MultipartFile digitalSignature
     ) throws IOException {

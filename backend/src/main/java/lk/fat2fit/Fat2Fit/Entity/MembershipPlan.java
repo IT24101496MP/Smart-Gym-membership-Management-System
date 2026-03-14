@@ -38,8 +38,8 @@ public class MembershipPlan {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "duration_months", nullable = false)
-    private Integer durationMonths;
+    @Column(name = "duration_days", nullable = false)
+    private Integer durationDays;
 
     @Column(name = "monthly_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal monthlyPrice;

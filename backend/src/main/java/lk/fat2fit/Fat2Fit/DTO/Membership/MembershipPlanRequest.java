@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class MembershipPlanRequest {
     private String planName;
     private String description;
-    private Integer durationMonths;
+    private Integer durationDays;
     private BigDecimal monthlyPrice;
     private BigDecimal admissionFee;
     private Integer maximumMembers;

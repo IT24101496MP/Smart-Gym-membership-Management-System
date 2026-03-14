@@ -32,5 +32,4 @@ public class ClientRegister {
     private String bloodGroup;
     private byte[] profilePicture;
     private byte[] digitalSignature;
-    private Integer membershipPlanId;
 }
