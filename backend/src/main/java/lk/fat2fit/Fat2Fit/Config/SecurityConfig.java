@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/client/register",
                                 "/api/instructor/register")
                                 .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
 
                         // Authenticated-only
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
@@ -52,6 +53,9 @@ public class SecurityConfig {
                         // ADMIN only
                         .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/membership-plans").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/membership-plans").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/membership-plans/**").hasRole("ADMIN")
 
                         // Manage endpoints
                         .requestMatchers(HttpMethod.GET, "/api/manage/users").hasRole("ADMIN")
