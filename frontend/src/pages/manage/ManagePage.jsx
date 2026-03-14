@@ -898,6 +898,11 @@ const ManagePage = () => {
             <span className={`role-badge role-${role?.toLowerCase()}`}>{role}</span>
           </div>
           <div className="manage-header-right">
+            {role === "ADMIN" && (
+              <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
+                Membership Plans
+              </button>
+            )}
             <button className="btn-back" onClick={() => navigate("/profile")}>
               ← Profile
             </button>

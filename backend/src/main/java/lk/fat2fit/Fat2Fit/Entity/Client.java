@@ -17,4 +17,8 @@ public class Client extends User {
     @Lob
     @Column(name = "digital_signature", columnDefinition = "LONGBLOB")
     private byte[] digitalSignature;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "membership_plan_id")
+    private MembershipPlan membershipPlan;
 }
