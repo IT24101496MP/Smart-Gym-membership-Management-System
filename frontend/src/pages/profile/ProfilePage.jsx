@@ -4,6 +4,11 @@ import api from "../../utils/api";
 import { logout } from "../../utils/auth";
 import "./ProfilePage.css";
 
+const membershipLabel = (status) => {
+  if (!status) return "Unknown";
+  return status.charAt(0) + status.slice(1).toLowerCase();
+};
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -77,6 +82,24 @@ const ProfilePage = () => {
             <span className="detail-label">Role</span>
             <span className="detail-value">{user.role}</span>
           </div>
+          {user.role === "CLIENT" && (
+            <>
+              <div className="detail-row">
+                <span className="detail-label">Membership Status</span>
+                <span className={`membership-status-badge ${String(user.membershipStatus || "").toLowerCase()}`}>
+                  {membershipLabel(user.membershipStatus)}
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Membership Period</span>
+                <span className="detail-value">
+                  {user.membershipStartDate && user.membershipEndDate
+                    ? `${user.membershipStartDate} to ${user.membershipEndDate}`
+                    : "No active period"}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="profile-actions">
