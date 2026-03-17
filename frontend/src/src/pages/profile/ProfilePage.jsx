@@ -1,0 +1,118 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
+import { logout } from "../../utils/auth";
+import "./ProfilePage.css";
+
+const membershipLabel = (status) => {
+  if (!status) return "Unknown";
+  return status.charAt(0) + status.slice(1).toLowerCase();
+};
+
+const ProfilePage = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api
+      .get("/api/auth/me")
+      .then(({ data }) => setUser(data))
+      .catch(() => setError("Failed to load profile."));
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  if (error) {
+    return (
+      <div className="profile-page">
+        <div className="profile-card error-card">
+          <p>{error}</p>
+          <button onClick={() => navigate("/login")}>Go to Login</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="profile-page">
+        <div className="profile-card">
+          <p className="loading">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-page">
+      <div className="profile-card">
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {user.firstName.charAt(0).toUpperCase()}
+            {user.lastName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="profile-name">{user.firstName} {user.lastName}</h1>
+            <span className={`profile-role role-${user.role.toLowerCase()}`}>{user.role}</span>
+          </div>
+        </div>
+
+        <div className="profile-details">
+          <div className="detail-row">
+            <span className="detail-label">User ID</span>
+            <span className="detail-value">#{user.id}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">First Name</span>
+            <span className="detail-value">{user.firstName}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Last Name</span>
+            <span className="detail-value">{user.lastName}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Email</span>
+            <span className="detail-value">{user.email}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Role</span>
+            <span className="detail-value">{user.role}</span>
+          </div>
+          {user.role === "CLIENT" && (
+            <>
+              <div className="detail-row">
+                <span className="detail-label">Membership Status</span>
+                <span className={`membership-status-badge ${String(user.membershipStatus || "").toLowerCase()}`}>
+                  {membershipLabel(user.membershipStatus)}
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Membership Period</span>
+                <span className="detail-value">
+                  {user.membershipStartDate && user.membershipEndDate
+                    ? `${user.membershipStartDate} to ${user.membershipEndDate}`
+                    : "No active period"}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="profile-actions">
+          <button className="manage-btn" onClick={() => navigate("/manage")}>
+            &#9881; Manage
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;
