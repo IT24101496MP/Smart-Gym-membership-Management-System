@@ -14,6 +14,8 @@ import lk.fat2fit.Fat2Fit.DTO.Membership.MembershipPlanStatusUpdateRequest;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
+import lk.fat2fit.Fat2Fit.Entity.Client;
+import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,7 +33,7 @@ public class MembershipPlanService {
         MembershipPlan plan = MembershipPlan.builder()
                 .planName(request.getPlanName().trim())
                 .description(emptyToNull(request.getDescription()))
-            .durationDays(request.getDurationDays())
+                .durationDays(request.getDurationDays())
                 .monthlyPrice(scaleMoney(request.getMonthlyPrice()))
                 .admissionFee(scaleMoney(request.getAdmissionFee()))
                 .maximumMembers(request.getMaximumMembers())
@@ -107,7 +109,7 @@ public class MembershipPlanService {
                 .id(plan.getId())
                 .planName(plan.getPlanName())
                 .description(plan.getDescription())
-            .durationDays(plan.getDurationDays())
+                .durationDays(plan.getDurationDays())
                 .monthlyPrice(plan.getMonthlyPrice())
                 .admissionFee(plan.getAdmissionFee())
                 .maximumMembers(plan.getMaximumMembers())

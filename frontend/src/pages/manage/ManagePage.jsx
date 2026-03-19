@@ -627,6 +627,10 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, view
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-metrics" onClick={() => onEditMetrics(u)}>Metrics</button>
                   )}
+                  {/* Membership: ADMIN + INSTRUCTOR for clients only */}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-membership" onClick={() => handleOpenMembership(u)}>Membership</button>
+                  )}
                   {/* Instructor actions: ADMIN only */}
                   {viewerRole === "ADMIN" && u.role === "INSTRUCTOR" && (
                     u.instructorStatus === "APPROVED"
@@ -770,6 +774,159 @@ const SelfEditForm = ({ user, onSaved }) => {
   );
 };
 
+// ── Membership Modal ──────────────────────────────────────────────────────────
+
+const MembershipModal = ({ user, onClose }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [renewalForm, setRenewalForm] = useState({
+    planName: "",
+    durationMonths: "",
+    price: "",
+  });
+  const [renewing, setRenewing] = useState(false);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [user.id]);
+
+  const fetchHistory = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.get(`/api/membership-plans/history/${user.id}`);
+      setHistory(data);
+    } catch (err) {
+      setError(err.response?.data || "Failed to load membership history.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRenewal = async (e) => {
+    e.preventDefault();
+    if (!renewalForm.planName || !renewalForm.durationMonths || !renewalForm.price) {
+      setError("All fields are required for renewal.");
+      return;
+    }
+    setRenewing(true);
+    setError("");
+    try {
+      await api.post("/api/membership-plans/renew", {
+        clientId: user.id,
+        planName: renewalForm.planName,
+        durationMonths: parseInt(renewalForm.durationMonths),
+        price: parseFloat(renewalForm.price),
+      });
+      setRenewalForm({ planName: "", durationMonths: "", price: "" });
+      fetchHistory(); // Refresh history
+    } catch (err) {
+      setError(err.response?.data || "Failed to renew membership.");
+    } finally {
+      setRenewing(false);
+    }
+  };
+
+  const canRenew = history.length > 0 && (history[0].status === "ACTIVE" || history[0].status === "EXPIRED");
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content membership-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Membership Management - {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body">
+          {error && <div className="error-message">{error}</div>}
+
+          {/* Renewal Section */}
+          {canRenew && (
+            <div className="renewal-section">
+              <h3>Renew Membership</h3>
+              <form onSubmit={handleRenewal}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Plan Name</label>
+                    <input
+                      type="text"
+                      value={renewalForm.planName}
+                      onChange={(e) => setRenewalForm({ ...renewalForm, planName: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Duration (Months)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={renewalForm.durationMonths}
+                      onChange={(e) => setRenewalForm({ ...renewalForm, durationMonths: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={renewalForm.price}
+                      onChange={(e) => setRenewalForm({ ...renewalForm, price: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="btn-renew" disabled={renewing}>
+                  {renewing ? "Renewing…" : "Renew Membership"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* History Section */}
+          <div className="history-section">
+            <h3>Membership History</h3>
+            {loading ? (
+              <p>Loading history...</p>
+            ) : history.length === 0 ? (
+              <p>No membership history found.</p>
+            ) : (
+              <div className="history-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Plan Name</th>
+                      <th>Start Date</th>
+                      <th>Expiry Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((plan) => (
+                      <tr key={plan.id}>
+                        <td>{plan.planName}</td>
+                        <td>{new Date(plan.startDate).toLocaleDateString()}</td>
+                        <td>{new Date(plan.expiryDate).toLocaleDateString()}</td>
+                        <td>
+                          <span className={`status-badge status-${plan.status.toLowerCase()}`}>
+                            {plan.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main ManagePage ───────────────────────────────────────────────────────────
 
 const ManagePage = () => {
@@ -783,6 +940,7 @@ const ManagePage = () => {
   const [editing, setEditing] = useState(null);              // personal-details modal
   const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
+  const [editingMembership, setEditingMembership] = useState(null); // membership modal
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
 
@@ -817,6 +975,8 @@ const ManagePage = () => {
   const closeMetricsModal = () => setEditingMetrics(null);
   const handleOpenEmployment = (user) => setEditingEmployment(user);
   const closeEmploymentModal = () => setEditingEmployment(null);
+  const handleOpenMembership = (user) => setEditingMembership(user);
+  const closeMembershipModal = () => setEditingMembership(null);
 
   const handleEmploymentSaved = ({ id, payload }) => {
     setUsers((prev) => prev.map((u) =>
@@ -968,6 +1128,14 @@ const ManagePage = () => {
           user={editingEmployment}
           onClose={closeEmploymentModal}
           onSaved={handleEmploymentSaved}
+        />
+      )}
+
+      {/* Membership Modal */}
+      {editingMembership && (
+        <MembershipModal
+          user={editingMembership}
+          onClose={closeMembershipModal}
         />
       )}
     </div>

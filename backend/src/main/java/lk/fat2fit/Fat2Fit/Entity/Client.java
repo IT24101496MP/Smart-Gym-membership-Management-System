@@ -19,6 +19,6 @@ public class Client extends User {
     private byte[] digitalSignature;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "membership_plan_id")
-    private MembershipPlan membershipPlan;
+    @JoinColumn(name = "current_membership_id")
+    private ClientMembership currentMembership;
 }
