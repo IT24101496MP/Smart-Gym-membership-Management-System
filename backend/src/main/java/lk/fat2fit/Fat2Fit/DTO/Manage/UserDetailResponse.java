@@ -2,6 +2,7 @@ package lk.fat2fit.Fat2Fit.DTO.Manage;
 
 import lk.fat2fit.Fat2Fit.Entity.Enum.EmploymentType;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
+import lk.fat2fit.Fat2Fit.Entity.Enum.MemberMembershipStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.ProfileStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lombok.AllArgsConstructor;

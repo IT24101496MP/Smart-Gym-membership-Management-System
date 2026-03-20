@@ -29,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final MembershipStatusService membershipStatusService;
 
     public ResponseEntity<?> login(LoginRequest request) {
         String identifier = request.getIdentifier().trim();
