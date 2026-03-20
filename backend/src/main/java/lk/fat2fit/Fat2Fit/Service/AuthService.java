@@ -1,6 +1,7 @@
 package lk.fat2fit.Fat2Fit.Service;
 
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import lk.fat2fit.Fat2Fit.DTO.Auth.LoginRequest;
 import lk.fat2fit.Fat2Fit.DTO.Auth.LoginResponse;
 import lk.fat2fit.Fat2Fit.DTO.Auth.MeResponse;
 import lk.fat2fit.Fat2Fit.DTO.Auth.RefreshRequest;
+import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.RefreshToken;
 import lk.fat2fit.Fat2Fit.Entity.User;
@@ -95,8 +97,81 @@ public class AuthService {
         String role = jwtUtil.getRoleFromToken(token);
 
         return userRepository.findById(userId)
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
-                        new MeResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), role)))
+                .<ResponseEntity<?>>map(u -> {
+                    String membershipName = null;
+                    String membershipStatus = null;
+                    LocalDate membershipStartDate = null;
+                    LocalDate membershipEndDate = null;
+
+                    if (u instanceof Client client) {
+                        if (client.getMembershipPlan() != null) {
+                            membershipName = client.getMembershipPlan().getPlanName();
+                        }
+                        membershipStartDate = client.getMembershipStartDate();
+                        membershipEndDate = client.getMembershipEndDate();
+                        if (membershipName != null && (membershipStartDate == null || membershipEndDate == null)) {
+                            MembershipPeriod fallbackPeriod = deriveMembershipPeriod(client);
+                            membershipStartDate = fallbackPeriod.startDate();
+                            membershipEndDate = fallbackPeriod.endDate();
+                        }
+                        membershipStatus = resolveMembershipStatus(client);
+                        if ("PENDING".equals(membershipStatus)
+                                && membershipStartDate != null
+                                && membershipEndDate != null) {
+                            membershipStatus = resolveMembershipStatusByPeriod(membershipStartDate, membershipEndDate);
+                        }
+                    }
+
+                    return ResponseEntity.ok(new MeResponse(
+                            u.getId(),
+                            u.getFirstName(),
+                            u.getLastName(),
+                            u.getEmail(),
+                            role,
+                            u.getIsActive(),
+                            membershipName,
+                            membershipStatus,
+                            membershipStartDate,
+                            membershipEndDate));
+                })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found."));
+    }
+
+    private String resolveMembershipStatus(Client client) {
+        if (client.getMembershipPlan() == null) {
+            return "NOT_ASSIGNED";
+        }
+
+        LocalDate start = client.getMembershipStartDate();
+        LocalDate end = client.getMembershipEndDate();
+
+        if (start == null || end == null) {
+            return "PENDING";
+        }
+        return resolveMembershipStatusByPeriod(start, end);
+    }
+
+    private String resolveMembershipStatusByPeriod(LocalDate start, LocalDate end) {
+        LocalDate now = LocalDate.now();
+        if (now.isBefore(start)) {
+            return "UPCOMING";
+        }
+        if (now.isAfter(end)) {
+            return "EXPIRED";
+        }
+        return "ACTIVE";
+    }
+
+    private MembershipPeriod deriveMembershipPeriod(Client client) {
+        if (client.getMembershipPlan() == null || client.getMembershipPlan().getDurationDays() == null || client.getCreatedAt() == null) {
+            return new MembershipPeriod(null, null);
+        }
+
+        LocalDate derivedStart = client.getCreatedAt().toLocalDate();
+        LocalDate derivedEnd = derivedStart.plusDays(client.getMembershipPlan().getDurationDays().longValue());
+        return new MembershipPeriod(derivedStart, derivedEnd);
+    }
+
+    private record MembershipPeriod(LocalDate startDate, LocalDate endDate) {
     }
 }

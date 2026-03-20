@@ -37,6 +37,13 @@ public class UserDetailResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // ── Client-only fields (null for non-clients) ───────────────────────────
+    private Integer membershipPlanId;
+    private String membershipPlanName;
+    private String membershipStatus;
+    private LocalDate membershipStartDate;
+    private LocalDate membershipEndDate;
+
     // ── Instructor-only fields (null for non-instructors) ────────────────────
     private ProfileStatus instructorStatus;
     private EmploymentType employmentType;

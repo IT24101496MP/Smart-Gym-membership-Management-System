@@ -1,6 +1,7 @@
 package lk.fat2fit.Fat2Fit.Entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +22,10 @@ public class Client extends User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_plan_id")
     private MembershipPlan membershipPlan;
+
+    @Column(name = "membership_start_date")
+    private LocalDate membershipStartDate;
+
+    @Column(name = "membership_end_date")
+    private LocalDate membershipEndDate;
 }

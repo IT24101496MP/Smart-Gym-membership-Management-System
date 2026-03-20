@@ -68,6 +68,8 @@ const emptyEdit = () => ({
   emergencyContactNumber: "",
   bloodGroup: "",
   isActive: true,
+  membershipPlanId: "",
+  membershipStartDate: "",
 });
 
 const userToForm = (u) => ({
@@ -85,16 +87,22 @@ const userToForm = (u) => ({
   emergencyContactNumber: u.emergencyContactNumber ?? "",
   bloodGroup: u.bloodGroup ?? "",
   isActive: u.isActive ?? true,
+  membershipPlanId: u.membershipPlanId != null ? String(u.membershipPlanId) : "",
+  membershipStartDate: u.membershipStartDate ?? "",
 });
 
 const membershipLabel = (status) => {
   if (!status) return "Unknown";
-  return status.charAt(0) + status.slice(1).toLowerCase();
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 };
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
-const EditModal = ({ user, onClose, onSave, showIsActive }) => {
+const EditModal = ({ user, onClose, onSave, showIsActive, showMembershipAssignment, membershipPlans }) => {
   const [form, setForm] = useState(userToForm(user));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -109,7 +117,19 @@ const EditModal = ({ user, onClose, onSave, showIsActive }) => {
     setError("");
     setSaving(true);
     try {
-      await onSave(form);
+      const payload = {
+        ...form,
+        membershipPlanId:
+          showMembershipAssignment
+            ? (form.membershipPlanId === "" ? 0 : Number(form.membershipPlanId))
+            : undefined,
+        membershipStartDate:
+          showMembershipAssignment && form.membershipPlanId !== ""
+            ? (form.membershipStartDate || null)
+            : null,
+      };
+
+      await onSave(payload);
       onClose();
     } catch (err) {
       setError(err.response?.data ?? "Failed to save changes.");
@@ -211,6 +231,34 @@ const EditModal = ({ user, onClose, onSave, showIsActive }) => {
               <input value={form.emergencyContactNumber} onChange={set("emergencyContactNumber")} />
             </div>
           </div>
+
+          {showMembershipAssignment && (
+            <>
+              <div className="form-section-label">Membership Assignment</div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Membership Plan</label>
+                  <select value={form.membershipPlanId} onChange={set("membershipPlanId")}>
+                    <option value="">No plan</option>
+                    {membershipPlans.map((plan) => (
+                      <option key={plan.id} value={String(plan.id)}>
+                        {plan.planName} ({plan.durationDays} days)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Membership Start Date</label>
+                  <input
+                    type="date"
+                    value={form.membershipStartDate}
+                    onChange={set("membershipStartDate")}
+                    disabled={form.membershipPlanId === ""}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {showIsActive && (
             <div className="form-row">
@@ -621,9 +669,12 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, view
                 </td>
                 <td>
                   {u.role === "CLIENT" ? (
-                    <span className={`membership-status-badge ${String(u.membershipStatus || "").toLowerCase()}`}>
-                      {membershipLabel(u.membershipStatus)}
-                    </span>
+                    <div className="membership-cell">
+                      <span className={`membership-status-badge ${String(u.membershipStatus || "").toLowerCase()}`}>
+                        {membershipLabel(u.membershipStatus)}
+                      </span>
+                      <span className="membership-name">{u.membershipPlanName || "No plan"}</span>
+                    </div>
                   ) : (
                     "-"
                   )}
@@ -792,6 +843,7 @@ const ManagePage = () => {
   const role = getRole();
 
   const [users, setUsers] = useState([]);
+  const [membershipPlans, setMembershipPlans] = useState([]);
   const [selfUser, setSelfUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -808,8 +860,12 @@ const ManagePage = () => {
       setError("");
       try {
         if (role === "ADMIN") {
-          const { data } = await api.get("/api/manage/users");
-          setUsers(data);
+          const [usersRes, plansRes] = await Promise.all([
+            api.get("/api/manage/users"),
+            api.get("/api/membership-plans/active"),
+          ]);
+          setUsers(usersRes.data);
+          setMembershipPlans(plansRes.data);
         } else if (role === "INSTRUCTOR") {
           const { data } = await api.get("/api/manage/clients");
           setUsers(data);
@@ -862,7 +918,7 @@ const ManagePage = () => {
     async (form) => {
       const endpoint =
         role === "ADMIN"
-          ? `/api/manage/users/${editing.id}`
+          ? (editing.role === "CLIENT" ? `/api/manage/clients/${editing.id}` : `/api/manage/users/${editing.id}`)
           : `/api/manage/clients/${editing.id}`;
       const { data } = await api.put(endpoint, form);
       setUsers((prev) => prev.map((u) => (u.id === data.id ? data : u)));
@@ -965,6 +1021,8 @@ const ManagePage = () => {
           onClose={closeModal}
           onSave={handleSaveUser}
           showIsActive={role === "ADMIN"}
+          showMembershipAssignment={role === "ADMIN" && editing.role === "CLIENT"}
+          membershipPlans={membershipPlans}
         />
       )}
 

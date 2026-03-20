@@ -21,4 +21,6 @@ public class UserEditRequest {
     private String bloodGroup;
     private String address;
     private Boolean isActive;
+    private Integer membershipPlanId;
+    private LocalDate membershipStartDate;
 }
