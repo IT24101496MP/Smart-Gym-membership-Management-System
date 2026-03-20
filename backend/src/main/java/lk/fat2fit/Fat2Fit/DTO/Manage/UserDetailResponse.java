@@ -2,6 +2,7 @@ package lk.fat2fit.Fat2Fit.DTO.Manage;
 
 import lk.fat2fit.Fat2Fit.Entity.Enum.EmploymentType;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Gender;
+import lk.fat2fit.Fat2Fit.Entity.Enum.MemberMembershipStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.ProfileStatus;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,14 @@ public class UserDetailResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // ── Client-only membership fields (null for non-clients) ─────────────────
+    private MemberMembershipStatus membershipStatus;
+    private LocalDate membershipStartDate;
+    private LocalDate membershipEndDate;
+    private Boolean membershipSuspended;
+    private Integer membershipPlanId;
+    private String membershipPlanName;
 
     // ── Instructor-only fields (null for non-instructors) ────────────────────
     private ProfileStatus instructorStatus;

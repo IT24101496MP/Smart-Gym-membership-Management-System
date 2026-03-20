@@ -87,6 +87,11 @@ const userToForm = (u) => ({
   isActive: u.isActive ?? true,
 });
 
+const membershipLabel = (status) => {
+  if (!status) return "Unknown";
+  return status.charAt(0) + status.slice(1).toLowerCase();
+};
+
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
 const EditModal = ({ user, onClose, onSave, showIsActive }) => {
@@ -597,6 +602,7 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, view
               <th>Email</th>
               <th>Phone</th>
               <th>Role</th>
+              <th>Membership</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -612,6 +618,15 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, view
                   <span className={`role-badge role-${u.role?.toLowerCase()}`}>
                     {u.role}
                   </span>
+                </td>
+                <td>
+                  {u.role === "CLIENT" ? (
+                    <span className={`membership-status-badge ${String(u.membershipStatus || "").toLowerCase()}`}>
+                      {membershipLabel(u.membershipStatus)}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td>
                   <span className={`status-badge ${u.isActive ? "active" : "inactive"}`}>
