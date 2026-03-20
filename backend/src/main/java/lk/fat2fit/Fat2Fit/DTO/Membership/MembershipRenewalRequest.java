@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MembershipRenewalRequest {
     private Long clientId;
+    private Integer planId;
     private String planName;
     private Integer durationMonths;
     private Double price;
+    private java.time.LocalDate renewalDate;
 }

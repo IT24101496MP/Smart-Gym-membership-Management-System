@@ -278,7 +278,7 @@ public class ManageService {
         return ResponseEntity.ok(toMetricsResponse(clientId, metrics));
     }
 
-    private ClientMetricsResponse toMetricsResponse(int clientId, ClientBodyMetrics m) {
+    private ClientMetricsResponse toMetricsResponse(Long clientId, ClientBodyMetrics m) {
         return ClientMetricsResponse.builder()
                 .clientId(clientId)
                 .weightKg(m.getWeightKg())

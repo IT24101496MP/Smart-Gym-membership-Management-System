@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface ClientBodyMetricsRepository extends JpaRepository<ClientBodyMetrics, Integer> {
 
-    Optional<ClientBodyMetrics> findByClientId(int clientId);
+    Optional<ClientBodyMetrics> findByClientId(Long clientId);
 }
