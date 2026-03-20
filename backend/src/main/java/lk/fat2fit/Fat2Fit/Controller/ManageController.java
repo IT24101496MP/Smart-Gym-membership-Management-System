@@ -55,7 +55,7 @@ public class ManageController {
      */
     @PutMapping("/users/{id}")
     public ResponseEntity<?> editUser(@PathVariable int id,
-                                      @RequestBody UserEditRequest req) {
+            @RequestBody UserEditRequest req) {
         return manageService.editUser(id, req);
     }
 
@@ -64,8 +64,8 @@ public class ManageController {
      * Admin ONLY: edit a client's personal details.
      */
     @PutMapping("/clients/{id}")
-    public ResponseEntity<?> editClient(@PathVariable int id,
-                                        @RequestBody UserEditRequest req) {
+    public ResponseEntity<?> editClient(@PathVariable Long id,
+            @RequestBody UserEditRequest req) {
         return manageService.editClient(id, req);
     }
 
@@ -74,7 +74,7 @@ public class ManageController {
      * Admin or Instructor: view a client's body metrics & fitness goals.
      */
     @GetMapping("/clients/{id}/metrics")
-    public ResponseEntity<?> getClientMetrics(@PathVariable int id) {
+    public ResponseEntity<?> getClientMetrics(@PathVariable Long id) {
         return manageService.getClientMetrics(id);
     }
 
@@ -83,8 +83,8 @@ public class ManageController {
      * Admin or Instructor: create/update a client's body metrics & fitness goals.
      */
     @PutMapping("/clients/{id}/metrics")
-    public ResponseEntity<?> saveClientMetrics(@PathVariable int id,
-                                               @RequestBody ClientMetricsRequest req) {
+    public ResponseEntity<?> saveClientMetrics(@PathVariable Long id,
+            @RequestBody ClientMetricsRequest req) {
         return manageService.saveClientMetrics(id, req);
     }
 
@@ -110,7 +110,8 @@ public class ManageController {
 
     /**
      * PUT /api/manage/me
-     * Any authenticated user: edit own personal details (isActive excluded for CLIENT).
+     * Any authenticated user: edit own personal details (isActive excluded for
+     * CLIENT).
      */
     @PutMapping("/me")
     public ResponseEntity<?> editSelf(@RequestBody UserEditRequest req) {

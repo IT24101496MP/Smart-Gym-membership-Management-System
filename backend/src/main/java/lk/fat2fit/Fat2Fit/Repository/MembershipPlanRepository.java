@@ -9,5 +9,6 @@ import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 
 public interface MembershipPlanRepository extends JpaRepository<MembershipPlan, Integer> {
     List<MembershipPlan> findAllByOrderByIdDesc();
+
     List<MembershipPlan> findByStatusOrderByIdDesc(MembershipPlanStatus status);
 }

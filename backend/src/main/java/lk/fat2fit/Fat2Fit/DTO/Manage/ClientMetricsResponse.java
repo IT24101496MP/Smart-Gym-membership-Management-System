@@ -15,7 +15,7 @@ import java.util.Set;
 @Builder
 public class ClientMetricsResponse {
 
-    private int clientId;
+    private Long clientId;
 
     private BigDecimal weightKg;
     private BigDecimal heightCm;
