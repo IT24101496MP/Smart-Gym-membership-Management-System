@@ -1,0 +1,18 @@
+{
+  "activeMember": {
+    "id": "1001",
+    "name": "John Doe",
+    "startDate": "2026-03-01",
+    "durationDays": 30
+  },
+  "expiredMember": {
+    "id": "1002",
+    "name": "Jane Smith",
+    "startDate": "2026-01-01",
+    "durationDays": 30
+  },
+  "invalidMember": {
+    "id": "9999",
+    "name": "Non Existing Member"
+  }
+}
