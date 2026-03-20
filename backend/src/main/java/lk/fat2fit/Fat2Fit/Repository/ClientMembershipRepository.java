@@ -6,12 +6,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClientMembershipRepository extends JpaRepository<ClientMembership, Long> {
     List<ClientMembership> findByClientId(Long clientId);
 
     List<ClientMembership> findByClientIdAndStatusIn(Long clientId, List<MembershipPlanStatus> statuses);
+
+    Optional<ClientMembership> findFirstByClientIdAndStatusInOrderByExpiryDateDescIdDesc(
+            Long clientId,
+            List<MembershipPlanStatus> statuses);
 
     List<ClientMembership> findByClientIdOrderByIdDesc(Long clientId);
 }

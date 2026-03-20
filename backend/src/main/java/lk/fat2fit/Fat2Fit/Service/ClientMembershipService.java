@@ -27,68 +27,62 @@ public class ClientMembershipService {
     private final MembershipPlanRepository membershipPlanRepository;
 
     public ResponseEntity<?> renewMembership(MembershipRenewalRequest request) {
+        if (request.getClientId() == null) {
+            return ResponseEntity.badRequest().body("Client id is required.");
+        }
+
         Optional<Client> clientOpt = clientRepository.findById(request.getClientId());
         if (clientOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Client not found.");
         }
 
-        Client client = clientOpt.get();
-        Optional<ClientMembership> currentOpt = clientMembershipRepository.findByClientIdAndStatusIn(
-                request.getClientId(), List.of(MembershipPlanStatus.ACTIVE, MembershipPlanStatus.EXPIRED)).stream()
-                .findFirst();
+        Optional<ClientMembership> currentOpt = clientMembershipRepository
+                .findFirstByClientIdAndStatusInOrderByExpiryDateDescIdDesc(
+                        request.getClientId(),
+                        List.of(MembershipPlanStatus.ACTIVE, MembershipPlanStatus.EXPIRED));
 
         if (currentOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("No active or expired membership found for renewal.");
         }
 
         ClientMembership current = currentOpt.get();
-        LocalDate newStartDate = current.getStatus() == MembershipPlanStatus.ACTIVE
-                ? current.getExpiryDate()
-                : LocalDate.now();
-        LocalDate newExpiryDate = newStartDate.plusMonths(request.getDurationMonths());
-
-        if (current.getStatus() == MembershipPlanStatus.ACTIVE) {
-            current.setStatus(MembershipPlanStatus.COMPLETED);
-            clientMembershipRepository.save(current);
+        Optional<MembershipPlan> planOpt;
+        if (request.getPlanId() != null) {
+            planOpt = membershipPlanRepository.findById(request.getPlanId());
+        } else if (request.getPlanName() != null && !request.getPlanName().isBlank()) {
+            planOpt = membershipPlanRepository.findAll().stream()
+                    .filter(p -> p.getPlanName().equalsIgnoreCase(request.getPlanName().trim()))
+                    .findFirst();
+        } else {
+            return ResponseEntity.badRequest().body("A membership plan is required.");
         }
-
-        // Assume the plan is selected by name, but for simplicity, use the current plan
-        // or create new.
-        // For now, create with the plan name, but since it's a template, perhaps find
-        // by name.
-        // But to simplify, since the request has planName, but no plan id, perhaps
-        // assume it's a new plan or find existing.
-        // For the feature, the staff selects a plan, so perhaps the request should have
-        // planId.
-
-        // Let's assume the request has planId instead of planName.
-
-        // Wait, in the frontend, I have planName, but to make it work, let's change to
-        // planId.
-
-        // But for now, to match, let's find the plan by name.
-
-        Optional<MembershipPlan> planOpt = membershipPlanRepository.findAll().stream()
-                .filter(p -> p.getPlanName().equals(request.getPlanName()))
-                .findFirst();
 
         if (planOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Membership plan not found.");
         }
 
         MembershipPlan plan = planOpt.get();
+        if (plan.getStatus() != MembershipPlanStatus.ACTIVE) {
+            return ResponseEntity.badRequest().body("Selected membership plan must be active.");
+        }
+
+        LocalDate effectiveRenewalDate = request.getRenewalDate() != null
+                ? request.getRenewalDate()
+                : LocalDate.now();
+
+        LocalDate newStartDate = current.getStatus() == MembershipPlanStatus.ACTIVE
+                ? current.getExpiryDate()
+                : effectiveRenewalDate;
+        LocalDate newExpiryDate = newStartDate.plusDays(plan.getDurationDays().longValue());
 
         ClientMembership newMembership = new ClientMembership();
-        newMembership.setClient(client);
+        newMembership.setClient(clientOpt.get());
         newMembership.setMembershipPlan(plan);
         newMembership.setStartDate(newStartDate);
         newMembership.setExpiryDate(newExpiryDate);
         newMembership.setStatus(MembershipPlanStatus.ACTIVE);
 
-        ClientMembership saved = clientMembershipRepository.save(newMembership);
-
-        client.setCurrentMembership(saved);
-        clientRepository.save(client);
+        clientMembershipRepository.save(newMembership);
 
         return ResponseEntity.ok("Membership renewed successfully.");
     }

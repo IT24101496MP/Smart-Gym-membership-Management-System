@@ -52,7 +52,7 @@ public class ManageController {
      * Admin: edit any user's details (role is excluded from changes).
      */
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> editUser(@PathVariable Long id,
+    public ResponseEntity<?> editUser(@PathVariable int id,
             @RequestBody UserEditRequest req) {
         return manageService.editUser(id, req);
     }
@@ -72,7 +72,7 @@ public class ManageController {
      * Admin or Instructor: view a client's body metrics & fitness goals.
      */
     @GetMapping("/clients/{id}/metrics")
-    public ResponseEntity<?> getClientMetrics(@PathVariable int id) {
+    public ResponseEntity<?> getClientMetrics(@PathVariable Long id) {
         return manageService.getClientMetrics(id);
     }
 

@@ -149,6 +149,12 @@
   color: #c62828;
 }
 
+.membership-status-badge.completed,
+.membership-status-badge.inactive {
+  background: #eeeeee;
+  color: #4f4f4f;
+}
+
 .membership-cell {
   display: flex;
   flex-direction: column;
@@ -248,6 +254,21 @@
 }
 .btn-metrics:hover {
   background: #c0392b;
+}
+
+.btn-membership-profile {
+  padding: 0.35rem 0.9rem;
+  background: #1565c0;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-membership-profile:hover {
+  background: #0f4f98;
 }
 
 .btn-employment {
@@ -383,6 +404,76 @@
 
 .modal-card--wide {
   max-width: 860px;
+}
+
+.member-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.member-profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+}
+
+.member-profile-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #6b6b6b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.member-profile-value {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.membership-renew-panel,
+.membership-history-panel {
+  margin-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1rem;
+}
+
+.membership-renew-panel h3,
+.membership-history-panel h3 {
+  font-size: 1rem;
+  color: #1a1a1a;
+  margin: 0 0 0.75rem;
+}
+
+.membership-renew-form {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.membership-renew-form select {
+  min-width: 240px;
+  padding: 0.55rem 0.8rem;
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+.membership-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
 }
 
 /* ── Fitness goals grid ──────────────────────────────────────────────────────── */

@@ -100,6 +100,11 @@ const membershipLabel = (status) => {
     .join(" ");
 };
 
+const canRenewMembership = (status) => {
+  const normalized = String(status || "").toUpperCase();
+  return normalized === "ACTIVE" || normalized === "EXPIRED";
+};
+
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
 const EditModal = ({ user, onClose, onSave, showIsActive, showMembershipAssignment, membershipPlans }) => {
@@ -451,6 +456,143 @@ const EmploymentModal = ({ user, onClose, onSaved }) => {
   );
 };
 
+const MembershipProfileModal = ({
+  user,
+  viewerRole,
+  history,
+  historyLoading,
+  historyError,
+  membershipPlans,
+  renewing,
+  renewError,
+  renewSuccess,
+  onRenew,
+  onRefresh,
+  onClose,
+}) => {
+  const [planId, setPlanId] = useState("");
+
+  useEffect(() => {
+    setPlanId(membershipPlans.length > 0 ? String(membershipPlans[0].id) : "");
+  }, [membershipPlans]);
+
+  const submitRenewal = async (e) => {
+    e.preventDefault();
+    if (!planId) return;
+    await onRenew(Number(planId));
+  };
+
+  const allowRenew =
+    (viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && canRenewMembership(user.membershipStatus);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Member Profile - {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="member-profile-grid">
+          <div className="member-profile-item">
+            <span className="member-profile-label">Client ID</span>
+            <span className="member-profile-value">#{user.id}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Email</span>
+            <span className="member-profile-value">{user.email}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Current Plan</span>
+            <span className="member-profile-value">{user.membershipPlanName || "Not assigned"}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Current Status</span>
+            <span className={`membership-status-badge ${String(user.membershipStatus || "").toLowerCase()}`}>
+              {membershipLabel(user.membershipStatus)}
+            </span>
+          </div>
+        </div>
+
+        {allowRenew && (
+          <div className="membership-renew-panel">
+            <h3>Renew Membership</h3>
+            <form className="membership-renew-form" onSubmit={submitRenewal}>
+              <select
+                value={planId}
+                onChange={(e) => setPlanId(e.target.value)}
+                disabled={renewing || membershipPlans.length === 0}
+                required
+              >
+                {membershipPlans.length === 0 ? (
+                  <option value="">No active plans available</option>
+                ) : (
+                  membershipPlans.map((plan) => (
+                    <option key={plan.id} value={String(plan.id)}>
+                      {plan.planName} ({plan.durationDays} days)
+                    </option>
+                  ))
+                )}
+              </select>
+              <button
+                type="submit"
+                className="btn-save"
+                disabled={renewing || membershipPlans.length === 0 || !planId}
+              >
+                {renewing ? "Renewing..." : "Renew Membership"}
+              </button>
+            </form>
+            {renewError && <p className="modal-error">{renewError}</p>}
+            {renewSuccess && <p className="form-success">{renewSuccess}</p>}
+          </div>
+        )}
+
+        <div className="membership-history-panel">
+          <div className="membership-history-header">
+            <h3>Membership History</h3>
+            <button className="btn-edit-inline" onClick={onRefresh} disabled={historyLoading}>
+              {historyLoading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+          {historyError && <p className="modal-error">{historyError}</p>}
+          {historyLoading ? (
+            <p className="empty-msg">Loading membership history...</p>
+          ) : history.length === 0 ? (
+            <p className="empty-msg">No membership records found.</p>
+          ) : (
+            <div className="table-scroll">
+              <table className="manage-table">
+                <thead>
+                  <tr>
+                    <th>Plan Name</th>
+                    <th>Start Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((record) => (
+                    <tr key={record.id}>
+                      <td>{record.planName}</td>
+                      <td>{record.startDate}</td>
+                      <td>{record.expiryDate}</td>
+                      <td>
+                        <span className={`membership-status-badge ${String(record.status || "").toLowerCase()}`}>
+                          {membershipLabel(record.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Client Metrics Modal (ADMIN + INSTRUCTOR) ─────────────────────────────────
 
 const ClientMetricsModal = ({ user, onClose, onSaved }) => {
@@ -635,7 +777,7 @@ const Toolbar = ({ search, onSearch, roleFilter, onRoleFilter, viewerRole }) => 
 
 // ── User / Client Table ───────────────────────────────────────────────────────
 
-const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, viewerRole, navigate }) => (
+const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, onOpenMemberProfile, title, viewerRole, navigate }) => (
   <div className="table-container">
     <h2 className="section-title">{title}</h2>
     {users.length === 0 ? (
@@ -692,6 +834,9 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, title, view
                   {/* Body metrics: ADMIN + INSTRUCTOR for clients only */}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-metrics" onClick={() => onEditMetrics(u)}>Metrics</button>
+                  )}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-membership-profile" onClick={() => onOpenMemberProfile(u)}>Profile</button>
                   )}
                   {/* Instructor actions: ADMIN only */}
                   {viewerRole === "ADMIN" && u.role === "INSTRUCTOR" && (
@@ -850,8 +995,43 @@ const ManagePage = () => {
   const [editing, setEditing] = useState(null);              // personal-details modal
   const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
+  const [memberProfile, setMemberProfile] = useState(null);
+  const [membershipHistory, setMembershipHistory] = useState([]);
+  const [membershipHistoryLoading, setMembershipHistoryLoading] = useState(false);
+  const [membershipHistoryError, setMembershipHistoryError] = useState("");
+  const [renewingMembership, setRenewingMembership] = useState(false);
+  const [renewMembershipError, setRenewMembershipError] = useState("");
+  const [renewMembershipSuccess, setRenewMembershipSuccess] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+
+  const loadMembershipHistory = useCallback(async (clientId) => {
+    setMembershipHistoryLoading(true);
+    setMembershipHistoryError("");
+    try {
+      const { data } = await api.get(`/api/membership-plans/history/${clientId}`);
+      setMembershipHistory(Array.isArray(data) ? data : []);
+    } catch {
+      setMembershipHistory([]);
+      setMembershipHistoryError("Failed to load membership history.");
+    } finally {
+      setMembershipHistoryLoading(false);
+    }
+  }, []);
+
+  const refreshUserList = useCallback(async () => {
+    if (role === "ADMIN") {
+      const { data } = await api.get("/api/manage/users");
+      setUsers(data);
+      return data;
+    }
+    if (role === "INSTRUCTOR") {
+      const { data } = await api.get("/api/manage/clients");
+      setUsers(data);
+      return data;
+    }
+    return [];
+  }, [role]);
 
   // Fetch data based on role
   useEffect(() => {
@@ -867,8 +1047,12 @@ const ManagePage = () => {
           setUsers(usersRes.data);
           setMembershipPlans(plansRes.data);
         } else if (role === "INSTRUCTOR") {
-          const { data } = await api.get("/api/manage/clients");
-          setUsers(data);
+          const [clientsRes, plansRes] = await Promise.all([
+            api.get("/api/manage/clients"),
+            api.get("/api/membership-plans/active"),
+          ]);
+          setUsers(clientsRes.data);
+          setMembershipPlans(plansRes.data);
         } else if (role === "CLIENT") {
           const { data } = await api.get("/api/manage/me");
           setSelfUser(data);
@@ -888,6 +1072,47 @@ const ManagePage = () => {
   const closeMetricsModal = () => setEditingMetrics(null);
   const handleOpenEmployment = (user) => setEditingEmployment(user);
   const closeEmploymentModal = () => setEditingEmployment(null);
+
+  const handleOpenMemberProfile = async (user) => {
+    setMemberProfile(user);
+    setRenewMembershipError("");
+    setRenewMembershipSuccess("");
+    await loadMembershipHistory(user.id);
+  };
+
+  const closeMemberProfile = () => {
+    setMemberProfile(null);
+    setMembershipHistory([]);
+    setMembershipHistoryError("");
+    setRenewMembershipError("");
+    setRenewMembershipSuccess("");
+  };
+
+  const handleRenewMembership = async (planId) => {
+    if (!memberProfile) return;
+    setRenewingMembership(true);
+    setRenewMembershipError("");
+    setRenewMembershipSuccess("");
+    try {
+      await api.post("/api/membership-plans/renew", {
+        clientId: memberProfile.id,
+        planId,
+      });
+      setRenewMembershipSuccess("Membership renewed successfully.");
+      const [, refreshedUsers] = await Promise.all([
+        loadMembershipHistory(memberProfile.id),
+        refreshUserList(),
+      ]);
+      const updatedMember = (refreshedUsers || []).find((u) => u.id === memberProfile.id);
+      if (updatedMember) {
+        setMemberProfile(updatedMember);
+      }
+    } catch (err) {
+      setRenewMembershipError(err.response?.data ?? "Failed to renew membership.");
+    } finally {
+      setRenewingMembership(false);
+    }
+  };
 
   const handleEmploymentSaved = ({ id, payload }) => {
     setUsers((prev) => prev.map((u) =>
@@ -998,6 +1223,7 @@ const ManagePage = () => {
               onEdit={handleEdit}
               onEditMetrics={handleOpenMetrics}
               onEditEmployment={handleOpenEmployment}
+              onOpenMemberProfile={handleOpenMemberProfile}
               viewerRole={role}
               navigate={navigate}
               title={`${tableTitle} (${visibleUsers.length})`}
@@ -1041,6 +1267,23 @@ const ManagePage = () => {
           user={editingEmployment}
           onClose={closeEmploymentModal}
           onSaved={handleEmploymentSaved}
+        />
+      )}
+
+      {memberProfile && (
+        <MembershipProfileModal
+          user={memberProfile}
+          viewerRole={role}
+          history={membershipHistory}
+          historyLoading={membershipHistoryLoading}
+          historyError={membershipHistoryError}
+          membershipPlans={membershipPlans}
+          renewing={renewingMembership}
+          renewError={renewMembershipError}
+          renewSuccess={renewMembershipSuccess}
+          onRenew={handleRenewMembership}
+          onRefresh={() => loadMembershipHistory(memberProfile.id)}
+          onClose={closeMemberProfile}
         />
       )}
     </div>
