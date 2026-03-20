@@ -133,9 +133,31 @@
   color: #a35a00;
 }
 
+.membership-status-badge.pending,
+.membership-status-badge.upcoming {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.membership-status-badge.not_assigned {
+  background: #f5f5f5;
+  color: #555;
+}
+
 .membership-status-badge.suspended {
   background: #fce4ec;
   color: #c62828;
+}
+
+.membership-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.membership-name {
+  font-size: 0.78rem;
+  color: #555;
 }
 
 /* ── Table ───────────────────────────────────────────────────────────────────── */

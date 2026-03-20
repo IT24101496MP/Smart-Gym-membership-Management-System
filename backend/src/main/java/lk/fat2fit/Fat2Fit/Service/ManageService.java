@@ -3,6 +3,7 @@ package lk.fat2fit.Fat2Fit.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import lk.fat2fit.Fat2Fit.Entity.ClientBodyMetrics;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.User;
+import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Repository.ClientBodyMetricsRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
@@ -34,7 +36,6 @@ public class ManageService {
     private final ClientRepository clientRepository;
     private final ClientBodyMetricsRepository metricsRepository;
     private final MembershipPlanRepository membershipPlanRepository;
-    private final MembershipStatusService membershipStatusService;
     
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -74,12 +75,20 @@ public class ManageService {
         }
 
         if (u instanceof Client client) {
-            builder.membershipStatus(membershipStatusService.resolveStatus(client))
-                    .membershipStartDate(client.getMembershipStartDate())
-                    .membershipEndDate(client.getMembershipEndDate())
-                    .membershipSuspended(Boolean.TRUE.equals(client.getMembershipSuspended()))
-                    .membershipPlanId(client.getMembershipPlan() != null ? client.getMembershipPlan().getId() : null)
-                    .membershipPlanName(client.getMembershipPlan() != null ? client.getMembershipPlan().getPlanName() : null);
+            LocalDate membershipStartDate = client.getMembershipStartDate();
+            LocalDate membershipEndDate = client.getMembershipEndDate();
+
+            if (client.getMembershipPlan() != null && (membershipStartDate == null || membershipEndDate == null)) {
+                MembershipPeriod derivedPeriod = deriveMembershipPeriod(client);
+                membershipStartDate = derivedPeriod.startDate();
+                membershipEndDate = derivedPeriod.endDate();
+            }
+
+            builder.membershipPlanId(client.getMembershipPlan() != null ? client.getMembershipPlan().getId() : null)
+                   .membershipPlanName(client.getMembershipPlan() != null ? client.getMembershipPlan().getPlanName() : null)
+                   .membershipStatus(resolveMembershipStatus(client.getMembershipPlan(), membershipStartDate, membershipEndDate))
+                   .membershipStartDate(membershipStartDate)
+                   .membershipEndDate(membershipEndDate);
         }
 
         return builder.build();
@@ -186,6 +195,35 @@ public class ManageService {
         if (req.getPhoneNumber() != null && !req.getPhoneNumber().equals(client.getPhoneNumber())
                 && userRepository.existsByPhoneNumber(req.getPhoneNumber())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Phone number already in use.");
+        }
+
+        if (req.getMembershipPlanId() != null) {
+            if (req.getMembershipPlanId() <= 0) {
+                client.setMembershipPlan(null);
+                client.setMembershipStartDate(null);
+                client.setMembershipEndDate(null);
+            } else {
+                Optional<MembershipPlan> planOpt = membershipPlanRepository.findById(req.getMembershipPlanId());
+                if (planOpt.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Membership plan not found.");
+                }
+
+                MembershipPlan selectedPlan = planOpt.get();
+                if (selectedPlan.getStatus() != MembershipPlanStatus.ACTIVE) {
+                    return ResponseEntity.badRequest().body("Only active membership plans can be assigned.");
+                }
+
+                client.setMembershipPlan(selectedPlan);
+                LocalDate startDate = req.getMembershipStartDate() != null
+                        ? req.getMembershipStartDate()
+                        : LocalDate.now();
+                client.setMembershipStartDate(startDate);
+                client.setMembershipEndDate(startDate.plusDays(selectedPlan.getDurationDays().longValue()));
+            }
+        } else if (req.getMembershipStartDate() != null && client.getMembershipPlan() != null) {
+            LocalDate startDate = req.getMembershipStartDate();
+            client.setMembershipStartDate(startDate);
+            client.setMembershipEndDate(startDate.plusDays(client.getMembershipPlan().getDurationDays().longValue()));
         }
 
         applyEdits(client, req, true);
@@ -320,5 +358,36 @@ public class ManageService {
 
     public ResponseEntity<?> getSelf() {
         return ResponseEntity.ok(toDetailResponse(getCurrentUser()));
+    }
+
+    private String resolveMembershipStatus(MembershipPlan plan, LocalDate startDate, LocalDate endDate) {
+        if (plan == null) {
+            return "NOT_ASSIGNED";
+        }
+        if (startDate == null || endDate == null) {
+            return "PENDING";
+        }
+
+        LocalDate today = LocalDate.now();
+        if (today.isBefore(startDate)) {
+            return "UPCOMING";
+        }
+        if (today.isAfter(endDate)) {
+            return "EXPIRED";
+        }
+        return "ACTIVE";
+    }
+
+    private MembershipPeriod deriveMembershipPeriod(Client client) {
+        if (client.getMembershipPlan() == null || client.getMembershipPlan().getDurationDays() == null || client.getCreatedAt() == null) {
+            return new MembershipPeriod(null, null);
+        }
+
+        LocalDate startDate = client.getCreatedAt().toLocalDate();
+        LocalDate endDate = startDate.plusDays(client.getMembershipPlan().getDurationDays().longValue());
+        return new MembershipPeriod(startDate, endDate);
+    }
+
+    private record MembershipPeriod(LocalDate startDate, LocalDate endDate) {
     }
 }

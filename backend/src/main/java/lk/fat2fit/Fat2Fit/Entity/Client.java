@@ -1,7 +1,7 @@
 package lk.fat2fit.Fat2Fit.Entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,8 +30,4 @@ public class Client extends User {
 
     @Column(name = "membership_end_date")
     private LocalDate membershipEndDate;
-
-    @Column(name = "membership_suspended", nullable = false)
-    @Builder.Default
-    private Boolean membershipSuspended = false;
 }
