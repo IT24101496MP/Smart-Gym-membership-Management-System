@@ -1,0 +1,14 @@
+{
+  "activeMember": {
+    "id": "1001",
+    "name": "John Doe"
+  },
+  "expiredMember": {
+    "id": "1002",
+    "name": "Jane Smith"
+  },
+  "invalidMember": {
+    "id": "9999",
+    "name": "Non Existing Member"
+  }
+}
