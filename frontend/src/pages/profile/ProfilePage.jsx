@@ -4,6 +4,15 @@ import api from "../../utils/api";
 import { logout } from "../../utils/auth";
 import "./ProfilePage.css";
 
+const membershipLabel = (status) => {
+  if (!status) return "Unknown";
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+};
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -77,6 +86,32 @@ const ProfilePage = () => {
             <span className="detail-label">Role</span>
             <span className="detail-value">{user.role}</span>
           </div>
+          <div className="detail-row">
+            <span className="detail-label">Account Status</span>
+            <span className="detail-value">{user.isActive ? "Active" : "Inactive"}</span>
+          </div>
+          {user.role === "CLIENT" && (
+            <>
+              <div className="detail-row">
+                <span className="detail-label">Membership Name</span>
+                <span className="detail-value">{user.membershipName || "Not assigned"}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Membership Status</span>
+                <span className={`membership-status-badge ${String(user.membershipStatus || "").toLowerCase()}`}>
+                  {membershipLabel(user.membershipStatus)}
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Membership Period</span>
+                <span className="detail-value">
+                  {user.membershipStartDate && user.membershipEndDate
+                    ? `${user.membershipStartDate} to ${user.membershipEndDate}`
+                    : "No active period"}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="profile-actions">

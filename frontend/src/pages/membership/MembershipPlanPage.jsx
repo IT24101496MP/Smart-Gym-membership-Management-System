@@ -146,6 +146,20 @@ const MembershipPlanPage = () => {
     }
   };
 
+  const activatePlan = async (plan) => {
+    setMessage("");
+    try {
+      const { data } = await api.put(`/api/membership-plans/${plan.id}/status`, { status: "ACTIVE" });
+      setPlans((prev) => prev.map((p) => (p.id === data.id ? data : p)));
+      if (editingPlanId === plan.id) {
+        setEditingPlanId(data.id);
+      }
+      setMessage(`Plan '${plan.planName}' activated.`);
+    } catch (err) {
+      setMessage(err.response?.data || "Failed to activate plan.");
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -258,6 +272,11 @@ const MembershipPlanPage = () => {
                         {plan.status === "ACTIVE" && (
                           <button className="btn-deactivate" onClick={() => deactivatePlan(plan)}>
                             Deactivate
+                          </button>
+                        )}
+                        {plan.status === "INACTIVE" && (
+                          <button className="btn-activate" onClick={() => activatePlan(plan)}>
+                            Activate
                           </button>
                         )}
                       </td>

@@ -111,7 +111,8 @@
 .btn-primary,
 .btn-secondary,
 .btn-edit,
-.btn-deactivate {
+.btn-deactivate,
+.btn-activate {
   border: none;
   border-radius: 8px;
   padding: 0.45rem 0.9rem;
@@ -137,6 +138,11 @@
 
 .btn-deactivate {
   background: #b57a00;
+  color: #fff;
+}
+
+.btn-activate {
+  background: #2e7d32;
   color: #fff;
 }
 
