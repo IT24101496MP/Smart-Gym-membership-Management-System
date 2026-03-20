@@ -43,7 +43,7 @@ public class MembershipPlanController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updatePlanStatus(@PathVariable Integer id,
-                                              @RequestBody MembershipPlanStatusUpdateRequest request) {
+            @RequestBody MembershipPlanStatusUpdateRequest request) {
         return membershipPlanService.updateStatus(id, request);
     }
 }

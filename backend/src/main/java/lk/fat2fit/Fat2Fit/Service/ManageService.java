@@ -67,8 +67,8 @@ public class ManageService {
             builder.instructorStatus(ins.getStatus());
             if (ins.getEmployment() != null) {
                 builder.employmentType(ins.getEmployment().getEmploymentType())
-                       .workingHoursPerWeek(ins.getEmployment().getWorkingHoursPerWeek())
-                       .salary(ins.getEmployment().getSalary());
+                        .workingHoursPerWeek(ins.getEmployment().getWorkingHoursPerWeek())
+                        .salary(ins.getEmployment().getSalary());
             }
         }
 
@@ -178,7 +178,7 @@ public class ManageService {
 
     // ── Admin / Instructor: edit a client's details ────────────────────────────
 
-    public ResponseEntity<?> editClient(int clientId, UserEditRequest req) {
+    public ResponseEntity<?> editClient(Long clientId, UserEditRequest req) {
         Optional<Client> clientOpt = clientRepository.findById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
@@ -231,7 +231,7 @@ public class ManageService {
 
     // ── Admin / Instructor: get client body metrics ───────────────────────────
 
-    public ResponseEntity<?> getClientMetrics(int clientId) {
+    public ResponseEntity<?> getClientMetrics(Long clientId) {
         if (!clientRepository.existsById(clientId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
@@ -242,7 +242,7 @@ public class ManageService {
 
     // ── Admin / Instructor: save client body metrics ──────────────────────────
 
-    public ResponseEntity<?> saveClientMetrics(int clientId, ClientMetricsRequest req) {
+    public ResponseEntity<?> saveClientMetrics(Long clientId, ClientMetricsRequest req) {
         Optional<Client> clientOpt = clientRepository.findById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
@@ -254,15 +254,24 @@ public class ManageService {
                         .fitnessGoals(new HashSet<>())
                         .build());
 
-        if (req.getWeightKg() != null)       metrics.setWeightKg(req.getWeightKg());
-        if (req.getHeightCm() != null)       metrics.setHeightCm(req.getHeightCm());
-        if (req.getHipSizeCm() != null)      metrics.setHipSizeCm(req.getHipSizeCm());
-        if (req.getBreastSizeCm() != null)   metrics.setBreastSizeCm(req.getBreastSizeCm());
-        if (req.getWaistSizeCm() != null)    metrics.setWaistSizeCm(req.getWaistSizeCm());
-        if (req.getArmSizeCm() != null)      metrics.setArmSizeCm(req.getArmSizeCm());
-        if (req.getShoulderSizeCm() != null) metrics.setShoulderSizeCm(req.getShoulderSizeCm());
-        if (req.getButtSizeCm() != null)     metrics.setButtSizeCm(req.getButtSizeCm());
-        if (req.getFitnessGoals() != null)   metrics.setFitnessGoals(req.getFitnessGoals());
+        if (req.getWeightKg() != null)
+            metrics.setWeightKg(req.getWeightKg());
+        if (req.getHeightCm() != null)
+            metrics.setHeightCm(req.getHeightCm());
+        if (req.getHipSizeCm() != null)
+            metrics.setHipSizeCm(req.getHipSizeCm());
+        if (req.getBreastSizeCm() != null)
+            metrics.setBreastSizeCm(req.getBreastSizeCm());
+        if (req.getWaistSizeCm() != null)
+            metrics.setWaistSizeCm(req.getWaistSizeCm());
+        if (req.getArmSizeCm() != null)
+            metrics.setArmSizeCm(req.getArmSizeCm());
+        if (req.getShoulderSizeCm() != null)
+            metrics.setShoulderSizeCm(req.getShoulderSizeCm());
+        if (req.getButtSizeCm() != null)
+            metrics.setButtSizeCm(req.getButtSizeCm());
+        if (req.getFitnessGoals() != null)
+            metrics.setFitnessGoals(req.getFitnessGoals());
         metrics.setOtherGoalSpecification(req.getOtherGoalSpecification());
 
         metricsRepository.save(metrics);
