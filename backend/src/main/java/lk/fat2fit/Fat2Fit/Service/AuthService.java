@@ -12,6 +12,7 @@ import lk.fat2fit.Fat2Fit.DTO.Auth.LoginRequest;
 import lk.fat2fit.Fat2Fit.DTO.Auth.LoginResponse;
 import lk.fat2fit.Fat2Fit.DTO.Auth.MeResponse;
 import lk.fat2fit.Fat2Fit.DTO.Auth.RefreshRequest;
+import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.RefreshToken;
 import lk.fat2fit.Fat2Fit.Entity.User;
@@ -27,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final MembershipStatusService membershipStatusService;
 
     public ResponseEntity<?> login(LoginRequest request) {
         String identifier = request.getIdentifier().trim();
@@ -95,8 +97,35 @@ public class AuthService {
         String role = jwtUtil.getRoleFromToken(token);
 
         return userRepository.findById(userId)
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
-                        new MeResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), role)))
+            .<ResponseEntity<?>>map(u -> {
+                if (u instanceof Client client) {
+                return ResponseEntity.ok(new MeResponse(
+                    u.getId(),
+                    u.getFirstName(),
+                    u.getLastName(),
+                    u.getEmail(),
+                    role,
+                    membershipStatusService.resolveStatus(client),
+                    client.getMembershipStartDate(),
+                    client.getMembershipEndDate(),
+                    Boolean.TRUE.equals(client.getMembershipSuspended()),
+                    client.getMembershipPlan() != null ? client.getMembershipPlan().getId() : null,
+                    client.getMembershipPlan() != null ? client.getMembershipPlan().getPlanName() : null));
+                }
+
+                return ResponseEntity.ok(new MeResponse(
+                    u.getId(),
+                    u.getFirstName(),
+                    u.getLastName(),
+                    u.getEmail(),
+                    role,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null));
+            })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found."));
     }
 }

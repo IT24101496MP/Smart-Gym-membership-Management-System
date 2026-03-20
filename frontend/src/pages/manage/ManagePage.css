@@ -114,6 +114,30 @@
 .status-badge.active   { background: #e8f5e9; color: #2e7d32; }
 .status-badge.inactive { background: #fce4ec; color: #c62828; }
 
+.membership-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.membership-status-badge.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.membership-status-badge.expired {
+  background: #fff8e1;
+  color: #a35a00;
+}
+
+.membership-status-badge.suspended {
+  background: #fce4ec;
+  color: #c62828;
+}
+
 /* ── Table ───────────────────────────────────────────────────────────────────── */
 .table-container {
   background: #fff;

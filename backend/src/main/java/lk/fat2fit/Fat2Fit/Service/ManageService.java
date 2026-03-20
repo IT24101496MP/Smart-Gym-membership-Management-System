@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
@@ -16,9 +18,11 @@ import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.ClientBodyMetrics;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
+import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.User;
 import lk.fat2fit.Fat2Fit.Repository.ClientBodyMetricsRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
+import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
 import lk.fat2fit.Fat2Fit.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +33,8 @@ public class ManageService {
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final ClientBodyMetricsRepository metricsRepository;
+    private final MembershipPlanRepository membershipPlanRepository;
+    private final MembershipStatusService membershipStatusService;
     
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -65,6 +71,15 @@ public class ManageService {
                        .workingHoursPerWeek(ins.getEmployment().getWorkingHoursPerWeek())
                        .salary(ins.getEmployment().getSalary());
             }
+        }
+
+        if (u instanceof Client client) {
+            builder.membershipStatus(membershipStatusService.resolveStatus(client))
+                    .membershipStartDate(client.getMembershipStartDate())
+                    .membershipEndDate(client.getMembershipEndDate())
+                    .membershipSuspended(Boolean.TRUE.equals(client.getMembershipSuspended()))
+                    .membershipPlanId(client.getMembershipPlan() != null ? client.getMembershipPlan().getId() : null)
+                    .membershipPlanName(client.getMembershipPlan() != null ? client.getMembershipPlan().getPlanName() : null);
         }
 
         return builder.build();
@@ -216,6 +231,53 @@ public class ManageService {
 
         metricsRepository.save(metrics);
         return ResponseEntity.ok(toMetricsResponse(clientId, metrics));
+    }
+
+    public ResponseEntity<?> updateClientMembershipSuspension(int clientId, ClientMembershipSuspendRequest req) {
+        if (req == null || req.getSuspended() == null) {
+            return ResponseEntity.badRequest().body("Suspended flag is required.");
+        }
+
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        Client client = clientOpt.get();
+        client.setMembershipSuspended(req.getSuspended());
+        clientRepository.save(client);
+        return ResponseEntity.ok(toDetailResponse(client));
+    }
+
+    public ResponseEntity<?> renewClientMembership(int clientId, ClientMembershipRenewRequest req) {
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        Client client = clientOpt.get();
+
+        MembershipPlan plan = null;
+        if (req != null && req.getMembershipPlanId() != null) {
+            plan = membershipPlanRepository.findById(req.getMembershipPlanId()).orElse(null);
+        } else if (client.getMembershipPlan() != null) {
+            plan = client.getMembershipPlan();
+        }
+
+        if (plan == null) {
+            return ResponseEntity.badRequest().body("Membership plan is required to renew membership.");
+        }
+
+        var startDate = (req != null && req.getStartDate() != null) ? req.getStartDate() : java.time.LocalDate.now();
+        var endDate = startDate.plusDays(plan.getDurationDays());
+
+        client.setMembershipPlan(plan);
+        client.setMembershipStartDate(startDate);
+        client.setMembershipEndDate(endDate);
+        client.setMembershipSuspended(false);
+
+        clientRepository.save(client);
+        return ResponseEntity.ok(toDetailResponse(client));
     }
 
     private ClientMetricsResponse toMetricsResponse(int clientId, ClientBodyMetrics m) {
