@@ -47,10 +47,15 @@ describe('Membership Expiry UI Tests', () => {
   });
 
   it('Assign membership and validate expiry date', () => {
+    cy.intercept('PUT', `**/api/manage/clients/${selectedClient.id}`).as('saveClient');
     cy.openClientEditModal(selectedClient.id);
     cy.selectPlanInEditModal(String(selectedPlan.id));
     cy.setMembershipStartDateInEditModal(startDate);
     cy.saveEditModal();
+    cy.wait('@saveClient').then(({ request, response }) => {
+      expect(response.statusCode).to.eq(200);
+      expect(request.body.membershipStartDate).to.eq(startDate);
+    });
 
     const expectedEndDate = plusDays(startDate, selectedPlan.durationDays);
 
@@ -79,10 +84,15 @@ describe('Membership Expiry UI Tests', () => {
     const pastDate = '2025-01-01';
     const expectedEnd = plusDays(pastDate, selectedPlan.durationDays);
 
+    cy.intercept('PUT', `**/api/manage/clients/${selectedClient.id}`).as('saveClientPast');
     cy.openClientEditModal(selectedClient.id);
     cy.selectPlanInEditModal(String(selectedPlan.id));
     cy.setMembershipStartDateInEditModal(pastDate);
     cy.saveEditModal();
+    cy.wait('@saveClientPast').then(({ request, response }) => {
+      expect(response.statusCode).to.eq(200);
+      expect(request.body.membershipStartDate).to.eq(pastDate);
+    });
 
     cy.contains('table.manage-table tbody tr td.cell-id', String(selectedClient.id))
       .parents('tr')
