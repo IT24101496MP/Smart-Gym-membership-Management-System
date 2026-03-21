@@ -322,6 +322,65 @@ public class ManageService {
         return ResponseEntity.ok(toDetailResponse(getCurrentUser()));
     }
 
+    // ── Admin / Instructor: suspend/unsuspend a client's membership ──────────
+
+    public ResponseEntity<?> updateClientMembershipSuspension(int clientId, ClientMembershipSuspendRequest req) {
+        Optional<Client> clientOpt = clientRepository.findById((long) clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        Client client = clientOpt.get();
+        if (req.getSuspended() == null) {
+            return ResponseEntity.badRequest().body("Suspended flag is required.");
+        }
+
+        client.setMembershipSuspended(req.getSuspended());
+        clientRepository.save(client);
+        return ResponseEntity.ok(toDetailResponse(client));
+    }
+
+    // ── Admin / Instructor: renew a client's membership from a start date ────
+
+    public ResponseEntity<?> renewClientMembership(int clientId, ClientMembershipRenewRequest req) {
+        Optional<Client> clientOpt = clientRepository.findById((long) clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        Client client = clientOpt.get();
+
+        // Determine which membership plan to use
+        Optional<MembershipPlan> planOpt;
+        if (req.getMembershipPlanId() != null && req.getMembershipPlanId() > 0) {
+            planOpt = membershipPlanRepository.findById(req.getMembershipPlanId());
+        } else if (client.getMembershipPlan() != null) {
+            planOpt = Optional.of(client.getMembershipPlan());
+        } else {
+            return ResponseEntity.badRequest().body("A membership plan must be specified or assigned to the client.");
+        }
+
+        if (planOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Membership plan not found.");
+        }
+
+        MembershipPlan plan = planOpt.get();
+        if (plan.getStatus() != MembershipPlanStatus.ACTIVE) {
+            return ResponseEntity.badRequest().body("Only active membership plans can be assigned.");
+        }
+
+        // Determine start date
+        LocalDate startDate = req.getStartDate() != null ? req.getStartDate() : LocalDate.now();
+        LocalDate endDate = startDate.plusDays(plan.getDurationDays().longValue());
+
+        client.setMembershipPlan(plan);
+        client.setMembershipStartDate(startDate);
+        client.setMembershipEndDate(endDate);
+        client.setMembershipSuspended(false); // Renewing removes any suspension
+        clientRepository.save(client);
+        return ResponseEntity.ok(toDetailResponse(client));
+    }
+
     private String resolveMembershipStatus(MembershipPlan plan, LocalDate startDate, LocalDate endDate) {
         if (plan == null) {
             return "NOT_ASSIGNED";

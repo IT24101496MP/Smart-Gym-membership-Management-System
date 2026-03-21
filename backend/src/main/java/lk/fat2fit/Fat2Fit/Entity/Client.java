@@ -30,4 +30,7 @@ public class Client extends User {
 
     @Column(name = "membership_end_date")
     private LocalDate membershipEndDate;
+
+    @Column(name = "membership_suspended")
+    private Boolean membershipSuspended;
 }
