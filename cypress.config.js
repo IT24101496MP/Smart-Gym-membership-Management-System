@@ -1,11 +1,12 @@
-const { defineConfig } = require('cypress');
+const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5173',
-    specPattern: 'cypress/e2e/**/*.cy.js',
-    supportFile: 'cypress/support/e2e.js',
-    defaultCommandTimeout: 8000
+    baseUrl: "http://localhost:5173",
+    setupNodeEvents(on, config) {
+    },
   },
-  fixturesFolder: 'cypress/fixtures'
+  env: {
+    apiUrl: "http://localhost:8080/api/membership-plans"
+  }
 });

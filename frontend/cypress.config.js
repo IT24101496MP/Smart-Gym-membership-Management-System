@@ -4,8 +4,12 @@ export default defineConfig({
   allowCypressEnv: false,
 
   e2e: {
+    baseUrl: "http://localhost:5173",
+    specPattern: "cypress/e2e/**/*.cy.js",
+
+    supportFile: "cypress/support/commands.js",
+
     setupNodeEvents(on, config) {
-      // implement node event listeners here
     },
   },
 });
