@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;

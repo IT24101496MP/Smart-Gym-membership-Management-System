@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Service.ManageService;
@@ -84,6 +86,26 @@ public class ManageController {
     public ResponseEntity<?> saveClientMetrics(@PathVariable Long id,
             @RequestBody ClientMetricsRequest req) {
         return manageService.saveClientMetrics(id, req);
+    }
+
+    /**
+     * PUT /api/manage/clients/{id}/membership/suspension
+     * Admin or Instructor: suspend/unsuspend a client's membership.
+     */
+    @PutMapping("/clients/{id}/membership/suspension")
+    public ResponseEntity<?> updateClientMembershipSuspension(@PathVariable int id,
+                                                              @RequestBody ClientMembershipSuspendRequest req) {
+        return manageService.updateClientMembershipSuspension(id, req);
+    }
+
+    /**
+     * PUT /api/manage/clients/{id}/membership/renew
+     * Admin or Instructor: renew a client's membership period from a start date.
+     */
+    @PutMapping("/clients/{id}/membership/renew")
+    public ResponseEntity<?> renewClientMembership(@PathVariable int id,
+                                                   @RequestBody(required = false) ClientMembershipRenewRequest req) {
+        return manageService.renewClientMembership(id, req);
     }
 
     /**
