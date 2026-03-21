@@ -1,0 +1,20 @@
+{
+  "activeMember": {
+    "id": "1001",
+    "name": "John Doe",
+    "currentExpiry": "2026-03-30",
+    "planDuration": 30
+  },
+  "expiredMember": {
+    "id": "1002",
+    "name": "Jane Smith",
+    "planDuration": 30
+  },
+  "noHistoryMember": {
+    "id": "2000",
+    "name": "New Member"
+  },
+  "invalidMember": {
+    "id": "9999"
+  }
+}
