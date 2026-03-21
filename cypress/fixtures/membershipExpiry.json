@@ -1,18 +1,30 @@
 {
-  "activeMember": {
+  "validMember": {
     "id": "1001",
     "name": "John Doe",
-    "startDate": "2026-03-01",
-    "durationDays": 30
+    "membershipStartDate": "2026-03-20",
+    "membershipEndDate": "2026-04-19",
+    "membershipStatus": "ACTIVE"
   },
   "expiredMember": {
     "id": "1002",
     "name": "Jane Smith",
-    "startDate": "2026-01-01",
+    "membershipStartDate": "2026-01-01",
+    "membershipEndDate": "2026-01-31",
+    "membershipStatus": "EXPIRED"
+  },
+  "validPlan": {
+    "id": "1",
+    "planName": "Monthly Plan",
     "durationDays": 30
+  },
+  "expiredPlan": {
+    "id": "2",
+    "planName": "Short Plan",
+    "durationDays": 15
   },
   "invalidMember": {
     "id": "9999",
-    "name": "Non Existing Member"
+    "name": "Non-existent Member"
   }
 }

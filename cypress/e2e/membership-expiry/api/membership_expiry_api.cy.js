@@ -1,56 +1,94 @@
-describe('Membership Expiry API Tests (Admin)', () => {
-  let authToken = '';
+describe('Membership Expiry API Tests', () => {
+  let token = '';
+  let clientId = null;
+  let plan = null;
+  const startDate = '2026-03-20';
+
+  const plusDays = (dateString, days) => {
+    const [y, m, d] = dateString.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + Number(days));
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+  };
 
   before(() => {
-    cy.request('POST', 'http://localhost:8080/api/auth/login', {
+    // Login and fetch token, client, plan
+    cy.request('POST', '/api/auth/login', {
       identifier: 'admin@fat2fit.lk',
       password: 'Admin@1234'
     }).then((res) => {
-      expect(res.status).to.eq(200);
-      authToken = res.body.accessToken;
+      token = res.body.accessToken;
+      return cy.request({
+        method: 'GET',
+        url: '/api/manage/clients',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }).then((clientsRes) => {
+      clientId = clientsRes.body[0].id;
+      return cy.request({
+        method: 'GET',
+        url: '/api/membership-plans/active',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }).then((plansRes) => {
+      plan = plansRes.body[0];
     });
   });
 
-  beforeEach(function () {
-    cy.fixture('membershipExpiry.json').as('members');
-  });
+  it('Assign membership via API and verify expiry', () => {
+    const expectedEndDate = plusDays(startDate, plan.durationDays);
 
-  it('Active member should have status Active', function () {
-    const member = this.members.activeMember;
     cy.request({
-      method: 'GET',
-      url: `http://localhost:8080/api/members/${member.id}/status`,
-      headers: { Authorization: `Bearer ${authToken}` }
+      method: 'PUT',
+      url: `/api/manage/clients/${clientId}`,
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        membershipPlanId: plan.id,
+        membershipStartDate: startDate
+      }
     }).then((res) => {
       expect(res.status).to.eq(200);
-      expect(res.body.membershipStatus).to.eq('Active');
-      expect(new Date(res.body.expiryDate)).to.be.greaterThan(new Date());
+      expect(res.body.membershipPlanId).to.eq(plan.id);
+      expect(res.body.membershipStartDate).to.eq(startDate);
+      expect(res.body.membershipEndDate).to.eq(expectedEndDate);
+      expect(res.body.membershipStatus).to.eq('ACTIVE');
     });
   });
 
-  it('Expired member should have status Expired', function () {
-    const member = this.members.expiredMember;
+  it('Membership becomes Expired automatically after end date', () => {
+    const pastStartDate = '2025-01-01';
+    const pastEndDate = plusDays(pastStartDate, plan.durationDays);
+
     cy.request({
-      method: 'GET',
-      url: `http://localhost:8080/api/members/${member.id}/status`,
-      headers: { Authorization: `Bearer ${authToken}` }
+      method: 'PUT',
+      url: `/api/manage/clients/${clientId}`,
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        membershipPlanId: plan.id,
+        membershipStartDate: pastStartDate
+      }
     }).then((res) => {
       expect(res.status).to.eq(200);
-      expect(res.body.membershipStatus).to.eq('Expired');
-      expect(new Date(res.body.expiryDate)).to.be.lessThan(new Date());
+      expect(res.body.membershipEndDate).to.eq(pastEndDate);
+      expect(res.body.membershipStatus).to.eq('EXPIRED');
     });
   });
 
-  it('Invalid member returns 404', function () {
-    const member = this.members.invalidMember;
+  it('Fails for invalid member', () => {
     cy.request({
-      method: 'GET',
-      url: `http://localhost:8080/api/members/${member.id}/status`,
-      headers: { Authorization: `Bearer ${authToken}` },
-      failOnStatusCode: false
+      method: 'PUT',
+      url: '/api/manage/clients/999999',
+      failOnStatusCode: false,
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        membershipPlanId: plan.id,
+        membershipStartDate: startDate
+      }
     }).then((res) => {
       expect(res.status).to.eq(404);
-      expect(res.body).to.eq('Member not found.');
     });
   });
 });
