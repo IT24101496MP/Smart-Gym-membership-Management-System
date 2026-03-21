@@ -8,14 +8,48 @@ Cypress.Commands.add('loginAsAdmin', () => {
   cy.url().should('not.include', '/login');
 });
 
-Cypress.Commands.add('selectMember', (memberName) => {
-  cy.get('[data-testid="member-dropdown"]').select(memberName);
+Cypress.Commands.add('openManagePage', () => {
+  cy.visit('/manage');
+  cy.contains('h1', 'Manage').should('be.visible');
 });
 
-Cypress.Commands.add('selectPlan', (planName) => {
-  cy.get('[data-testid="plan-dropdown"]').select(planName);
+Cypress.Commands.add('openClientEditModal', (clientId) => {
+  cy.openManagePage();
+  cy.get('table.manage-table tbody tr').should('have.length.greaterThan', 0);
+  cy.get('table.manage-table tbody tr').then(($rows) => {
+    const target = Array.from($rows).find((row) => {
+      const idCell = row.querySelector('td.cell-id');
+      return idCell && idCell.textContent.trim() === String(clientId);
+    });
+    expect(target, `client row for id ${clientId}`).to.exist;
+    cy.wrap(target).within(() => {
+      cy.contains('button', 'Edit').click();
+    });
+  });
+  cy.contains('h2', 'Edit').should('be.visible');
 });
 
-Cypress.Commands.add('assignMembership', () => {
-  cy.get('button').contains('Assign').click();
+Cypress.Commands.add('selectPlanInEditModal', (planName) => {
+  cy.get('.modal-card').within(() => {
+    cy.contains('label', 'Membership Plan').parent().find('select').then(($select) => {
+      const target = String(planName);
+      if (/^\d+$/.test(target)) {
+        cy.wrap($select).select(target);
+      } else {
+        cy.wrap($select).select(target);
+      }
+    });
+  });
+});
+
+Cypress.Commands.add('setMembershipStartDateInEditModal', (dateValue) => {
+  cy.get('.modal-card').within(() => {
+    cy.contains('label', 'Membership Start Date').parent().find('input[type="date"]').clear().type(dateValue);
+  });
+});
+
+Cypress.Commands.add('saveEditModal', () => {
+  cy.get('.modal-card').within(() => {
+    cy.contains('button', 'Save Changes').click();
+  });
 });
