@@ -11,4 +11,6 @@ public interface MembershipPlanRepository extends JpaRepository<MembershipPlan, 
     List<MembershipPlan> findAllByOrderByIdDesc();
 
     List<MembershipPlan> findByStatusOrderByIdDesc(MembershipPlanStatus status);
+
+    List<MembershipPlan> findByStatusOrderByDurationDaysAscMonthlyPriceAscIdAsc(MembershipPlanStatus status);
 }

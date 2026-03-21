@@ -5,16 +5,23 @@ import lk.fat2fit.Fat2Fit.DTO.Membership.MembershipHistoryResponse;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.ClientMembership;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
+import lk.fat2fit.Fat2Fit.Entity.User;
 import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Repository.ClientMembershipRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
+import lk.fat2fit.Fat2Fit.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,10 +32,35 @@ public class ClientMembershipService {
     private final ClientMembershipRepository clientMembershipRepository;
     private final ClientRepository clientRepository;
     private final MembershipPlanRepository membershipPlanRepository;
+    private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     public ResponseEntity<?> renewMembership(MembershipRenewalRequest request) {
+        if (request == null) {
+            return ResponseEntity.badRequest().body("Request payload is required.");
+        }
+
         if (request.getClientId() == null) {
             return ResponseEntity.badRequest().body("Client id is required.");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication is required.");
+        }
+
+        boolean isAdmin = hasRole(authentication, "ADMIN");
+        boolean isClient = hasRole(authentication, "CLIENT");
+
+        Optional<User> actorOpt = userRepository.findByEmail(authentication.getName());
+        if (actorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authenticated user not found.");
+        }
+
+        User actor = actorOpt.get();
+        if (isClient && actor.getId() != request.getClientId().intValue()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Clients can only renew memberships for their own profile.");
         }
 
         Optional<Client> clientOpt = findClientById(request.getClientId());
@@ -78,10 +110,30 @@ public class ClientMembershipService {
                 ? request.getRenewalDate()
                 : LocalDate.now();
 
-        LocalDate newStartDate = current.getStatus() == MembershipPlanStatus.ACTIVE
-                ? current.getExpiryDate()
-                : effectiveRenewalDate;
+        LocalDate newStartDate = effectiveRenewalDate;
         LocalDate newExpiryDate = newStartDate.plusDays(plan.getDurationDays().longValue());
+
+        boolean overlapExists = hasOverlap(client, newStartDate, newExpiryDate);
+        boolean overrideRequested = Boolean.TRUE.equals(request.getOverrideOverlap());
+
+        if (overlapExists && !(isAdmin && overrideRequested)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "message", "Membership period overlaps with an existing active membership.",
+                "overlapDetected", true,
+                "overrideAllowed", isAdmin));
+        }
+
+        if (overlapExists && isAdmin && overrideRequested) {
+            auditLogService.logChange(
+                client.getId(),
+                "CLIENT_MEMBERSHIP",
+                Long.valueOf(actor.getId()),
+                "MEMBERSHIP_OVERLAP_OVERRIDE",
+                current.getStartDate() + " to " + current.getExpiryDate(),
+                "Admin " + actor.getEmail() + " overrode overlap for clientId=" + client.getId()
+                    + ", clientEmail=" + client.getEmail()
+                    + ", newPeriod=" + newStartDate + " to " + newExpiryDate);
+        }
 
         if (current.getStatus() == MembershipPlanStatus.ACTIVE) {
             current.setStatus(MembershipPlanStatus.COMPLETED);
@@ -102,7 +154,12 @@ public class ClientMembershipService {
         client.setMembershipEndDate(newExpiryDate);
         clientRepository.save(client);
 
-        return ResponseEntity.ok("Membership renewed successfully.");
+        return ResponseEntity.ok(Map.of(
+            "message", "Membership renewed successfully.",
+            "overlapOverridden", overlapExists && isAdmin && overrideRequested,
+            "startDate", newStartDate,
+            "expiryDate", newExpiryDate,
+            "planName", plan.getPlanName()));
     }
 
     public List<MembershipHistoryResponse> getMembershipHistory(Long clientId) {
@@ -230,5 +287,26 @@ public class ClientMembershipService {
             return Optional.empty();
         }
         return clientRepository.findById(clientId.intValue());
+    }
+
+    private boolean hasRole(Authentication authentication, String role) {
+        String expected = "ROLE_" + role;
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(expected::equals);
+    }
+
+    private boolean hasOverlap(Client client, LocalDate proposedStartDate, LocalDate proposedEndDate) {
+        if (client.getMembershipPlan() == null || client.getMembershipStartDate() == null || client.getMembershipEndDate() == null) {
+            return false;
+        }
+
+        if (Boolean.TRUE.equals(client.getMembershipSuspended())) {
+            return false;
+        }
+
+        LocalDate existingStartDate = client.getMembershipStartDate();
+        LocalDate existingEndDate = client.getMembershipEndDate();
+        return proposedStartDate.isBefore(existingEndDate) && proposedEndDate.isAfter(existingStartDate);
     }
 }
