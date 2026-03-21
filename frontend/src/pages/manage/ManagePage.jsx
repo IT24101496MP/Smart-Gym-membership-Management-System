@@ -571,8 +571,8 @@ const MembershipProfileModal = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((record) => (
-                    <tr key={record.id}>
+                  {history.map((record, index) => (
+                    <tr key={record.id ?? `${record.planName}-${record.startDate}-${record.expiryDate}-${index}`}>
                       <td>{record.planName}</td>
                       <td>{record.startDate}</td>
                       <td>{record.expiryDate}</td>
