@@ -1,0 +1,14 @@
+{
+  "validMember": {
+    "id": "1001",
+    "name": "John Doe"
+  },
+  "validPlan": {
+    "id": "1",
+    "name": "Monthly Plan",
+    "durationDays": 30
+  },
+  "invalidMember": {
+    "id": "9999"
+  }
+}
