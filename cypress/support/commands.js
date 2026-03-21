@@ -41,9 +41,9 @@ Cypress.Commands.add('setMembershipStartDateInEditModal', (dateValue) => {
       .parent()
       .find('input[type="date"]')
       .should('be.enabled')
-      .invoke('val', dateValue)
-      .trigger('input')
-      .trigger('change')
+      .clear({ force: true })
+      .type(dateValue, { force: true })
+      .blur()
       .should('have.value', dateValue);
   });
 });
