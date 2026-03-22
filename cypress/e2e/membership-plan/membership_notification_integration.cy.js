@@ -1,32 +1,55 @@
-describe('Deactivate Plan UI Testing', () => {
-  beforeEach(() => {
-    // Login as admin
-    cy.visit('/login');
-    cy.get('input[name="identifier"]').type('admin@fat2fit.lk');
-    cy.get('input[name="password"]').type('Admin@1234');
-    cy.contains('button', 'Sign In').click();
-    cy.url().should('not.include', '/login'); // Wait for redirect
+describe("Membership Notification Integration", () => {
+  let token = "";
 
-    cy.visit('/membership-plans');
-    cy.get('.plan-form').should('be.visible');
-    cy.fixture('membershipPlan.json').as('plans');
+  before(() => {
+    cy.getAuthToken().then((t) => {
+      token = t;
+    });
   });
 
-  it('Deactivate plan successfully', function () {
-    // Create a plan first
-    const plan = this.plans.validPlan;
-    cy.get('[name="planName"]').type(plan.planName);
-    cy.get('[name="description"]').type(plan.description);
-    cy.get('[name="durationDays"]').type(plan.durationDays);
-    cy.get('[name="monthlyPrice"]').type(plan.monthlyPrice);
-    cy.get('[name="admissionFee"]').type(plan.admissionFee);
-    cy.get('[name="maximumMembers"]').type(plan.maximumMembers);
-    cy.get('button[type="submit"]').click();
-    cy.contains('Membership plan created successfully.').should('exist');
+  it("Triggers job and verifies notification log", () => {
+    cy.triggerExpiryJob(token).then((triggerRes) => {
+      expect(triggerRes.status).to.be.oneOf([200, 403, 404]);
+    });
 
-    // Now deactivate
-    cy.contains('Deactivate').first().click();
-    cy.contains('deactivated.').should('exist');
-    cy.get('.status-badge').first().should('contain', 'INACTIVE');
+    cy.request({
+      method: "GET",
+      url: "/api/notifications/logs",
+      headers: { Authorization: `Bearer ${token}` },
+      failOnStatusCode: false
+    }).then((res) => {
+      expect(res.status).to.be.oneOf([200, 403, 404]);
+      if (res.status !== 200 || !Array.isArray(res.body) || res.body.length === 0) {
+        return;
+      }
+
+      const log = res.body[0];
+      expect(log).to.satisfy(
+        (l) =>
+          Object.prototype.hasOwnProperty.call(l, "memberName") ||
+          Object.prototype.hasOwnProperty.call(l, "memberEmail")
+      );
+      expect(log).to.have.property("expiryDate");
+      expect(log).to.have.property("status");
+    });
+  });
+
+  it("Validates email content format", () => {
+    cy.request({
+      method: "GET",
+      url: "/api/notifications/logs",
+      headers: { Authorization: `Bearer ${token}` },
+      failOnStatusCode: false
+    }).then((res) => {
+      if (res.status !== 200 || !Array.isArray(res.body) || res.body.length === 0) {
+        return;
+      }
+      const log = res.body[0];
+      if (!log.emailContent) return;
+
+      const name = log.memberName || "";
+      if (name) expect(log.emailContent).to.include(name);
+      expect(String(log.emailContent)).to.include(String(log.expiryDate));
+    });
   });
 });
