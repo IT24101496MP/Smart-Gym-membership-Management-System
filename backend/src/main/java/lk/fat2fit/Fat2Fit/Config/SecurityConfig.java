@@ -33,19 +33,19 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
                         // Public auth endpoints
-                        .requestMatchers(HttpMethod.POST, 
-                                "/api/auth/login", 
-                                "/api/auth/refresh", 
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/client/register",
                                 "/api/instructor/register")
-                                .permitAll()
+                        .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
 
                         // Authenticated-only
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
@@ -55,8 +55,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/membership-plans").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew").hasAnyRole("ADMIN", "INSTRUCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/membership-plans/**").hasRole("ADMIN")
 
                         // Manage endpoints
@@ -64,14 +66,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/manage/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/manage/clients").hasAnyRole("ADMIN", "INSTRUCTOR")
                         // Personal details edit: ADMIN only
-                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/metrics").hasAnyRole("ADMIN", "INSTRUCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/metrics").hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/metrics")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/metrics")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/manage/clients/**").hasRole("ADMIN")
                         .requestMatchers("/api/manage/me").authenticated()
 
                         // ADMIN or INSTRUCTOR
                         .requestMatchers(HttpMethod.GET, "/api/instructor/**").hasAnyRole("ADMIN", "INSTRUCTOR")
-                        
+
                         // Instructor mutating operations: ADMIN only
                         .requestMatchers(HttpMethod.PUT, "/api/instructor/**").hasRole("ADMIN")
 
@@ -79,8 +83,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/client/**").hasAnyRole("ADMIN", "CLIENT")
 
                         // Everything else requires authentication
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
