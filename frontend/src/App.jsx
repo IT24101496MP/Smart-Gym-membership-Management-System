@@ -10,6 +10,7 @@ import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import ManagePage from "./pages/manage/ManagePage";
 import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
+import PaymentPage from "./pages/payment/PaymentPage";
 
 function App() {
   return (
@@ -68,6 +69,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <MembershipPlanPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payment/:planId"
+            element={
+              <ProtectedRoute allowedRoles={["CLIENT"]}>
+                <PaymentPage />
               </ProtectedRoute>
             }
           />
