@@ -45,7 +45,6 @@ public class SecurityConfig {
                                 "/api/instructor/register")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
 
                         // Authenticated-only
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
