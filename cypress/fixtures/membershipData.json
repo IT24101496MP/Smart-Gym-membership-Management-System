@@ -1,0 +1,8 @@
+{
+  "durationDays": 30,
+  "planNamePrefix": "QA Membership Plan",
+  "description": "Membership plan created by Cypress for user story testing",
+  "monthlyPrice": 1000,
+  "admissionFee": 100,
+  "maximumMembers": 200
+}
