@@ -1,0 +1,9 @@
+{
+  "currency": "usd",
+  "paymentReferencePrefix": "LOCALPAY-QA",
+  "activationTimeoutMs": 5000,
+  "activationPollIntervalMs": 250,
+  "doubleCallback": {
+    "useSamePaymentReference": true
+  }
+}
