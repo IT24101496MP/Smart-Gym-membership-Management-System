@@ -62,7 +62,8 @@ public class ManageService {
                 .role(u.getRole())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
-                .updatedAt(u.getUpdatedAt());
+                .updatedAt(u.getUpdatedAt())
+                .profilePicture(u.getProfilePicture());
 
         // Populate instructor-specific fields when applicable
         if (u instanceof Instructor ins) {
