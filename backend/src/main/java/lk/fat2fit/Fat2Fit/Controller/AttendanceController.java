@@ -19,4 +19,9 @@ public class AttendanceController {
     public ResponseEntity<?> checkIn(@RequestBody AttendanceRequestDTO dto) {
         return attendanceService.recordAttendance(dto);
     }
+
+    @GetMapping("/today")
+    public ResponseEntity<?> getTodayAttendance() {
+        return attendanceService.getTodayAttendance();
+    }
 }

@@ -12,6 +12,7 @@ import lk.fat2fit.Fat2Fit.Repository.AttendanceRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -64,5 +65,13 @@ public class AttendanceService {
         attendanceRepository.save(attendance);
 
         return ResponseEntity.ok("Attendance recorded successfully");
+    }
+
+    public ResponseEntity<?> getTodayAttendance() {
+        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        List<Attendance> todayAttendance = attendanceRepository.findByCheckInTimeBetween(startOfDay, endOfDay);
+        return ResponseEntity.ok(todayAttendance);
     }
 }
