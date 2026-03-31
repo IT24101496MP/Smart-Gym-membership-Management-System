@@ -1195,9 +1195,14 @@ const ManagePage = () => {
           </div>
           <div className="manage-header-right">
             {role === "ADMIN" && (
-              <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
-                Membership Plans
-              </button>
+              <>
+                <button className="btn-attendance" onClick={() => navigate("/attendance")}>
+                  Attendance
+                </button>
+                <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
+                  Membership Plans
+                </button>
+              </>
             )}
             <button className="btn-back" onClick={() => navigate("/profile")}>
               ← Profile
