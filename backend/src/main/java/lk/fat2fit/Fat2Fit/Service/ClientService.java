@@ -4,17 +4,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
+import lk.fat2fit.Fat2Fit.DTO.ClientSearchResponseDTO;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
-import java.time.LocalDateTime;
+
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class ClientService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // Convert DTO → Entity
     private Client clientRegisterToClient(ClientRegister dto) {
         return Client.builder()
                 .firstName(dto.getFirstName())
@@ -50,13 +52,37 @@ public class ClientService {
         return (value == null || value.trim().isEmpty()) ? null : value;
     }
 
+    // REGISTER CLIENT
     public ResponseEntity<?> registerClient(ClientRegister dto) {
+
         if (userRepository.existsByEmailOrPhoneNumber(dto.getEmail(), dto.getPhoneNumber())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Client with email or phone already exists");
         }
 
         clientRepository.save(clientRegisterToClient(dto));
-        return ResponseEntity.status(HttpStatus.CREATED).body("Client registered successfully");
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Client registered successfully");
+    }
+
+    // SEARCH CLIENTS FOR ATTENDANCE
+    public ResponseEntity<?> searchClients(String keyword) {
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Search keyword is required");
+        }
+
+        List<Client> clients = clientRepository.searchClients(keyword);
+
+        List<ClientSearchResponseDTO> response = clients.stream()
+                .map(client -> ClientSearchResponseDTO.builder()
+                        .id((long) client.getId()) // <-- fixed int to long
+                        .fullName(client.getFirstName() + " " + client.getLastName())
+                        .phoneNumber(client.getPhoneNumber())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 }
