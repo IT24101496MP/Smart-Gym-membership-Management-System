@@ -7,7 +7,14 @@ import "./AttendancePage.css";
 const formatDateTime = (iso) => {
   if (!iso) return "-";
   const date = new Date(iso);
-  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
 };
 
 const getInitials = (firstName, lastName) => {
@@ -221,11 +228,11 @@ const AttendancePage = () => {
               <thead>
                 <tr>
                   <th style={{ width: "50px" }}></th>
-                  <th style={{ maxWidth: "140px" }}>Member Name</th>
+                  <th style={{ maxWidth: "140px" }} className="left-align">Member Name</th>
                   <th style={{ width: "80px" }}>ID</th>
                   <th style={{ width: "140px" }}>Mobile Number</th>
                   <th>Membership Plan</th>
-                  <th style={{ width: "120px" }}>Check-in Time</th>
+                  <th style={{ width: "180px" }}>Check-in Date & Time</th>
                   <th style={{ width: "130px" }}>Action</th>
                 </tr>
               </thead>
