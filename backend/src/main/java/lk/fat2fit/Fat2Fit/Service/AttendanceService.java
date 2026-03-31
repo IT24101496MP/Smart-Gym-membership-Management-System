@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import lk.fat2fit.Fat2Fit.DTO.AttendanceRequestDTO;
+import lk.fat2fit.Fat2Fit.DTO.Attendance.AttendanceRequestDTO;
 import lk.fat2fit.Fat2Fit.Entity.Attendance;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Repository.AttendanceRepository;

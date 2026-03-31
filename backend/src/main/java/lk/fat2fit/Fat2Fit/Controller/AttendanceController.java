@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import lk.fat2fit.Fat2Fit.DTO.AttendanceRequestDTO;
+import lk.fat2fit.Fat2Fit.DTO.Attendance.AttendanceRequestDTO;
 import lk.fat2fit.Fat2Fit.Service.AttendanceService;
 
 @CrossOrigin(origins = "http://localhost:5173")

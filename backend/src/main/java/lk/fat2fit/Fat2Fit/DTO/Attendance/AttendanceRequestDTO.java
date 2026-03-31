@@ -1,4 +1,4 @@
-package lk.fat2fit.Fat2Fit.DTO;
+package lk.fat2fit.Fat2Fit.DTO.Attendance;
 
 import lombok.Data;
 

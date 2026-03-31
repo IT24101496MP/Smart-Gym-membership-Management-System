@@ -30,6 +30,6 @@ public class Attendance {
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
-    @Column(name = "check_in_time", nullable = false)
+    @Column(name = "check_in_time", nullable = false, updatable = false)
     private LocalDateTime checkInTime;
 }
