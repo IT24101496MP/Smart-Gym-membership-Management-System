@@ -2,11 +2,14 @@ package lk.fat2fit.Fat2Fit.Repository;
 
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.List;
 
 public interface ClientRepository extends JpaRepository<Client, Long> {
+
     Optional<Client> findById(Integer id);
 
     boolean existsByEmail(String email);
@@ -21,4 +24,10 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     List<Client> findByBloodGroup(String bloodGroup);
 
+    @Query("SELECT c FROM Client c WHERE " +
+            "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "c.phoneNumber LIKE CONCAT('%', :keyword, '%') OR " +
+            "CAST(c.id as string) LIKE CONCAT('%', :keyword, '%')")
+    List<Client> searchClients(@Param("keyword") String keyword);
 }
