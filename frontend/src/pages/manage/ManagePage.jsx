@@ -14,6 +14,12 @@ const EMPLOYMENT_TYPES = [
   { value: "CONTRACT",  label: "Contract" },
 ];
 
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "CASH", label: "Cash" },
+  { value: "BANK_TRANSFER", label: "Bank Transfer" },
+  { value: "CARD", label: "Card" },
+];
+
 const FITNESS_GOALS = [
   { value: "FAT_BURNING",          label: "Fat Burning" },
   { value: "CARDIO_TRAINING",      label: "Cardio Training" },
@@ -593,6 +599,151 @@ const MembershipProfileModal = ({
   );
 };
 
+const PaymentRecordModal = ({ user, onClose, onSaved }) => {
+  const [form, setForm] = useState({
+    membershipPlanId: user.membershipPlanId ? String(user.membershipPlanId) : "",
+    paymentAmount: "",
+    paymentDate: new Date().toISOString().slice(0, 10),
+    paymentMethod: "CASH",
+    referenceNumber: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const set = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const needsReference = form.paymentMethod === "BANK_TRANSFER" || form.paymentMethod === "CARD";
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!form.membershipPlanId) {
+      setError("Membership plan is required.");
+      return;
+    }
+
+    if (!form.paymentAmount || Number(form.paymentAmount) <= 0) {
+      setError("Please enter a valid payment amount.");
+      return;
+    }
+
+    if (needsReference && !form.referenceNumber.trim()) {
+      setError("Reference number is required for bank transfer or card payments.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        clientId: user.id,
+        membershipPlanId: Number(form.membershipPlanId),
+        paymentAmount: Number(form.paymentAmount),
+        paymentDate: form.paymentDate,
+        paymentMethod: form.paymentMethod,
+        referenceNumber: form.referenceNumber.trim() || null,
+      };
+      const { data } = await api.post("/api/payments/record", payload);
+      setSuccess(data.message || "Payment recorded successfully.");
+      onSaved?.(data);
+      setTimeout(() => onClose(), 900);
+    } catch (err) {
+      setError(err.response?.data || "Payment recording failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Record Payment - {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="member-profile-grid">
+          <div className="member-profile-item">
+            <span className="member-profile-label">Member ID</span>
+            <span className="member-profile-value">#{user.id}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Membership Plan</span>
+            <span className="member-profile-value">{user.membershipPlanName || "No plan"}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Membership Status</span>
+            <span className={`membership-status-badge ${String(user.membershipStatus || "").toLowerCase()}`}>
+              {membershipLabel(user.membershipStatus)}
+            </span>
+          </div>
+        </div>
+
+        {error && <p className="modal-error">{error}</p>}
+        {success && <p className="form-success">{success}</p>}
+
+        <form className="edit-form" onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Membership Plan</label>
+              <input value={user.membershipPlanName || "No active plan"} disabled />
+            </div>
+            <div className="form-group">
+              <label>Payment Amount</label>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={form.paymentAmount}
+                onChange={set("paymentAmount")}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Payment Date</label>
+              <input type="date" value={form.paymentDate} onChange={set("paymentDate")} required />
+            </div>
+            <div className="form-group">
+              <label>Payment Method</label>
+              <select value={form.paymentMethod} onChange={set("paymentMethod")} required>
+                {PAYMENT_METHOD_OPTIONS.map((method) => (
+                  <option key={method.value} value={method.value}>{method.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group full">
+              <label>Reference Number {needsReference ? "*" : "(Optional)"}</label>
+              <input
+                value={form.referenceNumber}
+                onChange={set("referenceNumber")}
+                placeholder="Enter transaction or receipt reference"
+                required={needsReference}
+              />
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-save" disabled={submitting}>
+              {submitting ? "Recording..." : "Record Payment"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ── Client Metrics Modal (ADMIN + INSTRUCTOR) ─────────────────────────────────
 
 const ClientMetricsModal = ({ user, onClose, onSaved }) => {
@@ -777,7 +928,17 @@ const Toolbar = ({ search, onSearch, roleFilter, onRoleFilter, viewerRole }) => 
 
 // ── User / Client Table ───────────────────────────────────────────────────────
 
-const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, onOpenMemberProfile, title, viewerRole, navigate }) => (
+const UserTable = ({
+  users,
+  onEdit,
+  onEditMetrics,
+  onEditEmployment,
+  onOpenMemberProfile,
+  onRecordPayment,
+  title,
+  viewerRole,
+  navigate,
+}) => (
   <div className="table-container">
     <h2 className="section-title">{title}</h2>
     {users.length === 0 ? (
@@ -837,6 +998,9 @@ const UserTable = ({ users, onEdit, onEditMetrics, onEditEmployment, onOpenMembe
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-membership-profile" onClick={() => onOpenMemberProfile(u)}>Profile</button>
+                  )}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-payment" onClick={() => onRecordPayment(u)}>Record Payment</button>
                   )}
                   {/* Instructor actions: ADMIN only */}
                   {viewerRole === "ADMIN" && u.role === "INSTRUCTOR" && (
@@ -995,6 +1159,7 @@ const ManagePage = () => {
   const [editing, setEditing] = useState(null);              // personal-details modal
   const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
+  const [recordingPayment, setRecordingPayment] = useState(null);
   const [memberProfile, setMemberProfile] = useState(null);
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [membershipHistoryLoading, setMembershipHistoryLoading] = useState(false);
@@ -1072,6 +1237,8 @@ const ManagePage = () => {
   const closeMetricsModal = () => setEditingMetrics(null);
   const handleOpenEmployment = (user) => setEditingEmployment(user);
   const closeEmploymentModal = () => setEditingEmployment(null);
+  const handleOpenPaymentRecord = (user) => setRecordingPayment(user);
+  const closePaymentRecordModal = () => setRecordingPayment(null);
 
   const handleOpenMemberProfile = async (user) => {
     setMemberProfile(user);
@@ -1224,6 +1391,7 @@ const ManagePage = () => {
               onEditMetrics={handleOpenMetrics}
               onEditEmployment={handleOpenEmployment}
               onOpenMemberProfile={handleOpenMemberProfile}
+              onRecordPayment={handleOpenPaymentRecord}
               viewerRole={role}
               navigate={navigate}
               title={`${tableTitle} (${visibleUsers.length})`}
@@ -1267,6 +1435,20 @@ const ManagePage = () => {
           user={editingEmployment}
           onClose={closeEmploymentModal}
           onSaved={handleEmploymentSaved}
+        />
+      )}
+
+      {recordingPayment && (
+        <PaymentRecordModal
+          user={recordingPayment}
+          onClose={closePaymentRecordModal}
+          onSaved={async () => {
+            const refreshedUsers = await refreshUserList();
+            const refreshed = (refreshedUsers || []).find((u) => u.id === recordingPayment.id);
+            if (refreshed) {
+              setRecordingPayment(refreshed);
+            }
+          }}
         />
       )}
 

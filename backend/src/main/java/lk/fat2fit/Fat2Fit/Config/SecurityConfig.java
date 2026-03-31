@@ -81,6 +81,9 @@ public class SecurityConfig {
                         // ADMIN or CLIENT
                         .requestMatchers("/api/client/**").hasAnyRole("ADMIN", "CLIENT")
 
+                        // Payment recording by staff
+                        .requestMatchers(HttpMethod.POST, "/api/payments/record").hasAnyRole("ADMIN", "INSTRUCTOR")
+
                         // Everything else requires authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -2,7 +2,10 @@ package lk.fat2fit.Fat2Fit.Controller;
 
 import lk.fat2fit.Fat2Fit.DTO.Payment.CreatePaymentIntentRequest;
 import lk.fat2fit.Fat2Fit.DTO.Payment.MockPaymentConfirmRequest;
+import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentRequest;
+import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentResponse;
 import lk.fat2fit.Fat2Fit.Service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +36,18 @@ public class PaymentController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/record")
+    public ResponseEntity<?> recordMembershipPayment(@Valid @RequestBody RecordMembershipPaymentRequest request) {
+        try {
+            RecordMembershipPaymentResponse response = paymentService.recordMembershipPayment(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Payment recording failed. Please try again.");
         }
     }
 }
