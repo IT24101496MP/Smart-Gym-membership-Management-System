@@ -23,23 +23,28 @@ public class AttendanceController {
         return attendanceService.recordAttendance(dto);
     }
 
-    // Today attendance
     @GetMapping("/today")
     public ResponseEntity<?> getTodayAttendance() {
         return attendanceService.getTodayAttendance();
     }
 
-    // Attendance History by Date Range
     @GetMapping("/history")
     public ResponseEntity<?> getAttendanceHistory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "latest") String sort
     ) {
-        return attendanceService.getAttendanceByDateRange(
-                startDate,
-                endDate,
-                sort
-        );
+        return attendanceService.getAttendanceByDateRange(startDate, endDate, sort);
+    }
+
+
+    @GetMapping("/frequency")
+    public ResponseEntity<?> getVisitFrequency() {
+        return attendanceService.getVisitFrequency();
+    }
+
+    @GetMapping("/frequency/members")
+    public ResponseEntity<?> getVisitFrequencyPerMember() {
+        return attendanceService.getVisitFrequencyPerMember();
     }
 }
