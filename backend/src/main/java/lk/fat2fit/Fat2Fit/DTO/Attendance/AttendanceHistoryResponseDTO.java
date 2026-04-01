@@ -10,7 +10,11 @@ import java.time.LocalTime;
 @Builder
 public class AttendanceHistoryResponseDTO {
 
+    private Integer id;
+    private String firstName;
+    private String lastName;
     private String memberName;
     private LocalDate date;
     private LocalTime time;
+    private String profilePictureBase64;
 }

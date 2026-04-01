@@ -23,6 +23,35 @@ const getInitials = (firstName, lastName) => {
   return `${f}${l}`.slice(0, 2) || "U";
 };
 
+const formatLocalDate = (date) => {
+  if (!date) return "-";
+  try {
+    const parsed = new Date(date);
+    if (isNaN(parsed.getTime())) return "-";
+    return parsed.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (err) {
+    return "-";
+  }
+};
+
+const formatLocalTime = (time) => {
+  if (!time) return "-";
+
+  if (typeof time === "string") {
+    return time.length >= 5 ? time.substring(0, 5) : time;
+  }
+
+  if (typeof time === "object" && time.hour !== undefined && time.minute !== undefined) {
+    return `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
+  }
+
+  return "-";
+};
+
 const AttendancePage = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState([]);
@@ -33,6 +62,15 @@ const AttendancePage = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
   const [checkinLoading, setCheckinLoading] = useState({});
+  
+  // History filter states
+  const [showHistoryView, setShowHistoryView] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [filterMode, setFilterMode] = useState("latest");
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
 
   const attendedClientIds = useMemo(() => {
     return new Set(todayAttendance.map((a) => a.client?.id));
@@ -149,6 +187,52 @@ const AttendancePage = () => {
     navigate("/login");
   };
 
+  const getAttendanceHistory = async () => {
+    if (!startDate || !endDate) {
+      setHistoryError("Please select both start and end date.");
+      return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (end < start) {
+      setHistoryError("End date cannot be before start date.");
+      return;
+    }
+
+    setHistoryLoading(true);
+    setHistoryError("");
+    setMessage("");
+
+    try {
+      // Backend expects ISO8601 local datetime string, not JS chronological Date.toString
+      const startISO = `${startDate}T00:00:00`;
+      const endISO = `${endDate}T23:59:59`;
+
+      const { data } = await api.get("/api/attendance/history", {
+        params: {
+          startDate: startISO,
+          endDate: endISO,
+          sort: filterMode,
+        },
+      });
+
+      setAttendanceHistory(Array.isArray(data) ? data : []);
+      setMessageType("success");
+      setMessage(`✓ Found ${Array.isArray(data) ? data.length : 0} attendance records.`);
+    } catch (err) {
+      setHistoryError(err.response?.data || "Failed to load attendance history.");
+      setAttendanceHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const getSortedHistory = () => {
+    return [...attendanceHistory];
+  };
+
   if (loading) {
     return (
       <div className="attendance-page">
@@ -182,118 +266,271 @@ const AttendancePage = () => {
 
         {/* Main Content Section */}
         <div className="attendance-content">
-          {/* Stats */}
-          <div className="attendance-stats">
-            <div className="stat-item">
-              <span className="stat-label">Total Members</span>
-              <span className="stat-value">{clients.length}</span>
-            </div>
-            <div className="stat-item stat-present">
-              <span className="stat-label">Present Today</span>
-              <span className="stat-value">{presentCount}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Attendance Rate</span>
-              <span className="stat-value">{clients.length > 0 ? `${Math.round((presentCount / clients.length) * 100)}%` : "0%"}</span>
-            </div>
+          {/* View Toggle Tabs */}
+          <div className="view-tabs">
+            <button
+              className={`tab-button ${!showHistoryView ? "active" : ""}`}
+              onClick={() => setShowHistoryView(false)}
+            >
+              Check-In Today
+            </button>
+            <button
+              className={`tab-button ${showHistoryView ? "active" : ""}`}
+              onClick={() => setShowHistoryView(true)}
+            >
+              Attendance History
+            </button>
           </div>
 
-          {/* Search */}
-          <div className="attendance-search-wrapper">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="🔍 Search by name, ID or mobile number"
-              className="attendance-search"
-            />
-          </div>
+          {/* CHECK-IN VIEW */}
+          {!showHistoryView && (
+            <>
+              {/* Stats */}
+              <div className="attendance-stats">
+                <div className="stat-item">
+                  <span className="stat-label">Total Members</span>
+                  <span className="stat-value">{clients.length}</span>
+                </div>
+                <div className="stat-item stat-present">
+                  <span className="stat-label">Present Today</span>
+                  <span className="stat-value">{presentCount}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Attendance Rate</span>
+                  <span className="stat-value">{clients.length > 0 ? `${Math.round((presentCount / clients.length) * 100)}%` : "0%"}</span>
+                </div>
+              </div>
 
-          {/* Messages */}
-          {message && (
-            <div className={`message message-${messageType}`}>
-              {message}
-            </div>
-          )}
+              {/* Search */}
+              <div className="attendance-search-wrapper">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="🔍 Search by name, ID or mobile number"
+                  className="attendance-search"
+                />
+              </div>
 
-          {error && (
-            <div className="message message-error">
-              {error}
-            </div>
-          )}
+              {/* Messages */}
+              {message && (
+                <div className={`message message-${messageType}`}>
+                  {message}
+                </div>
+              )}
 
-          {/* Table */}
-          <div className="attendance-table-wrapper">
-            <table className="attendance-table">
-              <thead>
-                <tr>
-                  <th style={{ width: "50px" }}></th>
-                  <th style={{ maxWidth: "140px" }} className="left-align">Member Name</th>
-                  <th style={{ width: "80px" }}>ID</th>
-                  <th style={{ width: "140px" }}>Mobile Number</th>
-                  <th>Membership Plan</th>
-                  <th style={{ width: "180px" }}>Check-in Date & Time</th>
-                  <th style={{ width: "130px" }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClients.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="table-empty">No members found.</td>
-                  </tr>
-                ) : (
-                  filteredClients.map((client) => {
-                    const isCheckedIn = attendedClientIds.has(client.id);
-                    const profilePic = client.profilePicture
-                      ? `data:image/jpeg;base64,${client.profilePicture}`
-                      : null;
+              {error && (
+                <div className="message message-error">
+                  {error}
+                </div>
+              )}
 
-                    return (
-                      <tr key={client.id} className={isCheckedIn ? "row-checked-in" : ""}>
-                        <td className="avatar-cell">
-                          {profilePic ? (
-                            <img src={profilePic} alt={`${client.firstName}`} className="profile-avatar" />
-                          ) : (
-                            <div className="profile-avatar-placeholder">
-                              {getInitials(client.firstName, client.lastName)}
-                            </div>
-                          )}
-                        </td>
-                        <td className="name-cell">
-                          <span className="client-name">
-                            {client.firstName} {client.lastName}
-                          </span>
-                        </td>
-                        <td className="id-cell">{client.id}</td>
-                        <td className="phone-cell">{client.phoneNumber || "-"}</td>
-                        <td className="plan-cell">
-                          <span className="plan-badge">
-                            {client.membershipPlanName || "-"}
-                          </span>
-                        </td>
-                        <td className="time-cell">
-                          {isCheckedIn
-                            ? todayAttendance.find((a) => a.client?.id === client.id)?.checkInTime
-                              ? formatDateTime(todayAttendance.find((a) => a.client?.id === client.id)?.checkInTime)
-                              : "-"
-                            : "-"}
-                        </td>
-                        <td className="action-cell">
-                          <button
-                            className={`btn-checkin ${isCheckedIn ? "checked-in" : ""}`}
-                            onClick={() => checkInClient(client)}
-                            disabled={isCheckedIn || !!checkinLoading[client.id]}
-                          >
-                            {isCheckedIn ? "✓ Present" : checkinLoading[client.id] ? "…" : "Check-In"}
-                          </button>
-                        </td>
+              {/* Table */}
+              <div className="attendance-table-wrapper">
+                <table className="attendance-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "50px" }}></th>
+                      <th style={{ maxWidth: "140px" }} className="left-align">Member Name</th>
+                      <th style={{ width: "80px" }}>ID</th>
+                      <th style={{ width: "140px" }}>Mobile Number</th>
+                      <th>Membership Plan</th>
+                      <th style={{ width: "180px" }}>Check-in Date & Time</th>
+                      <th style={{ width: "130px" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClients.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="table-empty">No members found.</td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      filteredClients.map((client) => {
+                        const isCheckedIn = attendedClientIds.has(client.id);
+                        const profilePic = client.profilePicture
+                          ? `data:image/jpeg;base64,${client.profilePicture}`
+                          : null;
+
+                        return (
+                          <tr key={client.id} className={isCheckedIn ? "row-checked-in" : ""}>
+                            <td className="avatar-cell">
+                              {profilePic ? (
+                                <img src={profilePic} alt={`${client.firstName}`} className="profile-avatar" />
+                              ) : (
+                                <div className="profile-avatar-placeholder">
+                                  {getInitials(client.firstName, client.lastName)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="name-cell">
+                              <span className="client-name">
+                                {client.firstName} {client.lastName}
+                              </span>
+                            </td>
+                            <td className="id-cell">{client.id}</td>
+                            <td className="phone-cell">{client.phoneNumber || "-"}</td>
+                            <td className="plan-cell">
+                              <span className="plan-badge">
+                                {client.membershipPlanName || "-"}
+                              </span>
+                            </td>
+                            <td className="time-cell">
+                              {isCheckedIn
+                                ? todayAttendance.find((a) => a.client?.id === client.id)?.checkInTime
+                                  ? formatDateTime(todayAttendance.find((a) => a.client?.id === client.id)?.checkInTime)
+                                  : "-"
+                                : "-"}
+                            </td>
+                            <td className="action-cell">
+                              <button
+                                className={`btn-checkin ${isCheckedIn ? "checked-in" : ""}`}
+                                onClick={() => checkInClient(client)}
+                                disabled={isCheckedIn || !!checkinLoading[client.id]}
+                              >
+                                {isCheckedIn ? "✓ Present" : checkinLoading[client.id] ? "…" : "Check-In"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* HISTORY VIEW */}
+          {showHistoryView && (
+            <>
+              {/* Filter Section */}
+              <div className="history-filter-section">
+                <h3 className="filter-title">Attendance History Filter</h3>
+                
+                <div className="filter-controls">
+                  <div className="filter-group">
+                    <label htmlFor="start-date" className="filter-label">Start Date</label>
+                    <input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="filter-input"
+                    />
+                  </div>
+
+                  <div className="filter-group">
+                    <label htmlFor="end-date" className="filter-label">End Date</label>
+                    <input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="filter-input"
+                    />
+                  </div>
+
+                  <div className="filter-group">
+                    <label htmlFor="filter-mode" className="filter-label">Sort By</label>
+                    <select
+                      id="filter-mode"
+                      value={filterMode}
+                      onChange={(e) => setFilterMode(e.target.value)}
+                      className="filter-select"
+                    >
+                      <option value="latest">Latest First</option>
+                      <option value="oldest">Oldest First</option>
+                    </select>
+                  </div>
+
+                  <div className="filter-group">
+                    <button
+                      className="btn btn-filter"
+                      onClick={getAttendanceHistory}
+                      disabled={historyLoading || !startDate || !endDate}
+                    >
+                      {historyLoading ? "Loading..." : "Filter"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              {message && (
+                <div className={`message message-${messageType}`}>
+                  {message}
+                </div>
+              )}
+
+              {historyError && (
+                <div className="message message-error">
+                  {historyError}
+                </div>
+              )}
+
+              {/* History Table */}
+              {attendanceHistory.length > 0 && (
+                <div className="attendance-table-wrapper">
+                  <div className="history-table-info">
+                    <span className="record-count">Total Records: <strong>{attendanceHistory.length}</strong></span>
+                  </div>
+                  <table className="attendance-table history-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: "50px" }}></th>
+                        <th className="left-align">Member Name</th>
+                        <th style={{ width: "80px" }}>ID</th>
+                        <th style={{ width: "140px" }}>Date</th>
+                        <th style={{ width: "120px" }}>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getSortedHistory().map((record, index) => {
+                        const profilePic = record.profilePictureBase64
+                          ? `data:image/jpeg;base64,${record.profilePictureBase64}`
+                          : null;
+                        return (
+                          <tr key={index}>
+                            <td className="history-avatar-cell">
+                              {profilePic ? (
+                                <img src={profilePic} alt={record.memberName} className="history-profile-avatar" />
+                              ) : (
+                                <div className="history-profile-avatar-placeholder">
+                                  {getInitials(record.firstName, record.lastName)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="name-cell">
+                              <span className="history-member-name">{record.memberName}</span>
+                            </td>
+                            <td className="id-cell">{record.id || "-"}</td>
+                            <td className="date-cell">
+                              {formatLocalDate(record.date)}
+                            </td>
+                            <td className="time-cell">
+                              {formatLocalTime(record.time)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!historyLoading && attendanceHistory.length === 0 && !historyError && startDate && endDate && (
+                <div className="no-records-message">
+                  <p>No attendance records found for the selected date range.</p>
+                </div>
+              )}
+
+              {!historyLoading && !historyError && !startDate && !endDate && (
+                <div className="no-records-message">
+                  <p>Select a date range and click Filter to view attendance history.</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

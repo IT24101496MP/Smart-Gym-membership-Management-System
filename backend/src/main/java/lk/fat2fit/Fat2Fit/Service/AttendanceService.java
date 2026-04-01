@@ -13,6 +13,7 @@ import lk.fat2fit.Fat2Fit.Repository.AttendanceRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -78,7 +79,8 @@ public class AttendanceService {
     // Attendance History by Date Range
     public ResponseEntity<?> getAttendanceByDateRange(
             LocalDateTime startDate,
-            LocalDateTime endDate
+            LocalDateTime endDate,
+            String sort
     ) {
 
         // Validation
@@ -92,20 +94,33 @@ public class AttendanceService {
                     .body("End date cannot be before start date");
         }
 
-        // Fetch data (sorted - latest first)
-        List<Attendance> records =
-                attendanceRepository.findByCheckInTimeBetweenOrderByCheckInTimeDesc(
-                        startDate,
-                        endDate
-                );
+        // Fetch data
+        List<Attendance> records;
+        if ("oldest".equalsIgnoreCase(sort)) {
+            records = attendanceRepository.findByCheckInTimeBetweenOrderByCheckInTimeAsc(startDate, endDate);
+        } else {
+            records = attendanceRepository.findByCheckInTimeBetweenOrderByCheckInTimeDesc(startDate, endDate);
+        }
 
         //  Convert to DTO
         List<AttendanceHistoryResponseDTO> response = records.stream()
-                .map(a -> AttendanceHistoryResponseDTO.builder()
-                        .memberName(a.getClientName())
-                        .date(a.getCheckInTime().toLocalDate())
-                        .time(a.getCheckInTime().toLocalTime())
-                        .build())
+                .map(a -> {
+                    String profilePictureBase64 = null;
+                    if (a.getClient() != null && a.getClient().getProfilePicture() != null) {
+                        profilePictureBase64 = Base64.getEncoder()
+                                .encodeToString(a.getClient().getProfilePicture());
+                    }
+                    
+                    return AttendanceHistoryResponseDTO.builder()
+                            .id(a.getClient() != null ? a.getClient().getId() : null)
+                            .firstName(a.getClient() != null ? a.getClient().getFirstName() : "")
+                            .lastName(a.getClient() != null ? a.getClient().getLastName() : "")
+                            .memberName(a.getClientName())
+                            .date(a.getCheckInTime().toLocalDate())
+                            .time(a.getCheckInTime().toLocalTime())
+                            .profilePictureBase64(profilePictureBase64)
+                            .build();
+                })
                 .toList();
 
         return ResponseEntity.ok(response);

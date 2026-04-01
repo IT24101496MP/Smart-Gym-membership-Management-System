@@ -1,6 +1,7 @@
 package lk.fat2fit.Fat2Fit.Controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +32,14 @@ public class AttendanceController {
     // Attendance History by Date Range
     @GetMapping("/history")
     public ResponseEntity<?> getAttendanceHistory(
-            @RequestParam String startDate,
-            @RequestParam String endDate
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "latest") String sort
     ) {
         return attendanceService.getAttendanceByDateRange(
-                LocalDateTime.parse(startDate),
-                LocalDateTime.parse(endDate)
+                startDate,
+                endDate,
+                sort
         );
     }
 }
