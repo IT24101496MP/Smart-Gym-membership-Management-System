@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import lk.fat2fit.Fat2Fit.DTO.Attendance.AttendanceRequestDTO;
+import lk.fat2fit.Fat2Fit.DTO.Attendance.AttendanceHistoryResponseDTO;
 import lk.fat2fit.Fat2Fit.Entity.Attendance;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Repository.AttendanceRepository;
@@ -23,12 +24,10 @@ public class AttendanceService {
 
     public ResponseEntity<?> recordAttendance(AttendanceRequestDTO dto) {
 
-        // Validation
         if (dto.getClientId() == null) {
             return ResponseEntity.badRequest().body("Client ID is required");
         }
 
-        //  Find Client
         Client client = clientRepository.findById(dto.getClientId().intValue())
                 .orElse(null);
 
@@ -37,7 +36,6 @@ public class AttendanceService {
                     .body("Client not found");
         }
 
-        // Prevent duplicate check-in (same day)
         LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
@@ -71,7 +69,45 @@ public class AttendanceService {
         LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<Attendance> todayAttendance = attendanceRepository.findByCheckInTimeBetween(startOfDay, endOfDay);
+        List<Attendance> todayAttendance =
+                attendanceRepository.findByCheckInTimeBetween(startOfDay, endOfDay);
+
         return ResponseEntity.ok(todayAttendance);
+    }
+
+    // Attendance History by Date Range
+    public ResponseEntity<?> getAttendanceByDateRange(
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+
+        // Validation
+        if (startDate == null || endDate == null) {
+            return ResponseEntity.badRequest()
+                    .body("Start date and End date are required");
+        }
+
+        if (endDate.isBefore(startDate)) {
+            return ResponseEntity.badRequest()
+                    .body("End date cannot be before start date");
+        }
+
+        // Fetch data (sorted - latest first)
+        List<Attendance> records =
+                attendanceRepository.findByCheckInTimeBetweenOrderByCheckInTimeDesc(
+                        startDate,
+                        endDate
+                );
+
+        //  Convert to DTO
+        List<AttendanceHistoryResponseDTO> response = records.stream()
+                .map(a -> AttendanceHistoryResponseDTO.builder()
+                        .memberName(a.getClientName())
+                        .date(a.getCheckInTime().toLocalDate())
+                        .time(a.getCheckInTime().toLocalTime())
+                        .build())
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
