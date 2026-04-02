@@ -72,6 +72,13 @@ const AttendancePage = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
+  // Visit Frequency states
+  const [showFrequencyView, setShowFrequencyView] = useState(false);
+  const [overallFrequency, setOverallFrequency] = useState(null);
+  const [memberFrequencies, setMemberFrequencies] = useState([]);
+  const [frequencyLoading, setFrequencyLoading] = useState(false);
+  const [frequencyError, setFrequencyError] = useState("");
+
   const attendedClientIds = useMemo(() => {
     return new Set(todayAttendance.map((a) => a.client?.id));
   }, [todayAttendance]);
@@ -103,6 +110,12 @@ const AttendancePage = () => {
     loadClients();
     loadTodayAttendance();
   }, []);
+
+  useEffect(() => {
+    if (showFrequencyView) {
+      loadFrequencyData();
+    }
+  }, [showFrequencyView]);
 
   const filteredClients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -229,6 +242,23 @@ const AttendancePage = () => {
     }
   };
 
+  const loadFrequencyData = async () => {
+    setFrequencyLoading(true);
+    setFrequencyError("");
+    try {
+      const [overallRes, membersRes] = await Promise.all([
+        api.get("/api/attendance/frequency"),
+        api.get("/api/attendance/frequency/members")
+      ]);
+      setOverallFrequency(overallRes.data);
+      setMemberFrequencies(Array.isArray(membersRes.data) ? membersRes.data : []);
+    } catch (err) {
+      setFrequencyError(err.response?.data || "Failed to load visit frequency data.");
+    } finally {
+      setFrequencyLoading(false);
+    }
+  };
+
   const getSortedHistory = () => {
     return [...attendanceHistory];
   };
@@ -269,21 +299,36 @@ const AttendancePage = () => {
           {/* View Toggle Tabs */}
           <div className="view-tabs">
             <button
-              className={`tab-button ${!showHistoryView ? "active" : ""}`}
-              onClick={() => setShowHistoryView(false)}
+              className={`tab-button ${!showHistoryView && !showFrequencyView ? "active" : ""}`}
+              onClick={() => {
+                setShowHistoryView(false);
+                setShowFrequencyView(false);
+              }}
             >
               Check-In Today
             </button>
             <button
               className={`tab-button ${showHistoryView ? "active" : ""}`}
-              onClick={() => setShowHistoryView(true)}
+              onClick={() => {
+                setShowHistoryView(true);
+                setShowFrequencyView(false);
+              }}
             >
               Attendance History
+            </button>
+            <button
+              className={`tab-button ${showFrequencyView ? "active" : ""}`}
+              onClick={() => {
+                setShowHistoryView(false);
+                setShowFrequencyView(true);
+              }}
+            >
+              Visit Frequency
             </button>
           </div>
 
           {/* CHECK-IN VIEW */}
-          {!showHistoryView && (
+          {!showHistoryView && !showFrequencyView && (
             <>
               {/* Stats */}
               <div className="attendance-stats">
@@ -527,6 +572,95 @@ const AttendancePage = () => {
               {!historyLoading && !historyError && !startDate && !endDate && (
                 <div className="no-records-message">
                   <p>Select a date range and click Filter to view attendance history.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* FREQUENCY VIEW */}
+          {showFrequencyView && (
+            <>
+              {frequencyLoading ? (
+                <div className="frequency-loading">
+                  <div className="loading-spinner"></div>
+                  <p>Loading visit frequency data…</p>
+                </div>
+              ) : frequencyError ? (
+                <div className="frequency-error">
+                  <p>{frequencyError}</p>
+                  <button className="btn btn-secondary" onClick={loadFrequencyData}>Refresh</button>
+                </div>
+              ) : (
+                <div className="frequency-dashboard">
+                  <div className="frequency-header">
+                    <h3>Gym Visit Frequency Metrics</h3>
+                    <button className="btn btn-secondary" onClick={loadFrequencyData}>Refresh</button>
+                  </div>
+
+                  {/* Overall Metrics */}
+                  <div className="frequency-section">
+                    <h4>Overall Visit Frequency</h4>
+                    {overallFrequency ? (
+                      <div className="frequency-cards">
+                        <div className="frequency-card">
+                          <div className="frequency-value">{overallFrequency.weeklyVisits}</div>
+                          <div className="frequency-label">Weekly Visits</div>
+                        </div>
+                        <div className="frequency-card">
+                          <div className="frequency-value">{overallFrequency.monthlyVisits}</div>
+                          <div className="frequency-label">Monthly Visits</div>
+                        </div>
+                        <div className="frequency-card">
+                          <div className="frequency-value">
+                            {memberFrequencies.length > 0
+                              ? (() => {
+                                  const maxVisits = Math.max(...memberFrequencies.map(m => m.monthlyVisits));
+                                  const topMembers = memberFrequencies.filter(m => m.monthlyVisits === maxVisits);
+                                  if (topMembers.length === 1) {
+                                    return topMembers[0].memberName;
+                                  } else {
+                                    return `${topMembers.length} Active Members`;
+                                  }
+                                })()
+                              : 'No Active Members'
+                            }
+                          </div>
+                          <div className="frequency-label">Most Active Member</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p>No data available</p>
+                    )}
+                  </div>
+
+                  {/* Per-Member Metrics */}
+                  <div className="frequency-section">
+                    <h4>Per-Member Visit Frequency</h4>
+                    {memberFrequencies.length > 0 ? (
+                      <div className="frequency-table-wrapper">
+                        <table className="frequency-table">
+                          <thead>
+                            <tr>
+                              <th>Member Name</th>
+                              <th>Weekly Visits</th>
+                              <th>Monthly Visits</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {memberFrequencies.map((member) => (
+                              <tr key={member.clientId}>
+                                <td>{member.memberName}</td>
+                                <td>{member.weeklyVisits}</td>
+                                <td>{member.monthlyVisits}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p>No member data available</p>
+                    )}
+                  </div>
                 </div>
               )}
             </>

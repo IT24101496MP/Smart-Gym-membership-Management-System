@@ -667,3 +667,173 @@
   }
 }
 
+/* Frequency View Styles */
+.frequency-loading,
+.frequency-error {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.frequency-error p {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.frequency-dashboard {
+  padding: 1rem 0;
+}
+
+.frequency-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.frequency-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #363636;
+}
+
+.frequency-section {
+  margin-bottom: 2rem;
+}
+
+.frequency-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #363636;
+  margin: 0 0 1rem 0;
+}
+
+.frequency-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.frequency-card {
+  background: linear-gradient(135deg, #F8F8F8 0%, #e5e7eb 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.frequency-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Weekly Visits */
+.frequency-card:nth-child(1) {
+  background: linear-gradient(135deg, #fef9e7 0%, #fef3c7 100%);
+  border: 2px solid #fcd34d;
+}
+
+.frequency-card:nth-child(1) .frequency-value {
+  color: #d97706;
+}
+
+.frequency-card:nth-child(1) .frequency-label {
+  color: #92400e;
+}
+
+/* Monthly Visits */
+.frequency-card:nth-child(2) {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #6ee7b7;
+}
+
+.frequency-card:nth-child(2) .frequency-value {
+  color: #059669;
+}
+
+.frequency-card:nth-child(2) .frequency-label {
+  color: #065f46;
+}
+
+/* Visit Growth*/
+.frequency-card:nth-child(3) {
+  background: linear-gradient(135deg, #F8F8F8 0%, #e5e7eb 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.frequency-card:nth-child(3) .frequency-value {
+  color: #363636;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: break-word;
+  margin-bottom: 22px;
+}
+
+.frequency-card:nth-child(3) .frequency-label {
+  color: #6b7280;
+}
+
+.frequency-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.frequency-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.frequency-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+}
+
+.frequency-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.frequency-table th,
+.frequency-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.frequency-table th {
+  background: #363636;
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #363636;
+}
+
+.frequency-table td {
+  font-size: 0.9rem;
+  color: #363636;
+}
+
+.frequency-table tr:hover {
+  background: #f9fafb;
+}
+
+.frequency-table tr:hover td {
+  color: #DC2F2F;
+}
+
