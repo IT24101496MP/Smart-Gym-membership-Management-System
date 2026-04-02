@@ -822,11 +822,13 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #363636;
+  text-align: center;
 }
 
 .frequency-table td {
   font-size: 0.9rem;
   color: #363636;
+  text-align: center;
 }
 
 .frequency-table tr:hover {

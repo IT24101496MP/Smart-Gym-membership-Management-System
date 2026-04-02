@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { logout } from "../../utils/auth";
@@ -33,7 +33,7 @@ const formatLocalDate = (date) => {
       month: "short",
       day: "numeric",
     });
-  } catch (err) {
+  } catch {
     return "-";
   }
 };
@@ -50,6 +50,11 @@ const formatLocalTime = (time) => {
   }
 
   return "-";
+};
+
+const formatDateRange = (start, end) => {
+  if (!start || !end) return "-";
+  return `${formatLocalDate(start)} — ${formatLocalDate(end)}`;
 };
 
 const AttendancePage = () => {
@@ -76,6 +81,9 @@ const AttendancePage = () => {
   const [showFrequencyView, setShowFrequencyView] = useState(false);
   const [overallFrequency, setOverallFrequency] = useState(null);
   const [memberFrequencies, setMemberFrequencies] = useState([]);
+
+  const [frequencyWeekRange, setFrequencyWeekRange] = useState("");
+  const [frequencyMonthRange, setFrequencyMonthRange] = useState("");
   const [frequencyLoading, setFrequencyLoading] = useState(false);
   const [frequencyError, setFrequencyError] = useState("");
 
@@ -111,11 +119,48 @@ const AttendancePage = () => {
     loadTodayAttendance();
   }, []);
 
+  const computeFrequencyRanges = useCallback(() => {
+    const now = new Date();
+
+    // ISO week: Monday to Sunday bounds
+    const day = now.getDay();
+    const daysSinceMonday = (day + 6) % 7; // 0==Monday, 6==Sunday
+
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - daysSinceMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    setFrequencyWeekRange(formatDateRange(monday, sunday));
+    setFrequencyMonthRange(formatDateRange(monthStart, monthEnd));
+  }, []);
+
+  const loadFrequencyData = useCallback(async () => {
+    setFrequencyLoading(true);
+    setFrequencyError("");
+    try {
+      const [overallRes, membersRes] = await Promise.all([
+        api.get("/api/attendance/frequency"),
+        api.get("/api/attendance/frequency/members")
+      ]);
+      setOverallFrequency(overallRes.data);
+      setMemberFrequencies(Array.isArray(membersRes.data) ? membersRes.data : []);
+    } catch (err) {
+      setFrequencyError(err.response?.data || "Failed to load visit frequency data.");
+    } finally {
+      setFrequencyLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (showFrequencyView) {
       loadFrequencyData();
+      computeFrequencyRanges();
     }
-  }, [showFrequencyView]);
+  }, [showFrequencyView, loadFrequencyData, computeFrequencyRanges]);
 
   const filteredClients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -183,7 +228,7 @@ const AttendancePage = () => {
       try {
         await api.post("/api/attendance/check-in", { clientId: client.id });
         successCount++;
-      } catch (err) {
+      } catch {
         // ignore and continue
       }
     }
@@ -239,23 +284,6 @@ const AttendancePage = () => {
       setAttendanceHistory([]);
     } finally {
       setHistoryLoading(false);
-    }
-  };
-
-  const loadFrequencyData = async () => {
-    setFrequencyLoading(true);
-    setFrequencyError("");
-    try {
-      const [overallRes, membersRes] = await Promise.all([
-        api.get("/api/attendance/frequency"),
-        api.get("/api/attendance/frequency/members")
-      ]);
-      setOverallFrequency(overallRes.data);
-      setMemberFrequencies(Array.isArray(membersRes.data) ? membersRes.data : []);
-    } catch (err) {
-      setFrequencyError(err.response?.data || "Failed to load visit frequency data.");
-    } finally {
-      setFrequencyLoading(false);
     }
   };
 
@@ -593,8 +621,15 @@ const AttendancePage = () => {
               ) : (
                 <div className="frequency-dashboard">
                   <div className="frequency-header">
-                    <h3>Gym Visit Frequency Metrics</h3>
-                    <button className="btn btn-secondary" onClick={loadFrequencyData}>Refresh</button>
+                    <div>
+                      <h3>Gym Visit Frequency Metrics</h3>
+                      <p style={{ margin: "0.6rem 0 0.4rem", fontSize: '0.9rem', color: '#4b5563' }}>
+                        Weekly period: {frequencyWeekRange} • Monthly period: {frequencyMonthRange}
+                      </p>
+                    </div>
+                    <button className="btn btn-secondary" onClick={() => { loadFrequencyData(); computeFrequencyRanges(); }}>
+                      Refresh
+                    </button>
                   </div>
 
                   {/* Overall Metrics */}
