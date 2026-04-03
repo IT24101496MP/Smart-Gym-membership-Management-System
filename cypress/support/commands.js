@@ -1,6 +1,6 @@
 Cypress.Commands.add('loginAsAdmin', () => {
   cy.visit('http://localhost:5173/login');
-  cy.get('input[name="username"]').should('exist').type('admin@fat2fit.lk');
+  cy.get('input[name="identifier"]').should('exist').type('admin@fat2fit.lk');
   cy.get('input[name="password"]').should('exist').type('Admin@1234');
   cy.get('button[type="submit"]').click();
   cy.url().should('not.include', '/login');
