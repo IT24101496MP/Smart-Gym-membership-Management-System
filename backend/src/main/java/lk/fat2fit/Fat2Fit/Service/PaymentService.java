@@ -17,15 +17,27 @@ import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
 import lk.fat2fit.Fat2Fit.Repository.PaymentRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,6 +55,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
+
+    private static final int RECEIPT_PAGE_MARGIN = 50;
+    private static final float RECEIPT_LINE_HEIGHT = 18f;
 
     private final ClientRepository clientRepository;
     private final MembershipPlanRepository membershipPlanRepository;
@@ -67,6 +82,12 @@ public class PaymentService {
 
     @Value("${payhere.notify-url:https://cr9rcxvd-8080.asse.devtunnels.ms/api/payments/payhere/notify}")
     private String payhereNotifyUrl;
+
+    private record ReceiptEmailResult(boolean receiptGenerated,
+                                      boolean emailSent,
+                                      String receiptNumber,
+                                      String warningMessage) {
+    }
 
     @Transactional
     public RecordMembershipPaymentResponse recordMembershipPayment(RecordMembershipPaymentRequest request) {
@@ -105,6 +126,9 @@ public class PaymentService {
             }
         }
 
+        ensureNoDuplicatePayment(client, assignedPlan, request.getPaymentAmount(), request.getPaymentDate(),
+                request.getPaymentMethod(), referenceNumber);
+
         String recordedBy = SecurityContextHolder.getContext().getAuthentication() != null
                 ? SecurityContextHolder.getContext().getAuthentication().getName()
                 : "UNKNOWN";
@@ -123,6 +147,7 @@ public class PaymentService {
                 .build();
 
         PaymentRecord saved = paymentRecordRepository.save(record);
+        ReceiptEmailResult receiptEmailResult = generateReceiptAndSendConfirmation(saved);
 
         return RecordMembershipPaymentResponse.builder()
                 .paymentId(saved.getId())
@@ -134,7 +159,13 @@ public class PaymentService {
                 .paymentDate(saved.getPaymentDate())
                 .paymentMethod(saved.getPaymentMethod())
                 .referenceNumber(saved.getReferenceNumber())
-                .message("Payment recorded successfully.")
+                .receiptGenerated(receiptEmailResult.receiptGenerated())
+                .receiptNumber(receiptEmailResult.receiptNumber())
+                .emailSent(receiptEmailResult.emailSent())
+                .warningMessage(receiptEmailResult.warningMessage())
+                .message(receiptEmailResult.warningMessage() == null
+                    ? "Payment recorded successfully."
+                    : "Payment recorded with follow-up required.")
                 .build();
     }
 
@@ -259,12 +290,19 @@ public class PaymentService {
         record.setApprovedAt(LocalDateTime.now());
         record.setApprovedBy(approvedBy);
         record.setReferenceNumber(paymentReference);
-        paymentRecordRepository.save(record);
+        PaymentRecord saved = paymentRecordRepository.save(record);
+        ReceiptEmailResult receiptEmailResult = generateReceiptAndSendConfirmation(saved);
 
         Map<String, Object> response = new HashMap<>();
         response.put("paymentId", record.getId());
         response.put("status", "APPROVED");
-        response.put("message", "Payment approved and membership activated.");
+        response.put("receiptGenerated", receiptEmailResult.receiptGenerated());
+        response.put("receiptNumber", receiptEmailResult.receiptNumber());
+        response.put("emailSent", receiptEmailResult.emailSent());
+        response.put("warningMessage", receiptEmailResult.warningMessage());
+        response.put("message", receiptEmailResult.warningMessage() == null
+            ? "Payment approved and membership activated."
+            : "Payment approved and membership activated, but follow-up is required.");
         return response;
     }
 
@@ -288,6 +326,76 @@ public class PaymentService {
         response.put("status", "REJECTED");
         response.put("message", "Payment rejected successfully.");
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public PaymentRecord getReceiptByPaymentId(Long paymentId) {
+        PaymentRecord record = paymentRecordRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment record not found."));
+        if (record.getReceiptPdfData() == null || record.getReceiptPdfData().length == 0) {
+            throw new IllegalArgumentException("Receipt is not available for this payment.");
+        }
+        return record;
+    }
+
+    @Transactional
+    public Map<String, Object> retryReceiptGeneration(Long paymentId) {
+        PaymentRecord record = paymentRecordRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment record not found."));
+
+        ReceiptEmailResult result = generateReceiptAndSendConfirmation(record);
+        Map<String, Object> response = new HashMap<>();
+        response.put("paymentId", paymentId);
+        response.put("receiptGenerated", result.receiptGenerated());
+        response.put("receiptNumber", result.receiptNumber());
+        response.put("emailSent", result.emailSent());
+        response.put("warningMessage", result.warningMessage());
+        response.put("message", result.warningMessage() == null
+                ? "Receipt regenerated and email processed."
+                : "Receipt retry completed with follow-up required.");
+        return response;
+    }
+
+    @Transactional
+    public Map<String, Object> resendPaymentConfirmationEmail(Long paymentId) {
+        PaymentRecord record = paymentRecordRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment record not found."));
+
+        if (record.getReceiptPdfData() == null || record.getReceiptPdfData().length == 0) {
+            throw new IllegalStateException("Receipt is missing. Retry receipt generation first.");
+        }
+
+        String emailWarning = sendPaymentConfirmationEmail(record);
+        paymentRecordRepository.save(record);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("paymentId", paymentId);
+        response.put("emailSent", Boolean.TRUE.equals(record.getEmailSent()));
+        response.put("warningMessage", emailWarning);
+        response.put("message", emailWarning == null
+                ? "Payment confirmation email sent successfully."
+                : "Email resend completed with follow-up required.");
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getEmailFailurePayments() {
+        return paymentRecordRepository
+                .findByApprovalStatusAndEmailSentFalseAndEmailFailureReasonIsNotNullOrderByCreatedAtDesc(PaymentApprovalStatus.APPROVED)
+                .stream()
+                .map(record -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("paymentId", record.getId());
+                    item.put("receiptNumber", record.getReceiptNumber());
+                    item.put("memberName", (record.getClient().getFirstName() + " " + record.getClient().getLastName()).trim());
+                    item.put("memberEmail", record.getClient().getEmail());
+                    item.put("paymentAmount", record.getAmount());
+                    item.put("paymentDate", record.getPaymentDate());
+                    item.put("emailFailureReason", record.getEmailFailureReason());
+                    item.put("receiptAvailable", record.getReceiptPdfData() != null && record.getReceiptPdfData().length > 0);
+                    return item;
+                })
+                .toList();
     }
 
     public Map<String, Object> createPaymentIntent(CreatePaymentIntentRequest request) {
@@ -533,12 +641,13 @@ public class PaymentService {
                 .paymentMethod(PaymentMethod.CARD)
                 .referenceNumber(paymentReference)
                 .recordedBy("CLIENT_CHECKOUT")
-            .approvalStatus(PaymentApprovalStatus.APPROVED)
-            .approvedBy("SYSTEM")
-            .approvedAt(LocalDateTime.now())
+                .approvalStatus(PaymentApprovalStatus.APPROVED)
+                .approvedBy("SYSTEM")
+                .approvedAt(LocalDateTime.now())
                 .build();
 
-        paymentRecordRepository.save(paymentRecord);
+        PaymentRecord saved = paymentRecordRepository.save(paymentRecord);
+        generateReceiptAndSendConfirmation(saved);
     }
 
     private void activateMembership(Client client, MembershipPlan plan, String paymentReference) {
@@ -569,6 +678,175 @@ public class PaymentService {
 
         log.info("Activated membership for clientId={} planId={} via local payment reference {}",
                 client.getId(), plan.getId(), paymentReference);
+    }
+
+    private void ensureNoDuplicatePayment(Client client,
+                                          MembershipPlan plan,
+                                          BigDecimal amount,
+                                          LocalDate paymentDate,
+                                          PaymentMethod method,
+                                          String referenceNumber) {
+        if (referenceNumber != null && !referenceNumber.isBlank()) {
+            Optional<PaymentRecord> duplicateByReference = paymentRecordRepository
+                    .findFirstByClientIdAndReferenceNumberAndPaymentMethodOrderByIdDesc(
+                            (long) client.getId(),
+                            referenceNumber.trim(),
+                            method);
+            if (duplicateByReference.isPresent()) {
+                throw new IllegalStateException("Duplicate payment submission detected for this reference number.");
+            }
+            return;
+        }
+
+        boolean duplicateNoReference = paymentRecordRepository
+                .existsByClientIdAndMembershipPlanIdAndAmountAndPaymentDateAndPaymentMethod(
+                        (long) client.getId(),
+                        plan.getId(),
+                        amount,
+                        paymentDate,
+                        method);
+        if (duplicateNoReference) {
+            throw new IllegalStateException("Duplicate payment submission detected.");
+        }
+    }
+
+    private ReceiptEmailResult generateReceiptAndSendConfirmation(PaymentRecord paymentRecord) {
+        PaymentRecord managed = paymentRecordRepository.findById(paymentRecord.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Payment record not found."));
+
+        if (managed.getReceiptNumber() == null || managed.getReceiptNumber().isBlank()) {
+            managed.setReceiptNumber(generateReceiptNumber(managed));
+        }
+
+        String warning = null;
+        try {
+            byte[] pdf = createReceiptPdf(managed);
+            managed.setReceiptPdfData(pdf);
+            managed.setReceiptFileName("receipt-" + managed.getReceiptNumber() + ".pdf");
+            managed.setReceiptGeneratedAt(LocalDateTime.now());
+            managed.setReceiptGenerationError(null);
+        } catch (Exception ex) {
+            managed.setReceiptGenerationError("Receipt generation failed: " + ex.getMessage());
+            managed.setEmailSent(false);
+            managed.setEmailFailureReason("Email skipped because receipt generation failed.");
+            paymentRecordRepository.save(managed);
+            warning = "Receipt generation failed. Please use retry receipt option.";
+            return new ReceiptEmailResult(false, false, managed.getReceiptNumber(), warning);
+        }
+
+        String emailWarning = sendPaymentConfirmationEmail(managed);
+        paymentRecordRepository.save(managed);
+        return new ReceiptEmailResult(true, Boolean.TRUE.equals(managed.getEmailSent()), managed.getReceiptNumber(), emailWarning);
+    }
+
+    private String generateReceiptNumber(PaymentRecord paymentRecord) {
+        String datePart = LocalDate.now().toString().replace("-", "");
+        return "RCPT-" + datePart + "-" + String.format("%06d", paymentRecord.getId());
+    }
+
+    private byte[] createReceiptPdf(PaymentRecord paymentRecord) throws IOException {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                stream.beginText();
+                stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
+                stream.newLineAtOffset(RECEIPT_PAGE_MARGIN, page.getMediaBox().getHeight() - RECEIPT_PAGE_MARGIN);
+                stream.showText("Fat2Fit Payment Receipt");
+
+                stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 11);
+                float y = page.getMediaBox().getHeight() - RECEIPT_PAGE_MARGIN - (RECEIPT_LINE_HEIGHT * 2);
+
+                y = writeLine(stream, y, "Receipt No: " + paymentRecord.getReceiptNumber());
+                y = writeLine(stream, y, "Payment ID: " + paymentRecord.getId());
+                y = writeLine(stream, y, "Member: " + paymentRecord.getClient().getFirstName() + " " + paymentRecord.getClient().getLastName());
+                y = writeLine(stream, y, "Member Email: " + safeText(paymentRecord.getClient().getEmail()));
+                y = writeLine(stream, y, "Plan: " + paymentRecord.getMembershipPlan().getPlanName());
+                y = writeLine(stream, y, "Payment Method: " + paymentRecord.getPaymentMethod());
+                y = writeLine(stream, y, "Reference: " + safeText(paymentRecord.getReferenceNumber()));
+                y = writeLine(stream, y, "Amount: " + paymentRecord.getAmount());
+                y = writeLine(stream, y, "Payment Date: " + paymentRecord.getPaymentDate());
+                y = writeLine(stream, y, "Recorded By: " + paymentRecord.getRecordedBy());
+                writeLine(stream, y, "Generated At: " + LocalDateTime.now());
+
+                stream.endText();
+            }
+
+            document.save(out);
+            return out.toByteArray();
+        }
+    }
+
+    private float writeLine(PDPageContentStream stream, float y, String line) throws IOException {
+        stream.newLineAtOffset(0, -RECEIPT_LINE_HEIGHT);
+        stream.showText(line);
+        return y - RECEIPT_LINE_HEIGHT;
+    }
+
+    private String safeText(String value) {
+        return (value == null || value.isBlank()) ? "N/A" : value;
+    }
+
+    private String sendPaymentConfirmationEmail(PaymentRecord paymentRecord) {
+        paymentRecord.setLastEmailAttemptAt(LocalDateTime.now());
+
+        String email = paymentRecord.getClient().getEmail();
+        if (email == null || email.isBlank()) {
+            paymentRecord.setEmailSent(false);
+            paymentRecord.setEmailFailureReason("Member email is missing.");
+            return "Member email is missing. Update profile and resend email.";
+        }
+
+        if (!isValidEmail(email)) {
+            paymentRecord.setEmailSent(false);
+            paymentRecord.setEmailFailureReason("Member email is invalid.");
+            return "Member email is invalid. Update profile and resend email.";
+        }
+
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setTo(email);
+            helper.setSubject("Fat2Fit Payment Confirmation - " + paymentRecord.getReceiptNumber());
+            helper.setText(buildPaymentEmailBody(paymentRecord));
+            helper.addAttachment(
+                    paymentRecord.getReceiptFileName() == null ? "payment-receipt.pdf" : paymentRecord.getReceiptFileName(),
+                    () -> new java.io.ByteArrayInputStream(paymentRecord.getReceiptPdfData()),
+                    "application/pdf");
+
+            javaMailSender.send(mimeMessage);
+            paymentRecord.setEmailSent(true);
+            paymentRecord.setEmailSentAt(LocalDateTime.now());
+            paymentRecord.setEmailFailureReason(null);
+            return null;
+        } catch (Exception ex) {
+            log.error("Failed to send payment confirmation email for paymentId={}", paymentRecord.getId(), ex);
+            paymentRecord.setEmailSent(false);
+            paymentRecord.setEmailFailureReason("Failed to send email: " + ex.getMessage());
+            return "Email sending failed. Please use resend option.";
+        }
+    }
+
+    private String buildPaymentEmailBody(PaymentRecord paymentRecord) {
+        return "Dear " + paymentRecord.getClient().getFirstName() + ",\n\n"
+                + "Your payment has been successfully recorded.\n\n"
+                + "Receipt Number: " + paymentRecord.getReceiptNumber() + "\n"
+                + "Payment Method: " + paymentRecord.getPaymentMethod() + "\n"
+                + "Amount: " + paymentRecord.getAmount() + "\n"
+                + "Payment Date: " + paymentRecord.getPaymentDate() + "\n\n"
+                + "Please find your digital receipt attached.\n\n"
+                + "Regards,\nFat2Fit Team";
+    }
+
+    private boolean isValidEmail(String email) {
+        try {
+            InternetAddress address = new InternetAddress(email);
+            address.validate();
+            return true;
+        } catch (AddressException ex) {
+            return false;
+        }
     }
 
     private void sendClientActivationEmail(String email, String planName, LocalDate startDate, LocalDate expiryDate) {

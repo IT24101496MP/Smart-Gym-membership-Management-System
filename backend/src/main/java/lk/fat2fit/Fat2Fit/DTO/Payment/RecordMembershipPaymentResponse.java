@@ -23,5 +23,9 @@ public class RecordMembershipPaymentResponse {
     private LocalDate paymentDate;
     private PaymentMethod paymentMethod;
     private String referenceNumber;
+    private Boolean receiptGenerated;
+    private String receiptNumber;
+    private Boolean emailSent;
+    private String warningMessage;
     private String message;
 }
