@@ -1010,6 +1010,11 @@ const ManagePage = () => {
   const [approvalBusyId, setApprovalBusyId] = useState(null);
   const [rejectBusyId, setRejectBusyId] = useState(null);
   const [rejectReasons, setRejectReasons] = useState({});
+  const [emailFailures, setEmailFailures] = useState([]);
+  const [emailFailuresLoading, setEmailFailuresLoading] = useState(false);
+  const [emailFailuresError, setEmailFailuresError] = useState("");
+  const [resendBusyId, setResendBusyId] = useState(null);
+  const [retryReceiptBusyId, setRetryReceiptBusyId] = useState(null);
 
   const loadPendingApprovals = useCallback(async () => {
     if (role !== "ADMIN" && role !== "INSTRUCTOR") return;
@@ -1023,6 +1028,21 @@ const ManagePage = () => {
       setPendingError("Failed to load pending payment approvals.");
     } finally {
       setPendingLoading(false);
+    }
+  }, [role]);
+
+  const loadEmailFailures = useCallback(async () => {
+    if (role !== "ADMIN" && role !== "INSTRUCTOR") return;
+    setEmailFailuresLoading(true);
+    setEmailFailuresError("");
+    try {
+      const { data } = await api.get("/api/payments/email-failures");
+      setEmailFailures(Array.isArray(data) ? data : []);
+    } catch {
+      setEmailFailures([]);
+      setEmailFailuresError("Failed to load payment email failures.");
+    } finally {
+      setEmailFailuresLoading(false);
     }
   }, [role]);
 
@@ -1090,6 +1110,10 @@ const ManagePage = () => {
   useEffect(() => {
     loadPendingApprovals();
   }, [loadPendingApprovals]);
+
+  useEffect(() => {
+    loadEmailFailures();
+  }, [loadEmailFailures]);
 
   const handleEdit = (user) => setEditing(user);
   const closeModal = () => setEditing(null);
@@ -1233,6 +1257,46 @@ const ManagePage = () => {
     }
   };
 
+  const handleViewReceipt = async (paymentId) => {
+    try {
+      const response = await api.get(`/api/payments/${paymentId}/receipt`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      setEmailFailuresError("Failed to open receipt.");
+    }
+  };
+
+  const handleRetryReceipt = async (paymentId) => {
+    setRetryReceiptBusyId(paymentId);
+    setEmailFailuresError("");
+    try {
+      await api.post(`/api/payments/${paymentId}/retry-receipt`);
+      await loadEmailFailures();
+    } catch (err) {
+      setEmailFailuresError(err.response?.data || "Failed to retry receipt generation.");
+    } finally {
+      setRetryReceiptBusyId(null);
+    }
+  };
+
+  const handleResendEmail = async (paymentId) => {
+    setResendBusyId(paymentId);
+    setEmailFailuresError("");
+    try {
+      await api.post(`/api/payments/${paymentId}/resend-email`);
+      await loadEmailFailures();
+    } catch (err) {
+      setEmailFailuresError(err.response?.data || "Failed to resend payment email.");
+    } finally {
+      setResendBusyId(null);
+    }
+  };
+
   // ── render ──
   if (loading) {
     return (
@@ -1373,6 +1437,67 @@ const ManagePage = () => {
                                 disabled={approvalBusyId === p.paymentId || rejectBusyId === p.paymentId}
                               >
                                 {rejectBusyId === p.paymentId ? "Rejecting..." : "Reject"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="table-container pending-payments-section">
+              <h2 className="section-title">Payment Email Follow-ups ({emailFailures.length})</h2>
+              {emailFailuresLoading && <p className="loading-msg">Loading payment email follow-ups...</p>}
+              {emailFailuresError && <p className="error-msg">{emailFailuresError}</p>}
+              {!emailFailuresLoading && !emailFailuresError && emailFailures.length === 0 && (
+                <p className="loading-msg">No pending payment email follow-ups.</p>
+              )}
+
+              {!emailFailuresLoading && emailFailures.length > 0 && (
+                <div className="table-scroll">
+                  <table className="manage-table">
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Member</th>
+                        <th>Email</th>
+                        <th>Receipt</th>
+                        <th>Failure</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emailFailures.map((item) => (
+                        <tr key={item.paymentId}>
+                          <td className="cell-id">{item.paymentId}</td>
+                          <td className="cell-name">{item.memberName}</td>
+                          <td>{item.memberEmail || "—"}</td>
+                          <td>{item.receiptNumber || "Not generated"}</td>
+                          <td>{item.emailFailureReason || "—"}</td>
+                          <td>
+                            <div className="approval-actions">
+                              <button
+                                className="btn-secondary-action"
+                                onClick={() => handleRetryReceipt(item.paymentId)}
+                                disabled={retryReceiptBusyId === item.paymentId || resendBusyId === item.paymentId}
+                              >
+                                {retryReceiptBusyId === item.paymentId ? "Retrying..." : "Retry Receipt"}
+                              </button>
+                              <button
+                                className="btn-edit"
+                                onClick={() => handleResendEmail(item.paymentId)}
+                                disabled={retryReceiptBusyId === item.paymentId || resendBusyId === item.paymentId}
+                              >
+                                {resendBusyId === item.paymentId ? "Sending..." : "Resend Email"}
+                              </button>
+                              <button
+                                className="btn-secondary-action"
+                                onClick={() => handleViewReceipt(item.paymentId)}
+                              >
+                                View Receipt
                               </button>
                             </div>
                           </td>
