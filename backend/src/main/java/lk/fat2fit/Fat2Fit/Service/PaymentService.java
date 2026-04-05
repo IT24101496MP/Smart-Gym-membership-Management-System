@@ -398,6 +398,31 @@ public class PaymentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPaymentHistoryForMember(Long clientId) {
+        if (clientId == null) {
+            throw new IllegalArgumentException("Client id is required.");
+        }
+
+        if (!clientRepository.existsById(clientId)) {
+            throw new IllegalArgumentException("Client not found.");
+        }
+
+        return paymentRecordRepository.findByClientIdOrderByPaymentDateDescIdDesc(clientId)
+                .stream()
+                .map(record -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("paymentId", record.getId());
+                    item.put("paymentDate", record.getPaymentDate());
+                    item.put("amount", record.getAmount());
+                    item.put("paymentMethod", record.getPaymentMethod());
+                    item.put("receiptNumber", record.getReceiptNumber());
+                    item.put("status", record.getApprovalStatus() == null ? "APPROVED" : record.getApprovalStatus().name());
+                    return item;
+                })
+                .toList();
+    }
+
     public Map<String, Object> createPaymentIntent(CreatePaymentIntentRequest request) {
         if (request.getClientId() == null || request.getPlanId() == null) {
             throw new IllegalArgumentException("clientId and planId are required");

@@ -180,6 +180,16 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getEmailFailurePayments());
     }
 
+    @GetMapping("/history/{clientId}")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<?> getMemberPaymentHistory(@PathVariable Long clientId) {
+        try {
+            return ResponseEntity.ok(paymentService.getPaymentHistoryForMember(clientId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping(value = "/payhere/notify")
     public ResponseEntity<String> payhereNotify(@RequestParam Map<String, String> payload,
                                                  HttpServletRequest request) {
