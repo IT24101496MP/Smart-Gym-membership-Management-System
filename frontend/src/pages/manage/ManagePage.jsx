@@ -1004,6 +1004,27 @@ const ManagePage = () => {
   const [renewMembershipSuccess, setRenewMembershipSuccess] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [pendingError, setPendingError] = useState("");
+  const [approvalBusyId, setApprovalBusyId] = useState(null);
+  const [rejectBusyId, setRejectBusyId] = useState(null);
+  const [rejectReasons, setRejectReasons] = useState({});
+
+  const loadPendingApprovals = useCallback(async () => {
+    if (role !== "ADMIN" && role !== "INSTRUCTOR") return;
+    setPendingLoading(true);
+    setPendingError("");
+    try {
+      const { data } = await api.get("/api/payments/approvals/pending");
+      setPendingPayments(Array.isArray(data) ? data : []);
+    } catch {
+      setPendingPayments([]);
+      setPendingError("Failed to load pending payment approvals.");
+    } finally {
+      setPendingLoading(false);
+    }
+  }, [role]);
 
   const loadMembershipHistory = useCallback(async (clientId) => {
     setMembershipHistoryLoading(true);
@@ -1065,6 +1086,10 @@ const ManagePage = () => {
     };
     fetchData();
   }, [role]);
+
+  useEffect(() => {
+    loadPendingApprovals();
+  }, [loadPendingApprovals]);
 
   const handleEdit = (user) => setEditing(user);
   const closeModal = () => setEditing(null);
@@ -1156,6 +1181,58 @@ const ManagePage = () => {
     navigate("/login");
   };
 
+  const handleViewProof = async (paymentId) => {
+    try {
+      const response = await api.get(`/api/payments/approvals/${paymentId}/proof`, {
+        responseType: "blob",
+      });
+      const contentType = response.headers["content-type"] || "application/octet-stream";
+      const blob = new Blob([response.data], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      setPendingError("Failed to open proof document.");
+    }
+  };
+
+  const handleApprovePayment = async (paymentId) => {
+    setApprovalBusyId(paymentId);
+    setPendingError("");
+    try {
+      await api.post(`/api/payments/approvals/${paymentId}/approve`);
+      await loadPendingApprovals();
+    } catch (err) {
+      setPendingError(err.response?.data || "Failed to approve payment.");
+    } finally {
+      setApprovalBusyId(null);
+    }
+  };
+
+  const handleRejectReasonChange = (paymentId, value) => {
+    setRejectReasons((prev) => ({ ...prev, [paymentId]: value }));
+  };
+
+  const handleRejectPayment = async (paymentId) => {
+    const reason = (rejectReasons[paymentId] || "").trim();
+    if (!reason) {
+      setPendingError("Rejection reason is required.");
+      return;
+    }
+
+    setRejectBusyId(paymentId);
+    setPendingError("");
+    try {
+      await api.post(`/api/payments/approvals/${paymentId}/reject`, { reason });
+      setRejectReasons((prev) => ({ ...prev, [paymentId]: "" }));
+      await loadPendingApprovals();
+    } catch (err) {
+      setPendingError(err.response?.data || "Failed to reject payment.");
+    } finally {
+      setRejectBusyId(null);
+    }
+  };
+
   // ── render ──
   if (loading) {
     return (
@@ -1233,6 +1310,79 @@ const ManagePage = () => {
               navigate={navigate}
               title={`${tableTitle} (${visibleUsers.length})`}
             />
+
+            <div className="table-container pending-payments-section">
+              <h2 className="section-title">Pending Bank Transfer Approvals ({pendingPayments.length})</h2>
+              {pendingLoading && <p className="loading-msg">Loading pending approvals...</p>}
+              {pendingError && <p className="error-msg">{pendingError}</p>}
+              {!pendingLoading && !pendingError && pendingPayments.length === 0 && (
+                <p className="loading-msg">No pending bank transfer payments.</p>
+              )}
+
+              {!pendingLoading && pendingPayments.length > 0 && (
+                <div className="table-scroll">
+                  <table className="manage-table">
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Proof</th>
+                        <th>Reject Reason</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingPayments.map((p) => (
+                        <tr key={p.paymentId}>
+                          <td className="cell-id">{p.paymentId}</td>
+                          <td className="cell-name">{p.memberName}</td>
+                          <td>{p.membershipPlanName}</td>
+                          <td>{p.paymentAmount}</td>
+                          <td>{p.paymentDate}</td>
+                          <td>{p.referenceNumber || "—"}</td>
+                          <td>
+                            <button className="btn-secondary-action" onClick={() => handleViewProof(p.paymentId)}>
+                              View Proof
+                            </button>
+                          </td>
+                          <td>
+                            <input
+                              className="reject-reason-input"
+                              type="text"
+                              value={rejectReasons[p.paymentId] || ""}
+                              onChange={(e) => handleRejectReasonChange(p.paymentId, e.target.value)}
+                              placeholder="Reason"
+                            />
+                          </td>
+                          <td>
+                            <div className="approval-actions">
+                              <button
+                                className="btn-edit"
+                                onClick={() => handleApprovePayment(p.paymentId)}
+                                disabled={approvalBusyId === p.paymentId || rejectBusyId === p.paymentId}
+                              >
+                                {approvalBusyId === p.paymentId ? "Approving..." : "Approve"}
+                              </button>
+                              <button
+                                className="btn-reject"
+                                onClick={() => handleRejectPayment(p.paymentId)}
+                                disabled={approvalBusyId === p.paymentId || rejectBusyId === p.paymentId}
+                              >
+                                {rejectBusyId === p.paymentId ? "Rejecting..." : "Reject"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
 

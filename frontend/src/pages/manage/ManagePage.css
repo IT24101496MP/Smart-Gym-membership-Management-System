@@ -191,6 +191,10 @@
   padding: 1.5rem 1.75rem;
 }
 
+.pending-payments-section {
+  margin-top: 1.25rem;
+}
+
 .section-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -256,6 +260,52 @@
 }
 .btn-edit:hover {
   background: #a93226;
+}
+
+.btn-secondary-action {
+  padding: 0.35rem 0.9rem;
+  background: #2c5f8a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-secondary-action:hover {
+  background: #234a6b;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-reject {
+  padding: 0.35rem 0.9rem;
+  background: #8e2b2b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-reject:hover {
+  background: #742323;
+}
+
+.reject-reason-input {
+  width: 100%;
+  min-width: 180px;
+  border: 1px solid #d2d2d2;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
 }
 
 .btn-metrics {

@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/client/register",
-                                "/api/instructor/register")
+                            "/api/instructor/register",
+                            "/api/payments/payhere/notify")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
 

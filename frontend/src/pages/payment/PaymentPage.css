@@ -82,6 +82,37 @@
   color: #315944;
 }
 
+.bank-transfer-block {
+  margin-top: 1rem;
+}
+
+.payment-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.8rem 0;
+}
+
+.payment-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #29455f;
+  font-size: 0.9rem;
+}
+
+.payment-form-grid input,
+.payment-form-grid select {
+  border: 1px solid #bfd0df;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.9rem;
+}
+
+.payment-form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
 .payment-success {
   color: #124a35;
   background: #e7f9ef;
@@ -101,4 +132,10 @@
 .payment-secondary {
   background: #e7edf5;
   color: #1e3a58;
+}
+
+@media (max-width: 700px) {
+  .payment-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
