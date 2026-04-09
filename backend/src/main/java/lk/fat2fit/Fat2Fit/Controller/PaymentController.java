@@ -63,7 +63,7 @@ public class PaymentController {
 
     @PostMapping(value = "/submit-bank-transfer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> submitBankTransferPayment(@RequestParam Integer clientId,
+    public ResponseEntity<?> submitBankTransferPayment(@RequestParam Long clientId,
                                                        @RequestParam Integer membershipPlanId,
                                                        @RequestParam java.math.BigDecimal paymentAmount,
                                                        @RequestParam String paymentDate,

@@ -31,7 +31,7 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
             "c.phoneNumber LIKE CONCAT('%', :keyword, '%') OR " +
             "CAST(c.id as string) LIKE CONCAT('%', :keyword, '%')")
     List<Client> searchClients(@Param("keyword") String keyword);
-}
+
         @Query("""
                         SELECT c FROM Client c
                         WHERE c.membershipPlan IS NOT NULL
