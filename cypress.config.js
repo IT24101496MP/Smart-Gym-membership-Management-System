@@ -1,4 +1,4 @@
-const { defineConfig } = require("cypress");
+const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
   allowCypressEnv: false,
@@ -13,7 +13,5 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
     },
   },
-  env: {
-    apiUrl: "http://localhost:8080/api/membership-plans"
-  }
+  fixturesFolder: 'cypress/fixtures'
 });
