@@ -2,7 +2,10 @@ package lk.fat2fit.Fat2Fit.Repository;
 
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.List;
 
@@ -20,5 +23,13 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     Optional<Client> findByPhoneNumber(String phoneNumber);
 
     List<Client> findByBloodGroup(String bloodGroup);
+
+        @Query("""
+                        SELECT c FROM Client c
+                        WHERE c.membershipPlan IS NOT NULL
+                            AND c.membershipEndDate IN :dates
+                            AND (c.membershipSuspended IS NULL OR c.membershipSuspended = false)
+                        """)
+        List<Client> findActiveClientsExpiringOnDates(@Param("dates") List<LocalDate> dates);
 
 }

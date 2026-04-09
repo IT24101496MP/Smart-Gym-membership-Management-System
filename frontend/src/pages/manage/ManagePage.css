@@ -483,6 +483,19 @@
   background: #fff;
 }
 
+.renew-summary-note {
+  margin-top: 0.85rem;
+  background: #faf7f2;
+  border: 1px solid #eadfcf;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+}
+
+.renew-summary-note p {
+  margin: 0.25rem 0;
+  font-size: 0.88rem;
+}
+
 .membership-history-header {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
-import { logout } from "../../utils/auth";
+import { getRole, logout } from "../../utils/auth";
 import "./MembershipPlanPage.css";
 
 const emptyForm = {
@@ -22,8 +22,194 @@ const toPayload = (form) => ({
   maximumMembers: Number(form.maximumMembers),
 });
 
+const currency = (value) => {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("en-LK", {
+    style: "currency",
+    currency: "LKR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+const toDurationMonths = (durationDays) => Math.max(1, Math.ceil(Number(durationDays || 0) / 30));
+
+const totalAmountForPlan = (plan) => {
+  if (!plan) return 0;
+  const months = toDurationMonths(plan.durationDays);
+  return Number(plan.admissionFee || 0) + Number(plan.monthlyPrice || 0) * months;
+};
+
+const MembershipSelectionView = ({ navigate, handleLogout }) => {
+  const [plans, setPlans] = useState([]);
+  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const [client, setClient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [plansRes, meRes] = await Promise.all([
+          api.get("/api/membership-plans/active"),
+          api.get("/api/manage/me"),
+        ]);
+        setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
+        setClient(meRes.data);
+
+        if (Array.isArray(plansRes.data) && plansRes.data.length > 0) {
+          setSelectedPlanId(String(plansRes.data[0].id));
+        }
+      } catch {
+        setError("Failed to load active membership plans.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => String(plan.id) === selectedPlanId) || null,
+    [plans, selectedPlanId]
+  );
+
+  const durationMonths = toDurationMonths(selectedPlan?.durationDays);
+  const totalAmount = totalAmountForPlan(selectedPlan);
+
+  const proceedToSummary = () => {
+    setError("");
+    setSuccess("");
+    if (!selectedPlan) return;
+    setShowSummary(true);
+  };
+
+  const confirmAndPay = async () => {
+    if (!selectedPlan || !client?.id) return;
+    setProcessing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await api.post("/api/membership-plans/renew", {
+        clientId: client.id,
+        planId: selectedPlan.id,
+        durationMonths,
+        price: totalAmount,
+      });
+      setSuccess("Payment confirmed and membership activated successfully.");
+      setShowSummary(false);
+    } catch (err) {
+      const response = err.response?.data;
+      if (response && typeof response === "object") {
+        setError(response.message || "Unable to complete membership activation.");
+      } else {
+        setError(response || "Unable to complete membership activation.");
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="membership-page member-mode">
+      <div className="membership-container">
+        <div className="membership-header">
+          <div>
+            <h1>Choose Your Membership</h1>
+            <p>Select one active plan, review pricing, and confirm before payment redirect.</p>
+          </div>
+          <div className="membership-header-actions">
+            <button className="btn-back" onClick={() => navigate("/manage")}>← Manage</button>
+            <button className="btn-logout" onClick={handleLogout}>Logout</button>
+          </div>
+        </div>
+
+        {error && <p className="message-box message-error">{error}</p>}
+        {success && <p className="message-box message-success">{success}</p>}
+
+        {loading ? (
+          <div className="plan-list-card"><p className="list-message">Loading active plans...</p></div>
+        ) : plans.length === 0 ? (
+          <div className="plan-list-card"><p className="list-message">No active plans available.</p></div>
+        ) : (
+          <>
+            <div className="member-plans-grid">
+              {plans.map((plan) => {
+                const selected = String(plan.id) === selectedPlanId;
+                const months = toDurationMonths(plan.durationDays);
+                const total = totalAmountForPlan(plan);
+                return (
+                  <label key={plan.id} className={`member-plan-card ${selected ? "selected" : ""}`}>
+                    <input
+                      type="radio"
+                      name="selectedMembershipPlan"
+                      value={String(plan.id)}
+                      checked={selected}
+                      onChange={(e) => setSelectedPlanId(e.target.value)}
+                    />
+                    <div className="member-plan-head">
+                      <h3>{plan.planName}</h3>
+                      <span className="status-badge active">ACTIVE</span>
+                    </div>
+                    <p className="member-plan-benefits">{plan.description || "Benefits details will be shared at onboarding."}</p>
+                    <ul className="member-plan-meta">
+                      <li>Duration: {plan.durationDays} days ({months} month{months > 1 ? "s" : ""})</li>
+                      <li>Monthly Price: {currency(plan.monthlyPrice)}</li>
+                      <li>Admission Fee: {currency(plan.admissionFee)}</li>
+                      <li>Total Amount: {currency(total)}</li>
+                    </ul>
+                  </label>
+                );
+              })}
+            </div>
+
+            {selectedPlan && (
+              <div className="plan-list-card payment-summary-card">
+                <h2>Payment Summary</h2>
+                <p className="summary-line"><strong>Selected Plan:</strong> {selectedPlan.planName}</p>
+                <p className="summary-line"><strong>Duration:</strong> {selectedPlan.durationDays} days ({durationMonths} month{durationMonths > 1 ? "s" : ""})</p>
+                <p className="summary-line"><strong>Admission Fee:</strong> {currency(selectedPlan.admissionFee)}</p>
+                <p className="summary-line"><strong>Total Amount:</strong> {currency(totalAmount)}</p>
+                <div className="form-actions">
+                  {!showSummary ? (
+                    <button type="button" className="btn-primary" onClick={proceedToSummary}>
+                      Proceed to Payment
+                    </button>
+                  ) : (
+                    <>
+                      <button type="button" className="btn-secondary" onClick={() => setShowSummary(false)}>
+                        Cancel
+                      </button>
+                      <button type="button" className="btn-primary" onClick={confirmAndPay} disabled={processing}>
+                        {processing ? "Redirecting..." : "Confirm and Pay"}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {showSummary && (
+                  <p className="summary-note">
+                    Confirming will proceed to payment gateway and activate your selected membership plan.
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MembershipPlanPage = () => {
   const navigate = useNavigate();
+  const role = getRole();
   const [plans, setPlans] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingPlanId, setEditingPlanId] = useState(null);
@@ -34,9 +220,14 @@ const MembershipPlanPage = () => {
 
   const editing = useMemo(() => plans.find((p) => p.id === editingPlanId) || null, [plans, editingPlanId]);
 
+  const adminMode = role === "ADMIN";
+
   useEffect(() => {
+    if (!adminMode) {
+      return;
+    }
     loadPlans();
-  }, []);
+  }, [adminMode]);
 
   const loadPlans = async () => {
     setLoading(true);
@@ -164,6 +355,10 @@ const MembershipPlanPage = () => {
     logout();
     navigate("/login");
   };
+
+  if (!adminMode) {
+    return <MembershipSelectionView navigate={navigate} handleLogout={handleLogout} />;
+  }
 
   return (
     <div className="membership-page">
