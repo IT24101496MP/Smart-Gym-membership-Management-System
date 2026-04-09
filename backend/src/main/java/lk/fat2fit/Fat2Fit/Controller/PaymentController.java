@@ -136,6 +136,60 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/{paymentId}/receipt")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<byte[]> getReceipt(@PathVariable Long paymentId) {
+        try {
+            PaymentRecord record = paymentService.getReceiptByPaymentId(paymentId);
+            String filename = record.getReceiptFileName() == null || record.getReceiptFileName().isBlank()
+                    ? "receipt-" + paymentId + ".pdf"
+                    : record.getReceiptFileName();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(record.getReceiptPdfData());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/{paymentId}/retry-receipt")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<?> retryReceipt(@PathVariable Long paymentId) {
+        try {
+            return ResponseEntity.ok(paymentService.retryReceiptGeneration(paymentId));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{paymentId}/resend-email")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<?> resendEmail(@PathVariable Long paymentId) {
+        try {
+            return ResponseEntity.ok(paymentService.resendPaymentConfirmationEmail(paymentId));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/email-failures")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<List<Map<String, Object>>> getEmailFailures() {
+        return ResponseEntity.ok(paymentService.getEmailFailurePayments());
+    }
+
+    @GetMapping("/history/{clientId}")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<?> getMemberPaymentHistory(@PathVariable Long clientId) {
+        try {
+            return ResponseEntity.ok(paymentService.getPaymentHistoryForMember(clientId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping(value = "/payhere/notify")
     public ResponseEntity<String> payhereNotify(@RequestParam Map<String, String> payload,
                                                  HttpServletRequest request) {

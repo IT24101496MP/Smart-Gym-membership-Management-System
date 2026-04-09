@@ -79,6 +79,35 @@ public class PaymentRecord {
     @Column(name = "proof_content_type")
     private String proofContentType;
 
+    @Column(name = "receipt_number", unique = true)
+    private String receiptNumber;
+
+    @Lob
+    @Column(name = "receipt_pdf_data", columnDefinition = "LONGBLOB")
+    private byte[] receiptPdfData;
+
+    @Column(name = "receipt_file_name")
+    private String receiptFileName;
+
+    @Column(name = "receipt_generated_at")
+    private LocalDateTime receiptGeneratedAt;
+
+    @Column(name = "receipt_generation_error", length = 500)
+    private String receiptGenerationError;
+
+    @Column(name = "email_sent", nullable = false)
+    @Builder.Default
+    private Boolean emailSent = false;
+
+    @Column(name = "email_sent_at")
+    private LocalDateTime emailSentAt;
+
+    @Column(name = "email_failure_reason", length = 500)
+    private String emailFailureReason;
+
+    @Column(name = "last_email_attempt_at")
+    private LocalDateTime lastEmailAttemptAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
