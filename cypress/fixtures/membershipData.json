@@ -1,4 +1,16 @@
 {
+  "validMember": {
+    "id": "1001",
+    "name": "John Doe"
+  },
+  "validPlan": {
+    "id": "1",
+    "name": "Monthly Plan",
+    "durationDays": 30
+  },
+  "invalidMember": {
+    "id": "9999"
+  }
   "durationDays": 30,
   "planNamePrefix": "QA Membership Plan",
   "description": "Membership plan created by Cypress for user story testing",
