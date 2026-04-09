@@ -2,17 +2,23 @@ package lk.fat2fit.Fat2Fit.Service;
 
 import lk.fat2fit.Fat2Fit.DTO.Payment.CreatePaymentIntentRequest;
 import lk.fat2fit.Fat2Fit.DTO.Payment.MockPaymentConfirmRequest;
+import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentRequest;
+import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentResponse;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.ClientMembership;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
+import lk.fat2fit.Fat2Fit.Entity.PaymentRecord;
 import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
+import lk.fat2fit.Fat2Fit.Entity.Enum.PaymentMethod;
 import lk.fat2fit.Fat2Fit.Repository.ClientMembershipRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
+import lk.fat2fit.Fat2Fit.Repository.PaymentRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +37,75 @@ public class PaymentService {
     private final ClientRepository clientRepository;
     private final MembershipPlanRepository membershipPlanRepository;
     private final ClientMembershipRepository clientMembershipRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
     private final JavaMailSender javaMailSender;
+
+    @Transactional
+    public RecordMembershipPaymentResponse recordMembershipPayment(RecordMembershipPaymentRequest request) {
+        Client client = clientRepository.findById(request.getClientId())
+                .orElseThrow(() -> new IllegalArgumentException("Client not found."));
+
+        if (!Boolean.TRUE.equals(client.getIsActive())) {
+            throw new IllegalStateException("Cannot record payment for inactive user account.");
+        }
+
+        MembershipPlan assignedPlan = client.getMembershipPlan();
+        if (assignedPlan == null) {
+            throw new IllegalStateException("Cannot record payment for inactive membership.");
+        }
+
+        if (!assignedPlan.getId().equals(request.getMembershipPlanId())) {
+            throw new IllegalArgumentException("Selected membership plan does not match member's active plan.");
+        }
+
+        if (request.getPaymentAmount() == null || request.getPaymentAmount().signum() <= 0) {
+            throw new IllegalArgumentException("Payment amount must be greater than zero.");
+        }
+
+        if (request.getPaymentDate() == null) {
+            throw new IllegalArgumentException("Payment date is required.");
+        }
+
+        if (request.getPaymentMethod() == null) {
+            throw new IllegalArgumentException("Payment method is required.");
+        }
+
+        String referenceNumber = request.getReferenceNumber();
+        if (request.getPaymentMethod() == PaymentMethod.BANK_TRANSFER || request.getPaymentMethod() == PaymentMethod.CARD) {
+            if (referenceNumber == null || referenceNumber.isBlank()) {
+                throw new IllegalArgumentException("Reference number is required for bank transfer or card payments.");
+            }
+        }
+
+        String recordedBy = SecurityContextHolder.getContext().getAuthentication() != null
+                ? SecurityContextHolder.getContext().getAuthentication().getName()
+                : "UNKNOWN";
+
+        PaymentRecord record = PaymentRecord.builder()
+                .client(client)
+                .membershipPlan(assignedPlan)
+                .amount(request.getPaymentAmount())
+                .paymentDate(request.getPaymentDate())
+                .paymentMethod(request.getPaymentMethod())
+                .referenceNumber(referenceNumber == null || referenceNumber.isBlank() ? null : referenceNumber.trim())
+                .recordedBy(recordedBy)
+                .build();
+
+        PaymentRecord saved = paymentRecordRepository.save(record);
+
+        return RecordMembershipPaymentResponse.builder()
+                .paymentId(saved.getId())
+                .clientId((long) client.getId())
+                .memberName((client.getFirstName() + " " + client.getLastName()).trim())
+                .membershipPlanId(assignedPlan.getId())
+                .membershipPlanName(assignedPlan.getPlanName())
+                .paymentAmount(saved.getAmount())
+                .paymentDate(saved.getPaymentDate())
+                .paymentMethod(saved.getPaymentMethod())
+                .referenceNumber(saved.getReferenceNumber())
+                .message("Payment recorded successfully.")
+                .build();
+    }
 
     public Map<String, Object> createPaymentIntent(CreatePaymentIntentRequest request) {
         if (request.getClientId() == null || request.getPlanId() == null) {
@@ -114,9 +188,29 @@ public class PaymentService {
         }
 
         activateMembership(client, plan, paymentReference);
+        saveConfirmedClientPaymentRecord(client, plan, paymentReference);
         response.put("status", "SUCCESS");
         response.put("message", "Payment confirmed and membership activated.");
         return response;
+    }
+
+    private void saveConfirmedClientPaymentRecord(Client client, MembershipPlan plan, String paymentReference) {
+        BigDecimal amount = plan.getMonthlyPrice();
+        if (amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("Invalid plan amount");
+        }
+
+        PaymentRecord paymentRecord = PaymentRecord.builder()
+                .client(client)
+                .membershipPlan(plan)
+                .amount(amount)
+                .paymentDate(LocalDate.now())
+                .paymentMethod(PaymentMethod.CARD)
+                .referenceNumber(paymentReference)
+                .recordedBy("CLIENT_CHECKOUT")
+                .build();
+
+        paymentRecordRepository.save(paymentRecord);
     }
 
     private void activateMembership(Client client, MembershipPlan plan, String paymentReference) {

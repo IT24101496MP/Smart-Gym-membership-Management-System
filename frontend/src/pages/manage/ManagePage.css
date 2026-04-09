@@ -271,6 +271,21 @@
   background: #0f4f98;
 }
 
+.btn-payment {
+  padding: 0.35rem 0.9rem;
+  background: #6f4e37;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-payment:hover {
+  background: #5c3f2a;
+}
+
 .btn-employment {
   padding: 0.35rem 0.9rem;
   background: #1a6b3c;
