@@ -8,6 +8,17 @@
     "memberId": 1,
     "startDate": "2026-05-01",
     "endDate": "2026-08-01"
+  "validMember": {
+    "id": "1001",
+    "name": "John Doe"
+  },
+  "validPlan": {
+    "id": "1",
+    "name": "Monthly Plan",
+    "durationDays": 30
+  },
+  "invalidMember": {
+    "id": "9999"
   }
   "durationDays": 30,
   "planNamePrefix": "QA Membership Plan",
