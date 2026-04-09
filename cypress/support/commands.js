@@ -95,7 +95,14 @@ Cypress.Commands.add('selectPlanInEditModal', (planName) => {
 
 Cypress.Commands.add('setMembershipStartDateInEditModal', (dateValue) => {
   cy.get('.modal-card').within(() => {
-    cy.contains('label', 'Membership Start Date').parent().find('input[type="date"]').clear().type(dateValue);
+    cy.contains('label', 'Membership Start Date')
+      .parent()
+      .find('input[type="date"]')
+      .should('be.enabled')
+      .clear({ force: true })
+      .type(dateValue, { force: true })
+      .blur()
+      .should('have.value', dateValue);
   });
 });
 
