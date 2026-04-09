@@ -19,4 +19,6 @@ public interface ClientMembershipRepository extends JpaRepository<ClientMembersh
             List<MembershipPlanStatus> statuses);
 
     List<ClientMembership> findByClientIdOrderByIdDesc(Long clientId);
+
+    Optional<ClientMembership> findFirstByClientIdAndPaymentIntentId(Long clientId, String paymentIntentId);
 }

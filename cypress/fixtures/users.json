@@ -1,0 +1,9 @@
+{
+  "admin": {
+    "identifier": "admin@fat2fit.lk",
+    "password": "Admin@1234"
+  },
+  "client": {
+    "password": "Password123!"
+  }
+}
