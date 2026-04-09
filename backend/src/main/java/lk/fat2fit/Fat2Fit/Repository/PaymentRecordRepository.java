@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Long> {
 	List<PaymentRecord> findByApprovalStatusOrderByCreatedAtDesc(PaymentApprovalStatus approvalStatus);
 
+	List<PaymentRecord> findByClientIdOrderByPaymentDateDescIdDesc(Long clientId);
+
 	Optional<PaymentRecord> findByIdAndApprovalStatus(Long id, PaymentApprovalStatus approvalStatus);
 
 	Optional<PaymentRecord> findFirstByClientIdAndReferenceNumberAndPaymentMethodOrderByIdDesc(

@@ -462,6 +462,9 @@ const MembershipProfileModal = ({
   history,
   historyLoading,
   historyError,
+  paymentHistory,
+  paymentHistoryLoading,
+  paymentHistoryError,
   membershipPlans,
   renewing,
   renewError,
@@ -581,6 +584,43 @@ const MembershipProfileModal = ({
                           {membershipLabel(record.status)}
                         </span>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="membership-history-panel">
+          <div className="membership-history-header">
+            <h3>Payment History</h3>
+          </div>
+          {paymentHistoryError && <p className="modal-error">{paymentHistoryError}</p>}
+          {paymentHistoryLoading ? (
+            <p className="empty-msg">Loading payment history...</p>
+          ) : paymentHistory.length === 0 ? (
+            <p className="empty-msg">No payment records found.</p>
+          ) : (
+            <div className="table-scroll">
+              <table className="manage-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Receipt Number</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentHistory.map((record, index) => (
+                    <tr key={record.paymentId ?? `${record.paymentDate}-${record.amount}-${index}`}>
+                      <td>{record.paymentDate || "-"}</td>
+                      <td>{record.amount ?? "-"}</td>
+                      <td>{record.paymentMethod || "-"}</td>
+                      <td>{record.receiptNumber || "Not generated"}</td>
+                      <td>{record.status || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -999,6 +1039,9 @@ const ManagePage = () => {
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [membershipHistoryLoading, setMembershipHistoryLoading] = useState(false);
   const [membershipHistoryError, setMembershipHistoryError] = useState("");
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+  const [paymentHistoryError, setPaymentHistoryError] = useState("");
   const [renewingMembership, setRenewingMembership] = useState(false);
   const [renewMembershipError, setRenewMembershipError] = useState("");
   const [renewMembershipSuccess, setRenewMembershipSuccess] = useState("");
@@ -1057,6 +1100,20 @@ const ManagePage = () => {
       setMembershipHistoryError("Failed to load membership history.");
     } finally {
       setMembershipHistoryLoading(false);
+    }
+  }, []);
+
+  const loadPaymentHistory = useCallback(async (clientId) => {
+    setPaymentHistoryLoading(true);
+    setPaymentHistoryError("");
+    try {
+      const { data } = await api.get(`/api/payments/history/${clientId}`);
+      setPaymentHistory(Array.isArray(data) ? data : []);
+    } catch {
+      setPaymentHistory([]);
+      setPaymentHistoryError("Unable to retrieve payment history.");
+    } finally {
+      setPaymentHistoryLoading(false);
     }
   }, []);
 
@@ -1126,13 +1183,18 @@ const ManagePage = () => {
     setMemberProfile(user);
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
-    await loadMembershipHistory(user.id);
+    await Promise.all([
+      loadMembershipHistory(user.id),
+      loadPaymentHistory(user.id),
+    ]);
   };
 
   const closeMemberProfile = () => {
     setMemberProfile(null);
     setMembershipHistory([]);
     setMembershipHistoryError("");
+    setPaymentHistory([]);
+    setPaymentHistoryError("");
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
   };
@@ -1557,12 +1619,18 @@ const ManagePage = () => {
           history={membershipHistory}
           historyLoading={membershipHistoryLoading}
           historyError={membershipHistoryError}
+          paymentHistory={paymentHistory}
+          paymentHistoryLoading={paymentHistoryLoading}
+          paymentHistoryError={paymentHistoryError}
           membershipPlans={membershipPlans}
           renewing={renewingMembership}
           renewError={renewMembershipError}
           renewSuccess={renewMembershipSuccess}
           onRenew={handleRenewMembership}
-          onRefresh={() => loadMembershipHistory(memberProfile.id)}
+          onRefresh={() => Promise.all([
+            loadMembershipHistory(memberProfile.id),
+            loadPaymentHistory(memberProfile.id),
+          ])}
           onClose={closeMemberProfile}
         />
       )}
