@@ -37,4 +37,7 @@ public class ClientMembership {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private MembershipPlanStatus status;
+
+    @Column(name = "payment_intent_id", unique = true)
+    private String paymentIntentId;
 }

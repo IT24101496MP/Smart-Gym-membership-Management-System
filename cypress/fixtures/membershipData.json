@@ -9,4 +9,10 @@
     "startDate": "2026-05-01",
     "endDate": "2026-08-01"
   }
+  "durationDays": 30,
+  "planNamePrefix": "QA Membership Plan",
+  "description": "Membership plan created by Cypress for user story testing",
+  "monthlyPrice": 1000,
+  "admissionFee": 100,
+  "maximumMembers": 200
 }
