@@ -15,7 +15,7 @@ Cypress.Commands.add('loginAsAdmin', () => {
     cy.get('#password').type(users.admin.password);
   });
   cy.get('button[type="submit"]').click();
-  cy.url().should('not.include', '/login');
+  cy.url().should("not.include", "/login");
 });
 
 // Open member profile

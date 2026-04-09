@@ -53,25 +53,6 @@ const metricsToForm = (m) => ({
   otherGoalSpecification: m.otherGoalSpecification ?? "",
 });
 
-const emptyEdit = () => ({
-  firstName: "",
-  lastName: "",
-  age: "",
-  dateOfBirth: "",
-  gender: "",
-  email: "",
-  phoneNumber: "",
-  landPhone: "",
-  address: "",
-  emergencyContactName: "",
-  emergencyContactRelationship: "",
-  emergencyContactNumber: "",
-  bloodGroup: "",
-  isActive: true,
-  membershipPlanId: "",
-  membershipStartDate: "",
-});
-
 const userToForm = (u) => ({
   firstName: u.firstName ?? "",
   lastName: u.lastName ?? "",
@@ -466,21 +447,27 @@ const MembershipProfileModal = ({
   renewing,
   renewError,
   renewSuccess,
+  renewConflict,
   onRenew,
+  onOverrideRenew,
   onRefresh,
   onClose,
 }) => {
   const [planId, setPlanId] = useState("");
-
-  useEffect(() => {
-    setPlanId(membershipPlans.length > 0 ? String(membershipPlans[0].id) : "");
-  }, [membershipPlans]);
+  const effectivePlanId =
+    planId || (membershipPlans.length > 0 ? String(membershipPlans[0].id) : "");
 
   const submitRenewal = async (e) => {
     e.preventDefault();
-    if (!planId) return;
-    await onRenew(Number(planId));
+    if (!effectivePlanId) return;
+    await onRenew(Number(effectivePlanId));
   };
+
+  const selectedPlan = membershipPlans.find((plan) => String(plan.id) === effectivePlanId) || null;
+  const durationMonths = selectedPlan ? Math.max(1, Math.ceil((selectedPlan.durationDays || 0) / 30)) : 0;
+  const totalAmount = selectedPlan
+    ? Number(selectedPlan.admissionFee || 0) + Number(selectedPlan.monthlyPrice || 0) * durationMonths
+    : 0;
 
   const allowRenew =
     (viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && canRenewMembership(user.membershipStatus);
@@ -519,7 +506,7 @@ const MembershipProfileModal = ({
             <h3>Renew Membership</h3>
             <form className="membership-renew-form" onSubmit={submitRenewal}>
               <select
-                value={planId}
+                value={effectivePlanId}
                 onChange={(e) => setPlanId(e.target.value)}
                 disabled={renewing || membershipPlans.length === 0}
                 required
@@ -537,13 +524,31 @@ const MembershipProfileModal = ({
               <button
                 type="submit"
                 className="btn-save"
-                disabled={renewing || membershipPlans.length === 0 || !planId}
+                disabled={renewing || membershipPlans.length === 0 || !effectivePlanId}
               >
                 {renewing ? "Renewing..." : "Renew Membership"}
               </button>
             </form>
+            {selectedPlan && (
+              <div className="renew-summary-note">
+                <p><strong>Selected Plan:</strong> {selectedPlan.planName}</p>
+                <p><strong>Duration:</strong> {selectedPlan.durationDays} days ({durationMonths} month{durationMonths > 1 ? "s" : ""})</p>
+                <p><strong>Admission Fee:</strong> LKR {Number(selectedPlan.admissionFee || 0).toFixed(2)}</p>
+                <p><strong>Total Amount:</strong> LKR {totalAmount.toFixed(2)}</p>
+              </div>
+            )}
             {renewError && <p className="modal-error">{renewError}</p>}
             {renewSuccess && <p className="form-success">{renewSuccess}</p>}
+            {renewConflict?.overlapDetected && viewerRole === "ADMIN" && (
+              <button
+                type="button"
+                className="btn-save"
+                onClick={() => onOverrideRenew(Number(effectivePlanId))}
+                disabled={renewing || !effectivePlanId}
+              >
+                {renewing ? "Applying Override..." : "Admin Override and Renew"}
+              </button>
+            )}
           </div>
         )}
 
@@ -1002,6 +1007,7 @@ const ManagePage = () => {
   const [renewingMembership, setRenewingMembership] = useState(false);
   const [renewMembershipError, setRenewMembershipError] = useState("");
   const [renewMembershipSuccess, setRenewMembershipSuccess] = useState("");
+  const [renewMembershipConflict, setRenewMembershipConflict] = useState(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
 
@@ -1077,6 +1083,7 @@ const ManagePage = () => {
     setMemberProfile(user);
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
+    setRenewMembershipConflict(null);
     await loadMembershipHistory(user.id);
   };
 
@@ -1086,17 +1093,20 @@ const ManagePage = () => {
     setMembershipHistoryError("");
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
+    setRenewMembershipConflict(null);
   };
 
-  const handleRenewMembership = async (planId) => {
+  const submitMembershipRenewal = async (planId, overrideOverlap = false) => {
     if (!memberProfile) return;
     setRenewingMembership(true);
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
+    setRenewMembershipConflict(null);
     try {
       await api.post("/api/membership-plans/renew", {
         clientId: memberProfile.id,
         planId,
+        overrideOverlap,
       });
       setRenewMembershipSuccess("Membership renewed successfully.");
       const [, refreshedUsers] = await Promise.all([
@@ -1108,10 +1118,24 @@ const ManagePage = () => {
         setMemberProfile(updatedMember);
       }
     } catch (err) {
-      setRenewMembershipError(err.response?.data ?? "Failed to renew membership.");
+      const response = err.response?.data;
+      if (response && typeof response === "object") {
+        setRenewMembershipConflict(response);
+        setRenewMembershipError(response.message ?? "Failed to renew membership.");
+      } else {
+        setRenewMembershipError(response ?? "Failed to renew membership.");
+      }
     } finally {
       setRenewingMembership(false);
     }
+  };
+
+  const handleRenewMembership = async (planId) => {
+    await submitMembershipRenewal(planId, false);
+  };
+
+  const handleOverrideRenewMembership = async (planId) => {
+    await submitMembershipRenewal(planId, true);
   };
 
   const handleEmploymentSaved = ({ id, payload }) => {
@@ -1194,7 +1218,7 @@ const ManagePage = () => {
             <span className={`role-badge role-${role?.toLowerCase()}`}>{role}</span>
           </div>
           <div className="manage-header-right">
-            {role === "ADMIN" && (
+            {(role === "ADMIN" || role === "CLIENT") && (
               <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
                 Membership Plans
               </button>
@@ -1281,7 +1305,9 @@ const ManagePage = () => {
           renewing={renewingMembership}
           renewError={renewMembershipError}
           renewSuccess={renewMembershipSuccess}
+          renewConflict={renewMembershipConflict}
           onRenew={handleRenewMembership}
+          onOverrideRenew={handleOverrideRenewMembership}
           onRefresh={() => loadMembershipHistory(memberProfile.id)}
           onClose={closeMemberProfile}
         />

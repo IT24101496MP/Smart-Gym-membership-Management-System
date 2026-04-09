@@ -1,4 +1,13 @@
 {
+  "validMembership": {
+    "memberId": 1,
+    "startDate": "2026-03-01",
+    "endDate": "2026-06-01"
+  },
+  "overlappingMembership": {
+    "memberId": 1,
+    "startDate": "2026-05-01",
+    "endDate": "2026-08-01"
   "validMember": {
     "id": "1001",
     "name": "John Doe"
