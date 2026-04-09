@@ -203,8 +203,92 @@
   color: #666;
 }
 
+.message-box.message-error {
+  background: #fdecea;
+  color: #9f1d1d;
+  border-color: #f7c8c3;
+}
+
+.message-box.message-success {
+  background: #e9f8ee;
+  color: #1c6b36;
+  border-color: #bce8ca;
+}
+
+.member-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.member-plan-card {
+  display: block;
+  background: #fff;
+  border: 2px solid #e8e8e8;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+.member-plan-card.selected {
+  border-color: #c0392b;
+  box-shadow: 0 8px 22px rgba(192, 57, 43, 0.18);
+}
+
+.member-plan-card input[type="radio"] {
+  margin-bottom: 0.7rem;
+}
+
+.member-plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.member-plan-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.member-plan-benefits {
+  margin: 0.65rem 0;
+  color: #555;
+}
+
+.member-plan-meta {
+  margin: 0;
+  padding-left: 1rem;
+  color: #212121;
+}
+
+.member-plan-meta li {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.payment-summary-card {
+  border-top: 5px solid #1a1a1a;
+}
+
+.summary-line {
+  margin: 0.35rem 0;
+}
+
+.summary-note {
+  margin-top: 0.8rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 860px) {
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-plans-grid {
     grid-template-columns: 1fr;
   }
 

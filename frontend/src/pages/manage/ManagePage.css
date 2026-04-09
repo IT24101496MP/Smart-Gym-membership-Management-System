@@ -338,6 +338,21 @@
   background: #0f4f98;
 }
 
+.btn-payment {
+  padding: 0.35rem 0.9rem;
+  background: #6f4e37;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-payment:hover {
+  background: #5c3f2a;
+}
+
 .btn-employment {
   padding: 0.35rem 0.9rem;
   background: #1a6b3c;
@@ -533,6 +548,19 @@
   font-size: 0.9rem;
   color: #1a1a1a;
   background: #fff;
+}
+
+.renew-summary-note {
+  margin-top: 0.85rem;
+  background: #faf7f2;
+  border: 1px solid #eadfcf;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+}
+
+.renew-summary-note p {
+  margin: 0.25rem 0;
+  font-size: 0.88rem;
 }
 
 .membership-history-header {

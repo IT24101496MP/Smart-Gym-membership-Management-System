@@ -55,10 +55,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/membership-plans").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew")
-                        .hasAnyRole("ADMIN", "INSTRUCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**")
-                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew").hasAnyRole("ADMIN", "INSTRUCTOR", "CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**").hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/membership-plans/**").hasRole("ADMIN")
 
                         // Manage endpoints
@@ -81,6 +79,9 @@ public class SecurityConfig {
 
                         // ADMIN or CLIENT
                         .requestMatchers("/api/client/**").hasAnyRole("ADMIN", "CLIENT")
+
+                        // Payment recording by staff
+                        .requestMatchers(HttpMethod.POST, "/api/payments/record").hasAnyRole("ADMIN", "INSTRUCTOR")
 
                         // Everything else requires authentication
                         .anyRequest().authenticated())
