@@ -7,11 +7,8 @@ import java.time.format.DateTimeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
@@ -51,8 +48,13 @@ public class ClientController {
             @RequestParam(required = false) MultipartFile profilePicture,
             @RequestParam(required = false) MultipartFile digitalSignature
     ) throws IOException {
-        if (firstName == null || firstName.trim().isEmpty()) return ResponseEntity.badRequest().body("First name is required");
-        if (lastName == null || lastName.trim().isEmpty()) return ResponseEntity.badRequest().body("Last name is required");
+
+        if (firstName == null || firstName.trim().isEmpty())
+            return ResponseEntity.badRequest().body("First name is required");
+
+        if (lastName == null || lastName.trim().isEmpty())
+            return ResponseEntity.badRequest().body("Last name is required");
+
         LocalDate dob;
         try {
             dob = LocalDate.parse(dateOfBirth);
@@ -66,7 +68,7 @@ public class ClientController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Invalid gender. Allowed: MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY");
         }
-      
+
         if (!phoneNumber.matches("0\\d{9}"))
             return ResponseEntity.badRequest().body("Invalid phone number");
 
@@ -79,12 +81,13 @@ public class ClientController {
         if (emergencyContactNumber != null && !emergencyContactNumber.trim().isEmpty()
                 && !emergencyContactNumber.matches("0\\d{9}"))
             return ResponseEntity.badRequest().body("Invalid emergency contact number");
-        
+
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$"))
             return ResponseEntity.badRequest().body("Invalid email");
-        
+
         byte[] profileBytes = (profilePicture != null && !profilePicture.isEmpty())
                 ? profilePicture.getBytes() : null;
+
         byte[] signatureBytes = (digitalSignature != null && !digitalSignature.isEmpty())
                 ? digitalSignature.getBytes() : null;
 
@@ -111,9 +114,24 @@ public class ClientController {
             return clientService.registerClient(clientRegister);
         } catch (Exception e) {
             logger.error("Error registering client", e);
-            return ResponseEntity.status(500).body("Server error during registration: " + e.getMessage());
+            return ResponseEntity.status(500)
+                    .body("Server error during registration: " + e.getMessage());
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchClients(@RequestParam String keyword) {
 
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Search keyword is required");
+        }
+
+        try {
+            return clientService.searchClients(keyword);
+        } catch (Exception e) {
+            logger.error("Error searching clients", e);
+            return ResponseEntity.status(500)
+                    .body("Server error during search: " + e.getMessage());
+        }
+    }
 }

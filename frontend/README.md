@@ -16,3 +16,20 @@ Note: This will impact Vite dev & build performances.
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## PayHere Setup (Checkout API)
+
+1. Configure backend env values:
+	- `PAYHERE_MERCHANT_ID`
+	- `PAYHERE_MERCHANT_SECRET`
+	- `PAYHERE_SANDBOX=true|false`
+	- `PAYHERE_RETURN_URL`
+	- `PAYHERE_CANCEL_URL`
+	- `PAYHERE_NOTIFY_URL` (must be publicly reachable)
+2. Start backend and frontend.
+3. Open `/payment/:planId`, create payment intent, then click **Proceed to PayHere**.
+
+Notes:
+- Frontend posts an HTML form directly to PayHere checkout URL using backend-generated hash.
+- PayHere payment completion is finalized by backend verification at `/api/payments/payhere/notify`.
+- **Confirm Payment (Test)** remains available for local-only fallback testing.

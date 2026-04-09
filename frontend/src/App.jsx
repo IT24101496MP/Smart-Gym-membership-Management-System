@@ -10,6 +10,7 @@ import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import ManagePage from "./pages/manage/ManagePage";
 import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
+import AttendancePage from "./pages/attendance/AttendancePage";
 import PaymentPage from "./pages/payment/PaymentPage";
 
 function App() {
@@ -60,6 +61,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "CLIENT"]}>
                 <ManagePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <AttendancePage />
               </ProtectedRoute>
             }
           />

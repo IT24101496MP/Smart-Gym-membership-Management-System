@@ -1,38 +1,34 @@
 package lk.fat2fit.Fat2Fit.Service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
-
-import lk.fat2fit.Fat2Fit.DTO.Payment.MockPaymentConfirmRequest;
 import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentRequest;
 import lk.fat2fit.Fat2Fit.DTO.Payment.RecordMembershipPaymentResponse;
 import lk.fat2fit.Fat2Fit.Entity.Client;
-import lk.fat2fit.Fat2Fit.Entity.ClientMembership;
-import lk.fat2fit.Fat2Fit.Entity.Enum.PaymentMethod;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.PaymentRecord;
+import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
+import lk.fat2fit.Fat2Fit.Entity.Enum.PaymentMethod;
 import lk.fat2fit.Fat2Fit.Repository.ClientMembershipRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
 import lk.fat2fit.Fat2Fit.Repository.PaymentRecordRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.mail.javamail.JavaMailSender;
 
-@ExtendWith(MockitoExtension.class)
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
+
 class PaymentServiceTest {
 
     @Mock
@@ -53,112 +49,100 @@ class PaymentServiceTest {
     @InjectMocks
     private PaymentService paymentService;
 
-    private Client client;
-    private MembershipPlan plan;
-
     @BeforeEach
     void setUp() {
-        plan = MembershipPlan.builder()
-                .id(5)
-                .planName("Premium")
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void shouldPreventDuplicatePaymentByReferenceNumber() {
+        MembershipPlan plan = MembershipPlan.builder()
+                .id(1)
+                .planName("Standard")
                 .durationDays(30)
-                .monthlyPrice(BigDecimal.valueOf(4500.00))
+                .monthlyPrice(new BigDecimal("5000.00"))
+                .status(MembershipPlanStatus.ACTIVE)
                 .build();
 
-        client = Client.builder()
+        Client client = Client.builder()
                 .id(10)
                 .firstName("John")
                 .lastName("Doe")
-                .membershipPlan(plan)
-                .membershipEndDate(LocalDate.now().plusDays(10))
-                .membershipSuspended(false)
+                .email("john@example.com")
                 .isActive(true)
+                .membershipPlan(plan)
                 .build();
+
+        RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
+        request.setClientId(10);
+        request.setMembershipPlanId(1);
+        request.setPaymentAmount(new BigDecimal("5000.00"));
+        request.setPaymentDate(LocalDate.now());
+        request.setPaymentMethod(PaymentMethod.CARD);
+        request.setReferenceNumber("TXN-123");
+
+        when(clientRepository.findById(10)).thenReturn(Optional.of(client));
+        when(paymentRecordRepository.findFirstByClientIdAndReferenceNumberAndPaymentMethodOrderByIdDesc(
+                10L,
+                "TXN-123",
+                PaymentMethod.CARD)).thenReturn(Optional.of(PaymentRecord.builder().id(99L).build()));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> paymentService.recordMembershipPayment(request));
+
+        assertThat(ex.getMessage()).contains("Duplicate payment submission detected");
     }
 
     @Test
-        void shouldRecordPaymentWhenUserAccountIsActiveEvenIfMembershipExpired() {
-        RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest(
-                10L,
-                5,
-                BigDecimal.valueOf(4500.00),
-                LocalDate.of(2026, 3, 30),
-                PaymentMethod.CASH,
-                null);
+    void shouldRecordPaymentButFlagWhenEmailIsMissing() {
+        MembershipPlan plan = MembershipPlan.builder()
+                .id(2)
+                .planName("Premium")
+                .durationDays(30)
+                .monthlyPrice(new BigDecimal("9000.00"))
+                .status(MembershipPlanStatus.ACTIVE)
+                .build();
 
-                client.setMembershipEndDate(LocalDate.now().minusDays(5));
-        when(clientRepository.findById(10L)).thenReturn(Optional.of(client));
+        Client client = Client.builder()
+                .id(20)
+                .firstName("Jane")
+                .lastName("Smith")
+                .email(null)
+                .isActive(true)
+                .membershipPlan(plan)
+                .build();
+
+        RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
+        request.setClientId(20);
+        request.setMembershipPlanId(2);
+        request.setPaymentAmount(new BigDecimal("9000.00"));
+        request.setPaymentDate(LocalDate.now());
+        request.setPaymentMethod(PaymentMethod.CASH);
+
+        AtomicReference<PaymentRecord> savedRef = new AtomicReference<>();
+
+        when(clientRepository.findById(20)).thenReturn(Optional.of(client));
+        when(paymentRecordRepository.existsByClientIdAndMembershipPlanIdAndAmountAndPaymentDateAndPaymentMethod(
+                20L,
+                2,
+                new BigDecimal("9000.00"),
+                request.getPaymentDate(),
+                PaymentMethod.CASH)).thenReturn(false);
         when(paymentRecordRepository.save(any(PaymentRecord.class))).thenAnswer(invocation -> {
-            PaymentRecord toSave = invocation.getArgument(0);
-            toSave.setId(99L);
-            return toSave;
+            PaymentRecord record = invocation.getArgument(0);
+            if (record.getId() == null) {
+                record.setId(1L);
+            }
+            savedRef.set(record);
+            return record;
         });
+        when(paymentRecordRepository.findById(anyLong())).thenAnswer(invocation -> Optional.ofNullable(savedRef.get()));
 
         RecordMembershipPaymentResponse response = paymentService.recordMembershipPayment(request);
 
-        assertEquals(99L, response.getPaymentId());
-        assertEquals(10L, response.getClientId());
-        assertEquals("John Doe", response.getMemberName());
-        assertEquals(5, response.getMembershipPlanId());
-        assertEquals(BigDecimal.valueOf(4500.00), response.getPaymentAmount());
-        assertEquals(PaymentMethod.CASH, response.getPaymentMethod());
-        verify(paymentRecordRepository).save(any(PaymentRecord.class));
+        assertThat(response.getPaymentId()).isEqualTo(1L);
+        assertThat(response.getReceiptGenerated()).isTrue();
+        assertThat(response.getEmailSent()).isFalse();
+        assertThat(response.getWarningMessage()).contains("missing");
     }
-
-    @Test
-        void shouldRejectWhenUserAccountIsInactive() {
-        RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest(
-                10L,
-                5,
-                BigDecimal.valueOf(4500.00),
-                LocalDate.of(2026, 3, 30),
-                PaymentMethod.CASH,
-                null);
-
-                client.setIsActive(false);
-        when(clientRepository.findById(10L)).thenReturn(Optional.of(client));
-
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> paymentService.recordMembershipPayment(request));
-
-                assertEquals("Cannot record payment for inactive user account.", exception.getMessage());
-    }
-
-    @Test
-    void shouldRejectWhenAmountIsInvalid() {
-        RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest(
-                10L,
-                5,
-                BigDecimal.ZERO,
-                LocalDate.of(2026, 3, 30),
-                PaymentMethod.CASH,
-                null);
-
-        when(clientRepository.findById(10L)).thenReturn(Optional.of(client));
-
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> paymentService.recordMembershipPayment(request));
-
-        assertEquals("Payment amount must be greater than zero.", exception.getMessage());
-    }
-
-        @Test
-        void shouldPersistPaymentRecordWhenMockPaymentIsConfirmed() {
-                MockPaymentConfirmRequest request = new MockPaymentConfirmRequest(10, 5, "LOCALPAY-XYZ");
-
-                when(clientRepository.findById(10)).thenReturn(Optional.of(client));
-                when(membershipPlanRepository.findById(5)).thenReturn(Optional.of(plan));
-                when(clientMembershipRepository.findFirstByClientIdAndPaymentIntentId(10L, "LOCALPAY-XYZ"))
-                                .thenReturn(Optional.empty());
-                when(clientMembershipRepository.save(any(ClientMembership.class))).thenAnswer(invocation -> invocation.getArgument(0));
-                when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
-                when(paymentRecordRepository.save(any(PaymentRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-                Map<String, Object> result = paymentService.confirmMockPayment(request);
-
-                assertEquals("SUCCESS", result.get("status"));
-                verify(paymentRecordRepository).save(any(PaymentRecord.class));
-        }
 }

@@ -37,6 +37,7 @@ public class UserDetailResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private byte[] profilePicture;
 
     // ── Client-only fields (null for non-clients) ───────────────────────────
     private Integer membershipPlanId;

@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.List;
 
 public interface ClientRepository extends JpaRepository<Client, Long> {
+
     Optional<Client> findById(Integer id);
 
     boolean existsByEmail(String email);
@@ -24,6 +25,13 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     List<Client> findByBloodGroup(String bloodGroup);
 
+    @Query("SELECT c FROM Client c WHERE " +
+            "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "c.phoneNumber LIKE CONCAT('%', :keyword, '%') OR " +
+            "CAST(c.id as string) LIKE CONCAT('%', :keyword, '%')")
+    List<Client> searchClients(@Param("keyword") String keyword);
+}
         @Query("""
                         SELECT c FROM Client c
                         WHERE c.membershipPlan IS NOT NULL

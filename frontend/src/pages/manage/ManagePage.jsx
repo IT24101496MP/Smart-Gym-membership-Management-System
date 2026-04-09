@@ -449,6 +449,9 @@ const MembershipProfileModal = ({
   history,
   historyLoading,
   historyError,
+  paymentHistory,
+  paymentHistoryLoading,
+  paymentHistoryError,
   membershipPlans,
   renewing,
   renewError,
@@ -592,6 +595,43 @@ const MembershipProfileModal = ({
                           {membershipLabel(record.status)}
                         </span>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="membership-history-panel">
+          <div className="membership-history-header">
+            <h3>Payment History</h3>
+          </div>
+          {paymentHistoryError && <p className="modal-error">{paymentHistoryError}</p>}
+          {paymentHistoryLoading ? (
+            <p className="empty-msg">Loading payment history...</p>
+          ) : paymentHistory.length === 0 ? (
+            <p className="empty-msg">No payment records found.</p>
+          ) : (
+            <div className="table-scroll">
+              <table className="manage-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Receipt Number</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentHistory.map((record, index) => (
+                    <tr key={record.paymentId ?? `${record.paymentDate}-${record.amount}-${index}`}>
+                      <td>{record.paymentDate || "-"}</td>
+                      <td>{record.amount ?? "-"}</td>
+                      <td>{record.paymentMethod || "-"}</td>
+                      <td>{record.receiptNumber || "Not generated"}</td>
+                      <td>{record.status || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1169,12 +1209,56 @@ const ManagePage = () => {
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [membershipHistoryLoading, setMembershipHistoryLoading] = useState(false);
   const [membershipHistoryError, setMembershipHistoryError] = useState("");
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+  const [paymentHistoryError, setPaymentHistoryError] = useState("");
   const [renewingMembership, setRenewingMembership] = useState(false);
   const [renewMembershipError, setRenewMembershipError] = useState("");
   const [renewMembershipSuccess, setRenewMembershipSuccess] = useState("");
   const [renewMembershipConflict, setRenewMembershipConflict] = useState(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [pendingError, setPendingError] = useState("");
+  const [approvalBusyId, setApprovalBusyId] = useState(null);
+  const [rejectBusyId, setRejectBusyId] = useState(null);
+  const [rejectReasons, setRejectReasons] = useState({});
+  const [emailFailures, setEmailFailures] = useState([]);
+  const [emailFailuresLoading, setEmailFailuresLoading] = useState(false);
+  const [emailFailuresError, setEmailFailuresError] = useState("");
+  const [resendBusyId, setResendBusyId] = useState(null);
+  const [retryReceiptBusyId, setRetryReceiptBusyId] = useState(null);
+
+  const loadPendingApprovals = useCallback(async () => {
+    if (role !== "ADMIN" && role !== "INSTRUCTOR") return;
+    setPendingLoading(true);
+    setPendingError("");
+    try {
+      const { data } = await api.get("/api/payments/approvals/pending");
+      setPendingPayments(Array.isArray(data) ? data : []);
+    } catch {
+      setPendingPayments([]);
+      setPendingError("Failed to load pending payment approvals.");
+    } finally {
+      setPendingLoading(false);
+    }
+  }, [role]);
+
+  const loadEmailFailures = useCallback(async () => {
+    if (role !== "ADMIN" && role !== "INSTRUCTOR") return;
+    setEmailFailuresLoading(true);
+    setEmailFailuresError("");
+    try {
+      const { data } = await api.get("/api/payments/email-failures");
+      setEmailFailures(Array.isArray(data) ? data : []);
+    } catch {
+      setEmailFailures([]);
+      setEmailFailuresError("Failed to load payment email failures.");
+    } finally {
+      setEmailFailuresLoading(false);
+    }
+  }, [role]);
 
   const loadMembershipHistory = useCallback(async (clientId) => {
     setMembershipHistoryLoading(true);
@@ -1187,6 +1271,20 @@ const ManagePage = () => {
       setMembershipHistoryError("Failed to load membership history.");
     } finally {
       setMembershipHistoryLoading(false);
+    }
+  }, []);
+
+  const loadPaymentHistory = useCallback(async (clientId) => {
+    setPaymentHistoryLoading(true);
+    setPaymentHistoryError("");
+    try {
+      const { data } = await api.get(`/api/payments/history/${clientId}`);
+      setPaymentHistory(Array.isArray(data) ? data : []);
+    } catch {
+      setPaymentHistory([]);
+      setPaymentHistoryError("Unable to retrieve payment history.");
+    } finally {
+      setPaymentHistoryLoading(false);
     }
   }, []);
 
@@ -1237,6 +1335,14 @@ const ManagePage = () => {
     fetchData();
   }, [role]);
 
+  useEffect(() => {
+    loadPendingApprovals();
+  }, [loadPendingApprovals]);
+
+  useEffect(() => {
+    loadEmailFailures();
+  }, [loadEmailFailures]);
+
   const handleEdit = (user) => setEditing(user);
   const closeModal = () => setEditing(null);
   const handleOpenMetrics = (user) => setEditingMetrics(user);
@@ -1250,14 +1356,18 @@ const ManagePage = () => {
     setMemberProfile(user);
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
-    setRenewMembershipConflict(null);
-    await loadMembershipHistory(user.id);
+    await Promise.all([
+      loadMembershipHistory(user.id),
+      loadPaymentHistory(user.id),
+    ]);
   };
 
   const closeMemberProfile = () => {
     setMemberProfile(null);
     setMembershipHistory([]);
     setMembershipHistoryError("");
+    setPaymentHistory([]);
+    setPaymentHistoryError("");
     setRenewMembershipError("");
     setRenewMembershipSuccess("");
     setRenewMembershipConflict(null);
@@ -1347,6 +1457,98 @@ const ManagePage = () => {
     navigate("/login");
   };
 
+  const handleViewProof = async (paymentId) => {
+    try {
+      const response = await api.get(`/api/payments/approvals/${paymentId}/proof`, {
+        responseType: "blob",
+      });
+      const contentType = response.headers["content-type"] || "application/octet-stream";
+      const blob = new Blob([response.data], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      setPendingError("Failed to open proof document.");
+    }
+  };
+
+  const handleApprovePayment = async (paymentId) => {
+    setApprovalBusyId(paymentId);
+    setPendingError("");
+    try {
+      await api.post(`/api/payments/approvals/${paymentId}/approve`);
+      await loadPendingApprovals();
+    } catch (err) {
+      setPendingError(err.response?.data || "Failed to approve payment.");
+    } finally {
+      setApprovalBusyId(null);
+    }
+  };
+
+  const handleRejectReasonChange = (paymentId, value) => {
+    setRejectReasons((prev) => ({ ...prev, [paymentId]: value }));
+  };
+
+  const handleRejectPayment = async (paymentId) => {
+    const reason = (rejectReasons[paymentId] || "").trim();
+    if (!reason) {
+      setPendingError("Rejection reason is required.");
+      return;
+    }
+
+    setRejectBusyId(paymentId);
+    setPendingError("");
+    try {
+      await api.post(`/api/payments/approvals/${paymentId}/reject`, { reason });
+      setRejectReasons((prev) => ({ ...prev, [paymentId]: "" }));
+      await loadPendingApprovals();
+    } catch (err) {
+      setPendingError(err.response?.data || "Failed to reject payment.");
+    } finally {
+      setRejectBusyId(null);
+    }
+  };
+
+  const handleViewReceipt = async (paymentId) => {
+    try {
+      const response = await api.get(`/api/payments/${paymentId}/receipt`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      setEmailFailuresError("Failed to open receipt.");
+    }
+  };
+
+  const handleRetryReceipt = async (paymentId) => {
+    setRetryReceiptBusyId(paymentId);
+    setEmailFailuresError("");
+    try {
+      await api.post(`/api/payments/${paymentId}/retry-receipt`);
+      await loadEmailFailures();
+    } catch (err) {
+      setEmailFailuresError(err.response?.data || "Failed to retry receipt generation.");
+    } finally {
+      setRetryReceiptBusyId(null);
+    }
+  };
+
+  const handleResendEmail = async (paymentId) => {
+    setResendBusyId(paymentId);
+    setEmailFailuresError("");
+    try {
+      await api.post(`/api/payments/${paymentId}/resend-email`);
+      await loadEmailFailures();
+    } catch (err) {
+      setEmailFailuresError(err.response?.data || "Failed to resend payment email.");
+    } finally {
+      setResendBusyId(null);
+    }
+  };
+
   // ── render ──
   if (loading) {
     return (
@@ -1385,10 +1587,15 @@ const ManagePage = () => {
             <span className={`role-badge role-${role?.toLowerCase()}`}>{role}</span>
           </div>
           <div className="manage-header-right">
-            {(role === "ADMIN" || role === "CLIENT") && (
-              <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
-                Membership Plans
-              </button>
+            {role === "ADMIN" && (
+              <>
+                <button className="btn-attendance" onClick={() => navigate("/attendance")}>
+                  Attendance
+                </button>
+                <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
+                  Membership Plans
+                </button>
+              </>
             )}
             <button className="btn-back" onClick={() => navigate("/profile")}>
               ← Profile
@@ -1420,6 +1627,140 @@ const ManagePage = () => {
               navigate={navigate}
               title={`${tableTitle} (${visibleUsers.length})`}
             />
+
+            <div className="table-container pending-payments-section">
+              <h2 className="section-title">Pending Bank Transfer Approvals ({pendingPayments.length})</h2>
+              {pendingLoading && <p className="loading-msg">Loading pending approvals...</p>}
+              {pendingError && <p className="error-msg">{pendingError}</p>}
+              {!pendingLoading && !pendingError && pendingPayments.length === 0 && (
+                <p className="loading-msg">No pending bank transfer payments.</p>
+              )}
+
+              {!pendingLoading && pendingPayments.length > 0 && (
+                <div className="table-scroll">
+                  <table className="manage-table">
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Proof</th>
+                        <th>Reject Reason</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingPayments.map((p) => (
+                        <tr key={p.paymentId}>
+                          <td className="cell-id">{p.paymentId}</td>
+                          <td className="cell-name">{p.memberName}</td>
+                          <td>{p.membershipPlanName}</td>
+                          <td>{p.paymentAmount}</td>
+                          <td>{p.paymentDate}</td>
+                          <td>{p.referenceNumber || "—"}</td>
+                          <td>
+                            <button className="btn-secondary-action" onClick={() => handleViewProof(p.paymentId)}>
+                              View Proof
+                            </button>
+                          </td>
+                          <td>
+                            <input
+                              className="reject-reason-input"
+                              type="text"
+                              value={rejectReasons[p.paymentId] || ""}
+                              onChange={(e) => handleRejectReasonChange(p.paymentId, e.target.value)}
+                              placeholder="Reason"
+                            />
+                          </td>
+                          <td>
+                            <div className="approval-actions">
+                              <button
+                                className="btn-edit"
+                                onClick={() => handleApprovePayment(p.paymentId)}
+                                disabled={approvalBusyId === p.paymentId || rejectBusyId === p.paymentId}
+                              >
+                                {approvalBusyId === p.paymentId ? "Approving..." : "Approve"}
+                              </button>
+                              <button
+                                className="btn-reject"
+                                onClick={() => handleRejectPayment(p.paymentId)}
+                                disabled={approvalBusyId === p.paymentId || rejectBusyId === p.paymentId}
+                              >
+                                {rejectBusyId === p.paymentId ? "Rejecting..." : "Reject"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="table-container pending-payments-section">
+              <h2 className="section-title">Payment Email Follow-ups ({emailFailures.length})</h2>
+              {emailFailuresLoading && <p className="loading-msg">Loading payment email follow-ups...</p>}
+              {emailFailuresError && <p className="error-msg">{emailFailuresError}</p>}
+              {!emailFailuresLoading && !emailFailuresError && emailFailures.length === 0 && (
+                <p className="loading-msg">No pending payment email follow-ups.</p>
+              )}
+
+              {!emailFailuresLoading && emailFailures.length > 0 && (
+                <div className="table-scroll">
+                  <table className="manage-table">
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Member</th>
+                        <th>Email</th>
+                        <th>Receipt</th>
+                        <th>Failure</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emailFailures.map((item) => (
+                        <tr key={item.paymentId}>
+                          <td className="cell-id">{item.paymentId}</td>
+                          <td className="cell-name">{item.memberName}</td>
+                          <td>{item.memberEmail || "—"}</td>
+                          <td>{item.receiptNumber || "Not generated"}</td>
+                          <td>{item.emailFailureReason || "—"}</td>
+                          <td>
+                            <div className="approval-actions">
+                              <button
+                                className="btn-secondary-action"
+                                onClick={() => handleRetryReceipt(item.paymentId)}
+                                disabled={retryReceiptBusyId === item.paymentId || resendBusyId === item.paymentId}
+                              >
+                                {retryReceiptBusyId === item.paymentId ? "Retrying..." : "Retry Receipt"}
+                              </button>
+                              <button
+                                className="btn-edit"
+                                onClick={() => handleResendEmail(item.paymentId)}
+                                disabled={retryReceiptBusyId === item.paymentId || resendBusyId === item.paymentId}
+                              >
+                                {resendBusyId === item.paymentId ? "Sending..." : "Resend Email"}
+                              </button>
+                              <button
+                                className="btn-secondary-action"
+                                onClick={() => handleViewReceipt(item.paymentId)}
+                              >
+                                View Receipt
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -1483,14 +1824,19 @@ const ManagePage = () => {
           history={membershipHistory}
           historyLoading={membershipHistoryLoading}
           historyError={membershipHistoryError}
+          paymentHistory={paymentHistory}
+          paymentHistoryLoading={paymentHistoryLoading}
+          paymentHistoryError={paymentHistoryError}
           membershipPlans={membershipPlans}
           renewing={renewingMembership}
           renewError={renewMembershipError}
           renewSuccess={renewMembershipSuccess}
           renewConflict={renewMembershipConflict}
           onRenew={handleRenewMembership}
-          onOverrideRenew={handleOverrideRenewMembership}
-          onRefresh={() => loadMembershipHistory(memberProfile.id)}
+          onRefresh={() => Promise.all([
+            loadMembershipHistory(memberProfile.id),
+            loadPaymentHistory(memberProfile.id),
+          ])}
           onClose={closeMemberProfile}
         />
       )}

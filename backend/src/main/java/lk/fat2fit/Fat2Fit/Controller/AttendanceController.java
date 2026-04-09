@@ -1,0 +1,50 @@
+package lk.fat2fit.Fat2Fit.Controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import lk.fat2fit.Fat2Fit.DTO.Attendance.AttendanceRequestDTO;
+import lk.fat2fit.Fat2Fit.Service.AttendanceService;
+
+import java.time.LocalDateTime;
+
+@CrossOrigin(origins = "http://localhost:5173")
+@RestController
+@RequestMapping("/api/attendance")
+@RequiredArgsConstructor
+public class AttendanceController {
+
+    private final AttendanceService attendanceService;
+
+    @PostMapping("/check-in")
+    public ResponseEntity<?> checkIn(@RequestBody AttendanceRequestDTO dto) {
+        return attendanceService.recordAttendance(dto);
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<?> getTodayAttendance() {
+        return attendanceService.getTodayAttendance();
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getAttendanceHistory(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "latest") String sort
+    ) {
+        return attendanceService.getAttendanceByDateRange(startDate, endDate, sort);
+    }
+
+
+    @GetMapping("/frequency")
+    public ResponseEntity<?> getVisitFrequency() {
+        return attendanceService.getVisitFrequency();
+    }
+
+    @GetMapping("/frequency/members")
+    public ResponseEntity<?> getVisitFrequencyPerMember() {
+        return attendanceService.getVisitFrequencyPerMember();
+    }
+}
