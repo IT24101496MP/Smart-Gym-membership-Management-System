@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { logout } from "../../utils/auth";
 import "./ProfilePage.css";
@@ -15,15 +15,22 @@ const membershipLabel = (status) => {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
+    if (location.state?.paymentSuccess) {
+      setSuccess("Membership activated successfully.");
+      window.history.replaceState({}, document.title); // avoid showing again on refresh
+    }
+
     api
       .get("/api/auth/me")
       .then(({ data }) => setUser(data))
       .catch(() => setError("Failed to load profile."));
-  }, []);
+  }, [location.state]);
 
   const handleLogout = async () => {
     await logout();
@@ -39,6 +46,10 @@ const ProfilePage = () => {
         </div>
       </div>
     );
+  }
+
+  if (success) {
+    // keep rendering profile and show message below; no early return
   }
 
   if (!user) {
@@ -65,6 +76,11 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {success && (
+          <div className="profile-notice success-notice">
+            <p>{success}</p>
+          </div>
+        )}
         <div className="profile-details">
           <div className="detail-row">
             <span className="detail-label">User ID</span>
