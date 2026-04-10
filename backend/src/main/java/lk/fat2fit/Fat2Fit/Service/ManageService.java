@@ -15,14 +15,18 @@ import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsResponse;
+import lk.fat2fit.Fat2Fit.DTO.Manage.HealthScreeningRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.HealthScreeningResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
+import lk.fat2fit.Fat2Fit.Entity.ClientHealthScreening;
 import lk.fat2fit.Fat2Fit.Entity.ClientMeasurement;
 import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.User;
+import lk.fat2fit.Fat2Fit.Repository.ClientHealthScreeningRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientMeasurementRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
@@ -35,6 +39,7 @@ public class ManageService {
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
+    private final ClientHealthScreeningRepository healthScreeningRepository;
     private final ClientMeasurementRepository measurementRepository;
     private final MembershipPlanRepository membershipPlanRepository;
     
@@ -90,7 +95,8 @@ public class ManageService {
                    .membershipPlanName(client.getMembershipPlan() != null ? client.getMembershipPlan().getPlanName() : null)
                    .membershipStatus(resolveMembershipStatus(client.getMembershipPlan(), membershipStartDate, membershipEndDate))
                    .membershipStartDate(membershipStartDate)
-                   .membershipEndDate(membershipEndDate);
+                     .membershipEndDate(membershipEndDate)
+                     .highRiskMember(Boolean.TRUE.equals(client.getHighRiskMember()));
         }
 
         return builder.build();
@@ -358,6 +364,107 @@ public class ManageService {
                 .measurementDate(m.getMeasurementDate())
                 .bmi(m.getBmi())
                 .recordedAt(m.getRecordedAt())
+                .build();
+    }
+
+    // ── Admin / Instructor: save health screening questionnaire ──────────────
+
+    public ResponseEntity<?> saveClientHealthScreening(Long clientId, HealthScreeningRequest req) {
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        String validationError = validateHealthScreeningRequest(req);
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(validationError);
+        }
+
+        Client client = clientOpt.get();
+        boolean highRisk = hasAnyHealthRiskIndicator(req);
+
+        ClientHealthScreening screening = ClientHealthScreening.builder()
+                .client(client)
+                .cardiacConditions(Boolean.TRUE.equals(req.getCardiacConditions()))
+                .respiratoryIssues(Boolean.TRUE.equals(req.getRespiratoryIssues()))
+                .faintingOrBalanceProblems(Boolean.TRUE.equals(req.getFaintingOrBalanceProblems()))
+                .jointOrMuscleDisorders(Boolean.TRUE.equals(req.getJointOrMuscleDisorders()))
+                .highBloodPressure(Boolean.TRUE.equals(req.getHighBloodPressure()))
+                .cholesterolLevels(Boolean.TRUE.equals(req.getCholesterolLevels()))
+                .currentMedications(Boolean.TRUE.equals(req.getCurrentMedications()))
+                .disabilitiesOrPhysicalLimitations(Boolean.TRUE.equals(req.getDisabilitiesOrPhysicalLimitations()))
+                .additionalNotes(emptyToNull(req.getAdditionalNotes()))
+                .highRisk(highRisk)
+                .build();
+
+        ClientHealthScreening saved = healthScreeningRepository.save(screening);
+
+        client.setHighRiskMember(highRisk);
+        clientRepository.save(client);
+
+        return ResponseEntity.ok(toHealthScreeningResponse(saved, Boolean.TRUE.equals(client.getHighRiskMember())));
+    }
+
+    public ResponseEntity<?> getLatestClientHealthScreening(Long clientId) {
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        Optional<ClientHealthScreening> latestOpt = healthScreeningRepository
+                .findTopByClientIdOrderByRecordedAtDescIdDesc(clientId);
+
+        if (latestOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No health screening records found for this client.");
+        }
+
+        boolean memberHighRisk = Boolean.TRUE.equals(clientOpt.get().getHighRiskMember());
+        return ResponseEntity.ok(toHealthScreeningResponse(latestOpt.get(), memberHighRisk));
+    }
+
+    private String validateHealthScreeningRequest(HealthScreeningRequest req) {
+        if (req == null
+                || req.getCardiacConditions() == null
+                || req.getRespiratoryIssues() == null
+                || req.getFaintingOrBalanceProblems() == null
+                || req.getJointOrMuscleDisorders() == null
+                || req.getHighBloodPressure() == null
+                || req.getCholesterolLevels() == null
+                || req.getCurrentMedications() == null
+                || req.getDisabilitiesOrPhysicalLimitations() == null) {
+            return "All required questionnaire responses must be provided.";
+        }
+        return null;
+    }
+
+    private boolean hasAnyHealthRiskIndicator(HealthScreeningRequest req) {
+        return Boolean.TRUE.equals(req.getCardiacConditions())
+                || Boolean.TRUE.equals(req.getRespiratoryIssues())
+                || Boolean.TRUE.equals(req.getFaintingOrBalanceProblems())
+                || Boolean.TRUE.equals(req.getJointOrMuscleDisorders())
+                || Boolean.TRUE.equals(req.getHighBloodPressure())
+                || Boolean.TRUE.equals(req.getCholesterolLevels())
+                || Boolean.TRUE.equals(req.getCurrentMedications())
+                || Boolean.TRUE.equals(req.getDisabilitiesOrPhysicalLimitations());
+    }
+
+    private HealthScreeningResponse toHealthScreeningResponse(ClientHealthScreening screening, boolean memberHighRisk) {
+        return HealthScreeningResponse.builder()
+                .screeningId(screening.getId())
+                .clientId((long) screening.getClient().getId())
+                .cardiacConditions(screening.isCardiacConditions())
+                .respiratoryIssues(screening.isRespiratoryIssues())
+                .faintingOrBalanceProblems(screening.isFaintingOrBalanceProblems())
+                .jointOrMuscleDisorders(screening.isJointOrMuscleDisorders())
+                .highBloodPressure(screening.isHighBloodPressure())
+                .cholesterolLevels(screening.isCholesterolLevels())
+                .currentMedications(screening.isCurrentMedications())
+                .disabilitiesOrPhysicalLimitations(screening.isDisabilitiesOrPhysicalLimitations())
+                .additionalNotes(screening.getAdditionalNotes())
+                .highRisk(screening.isHighRisk())
+                .memberHighRisk(memberHighRisk)
+                .recordedAt(screening.getRecordedAt())
                 .build();
     }
 
