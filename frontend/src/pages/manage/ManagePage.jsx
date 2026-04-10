@@ -20,43 +20,28 @@ const PAYMENT_METHOD_OPTIONS = [
   { value: "CARD", label: "Card" },
 ];
 
-const FITNESS_GOALS = [
-  { value: "FAT_BURNING",          label: "Fat Burning" },
-  { value: "CARDIO_TRAINING",      label: "Cardio Training" },
-  { value: "MUSCLE_STRENGTHENING", label: "Muscle Strengthening" },
-  { value: "ENDURANCE_DEVELOPING", label: "Endurance Developing" },
-  { value: "MUSCLE_GAIN",          label: "Muscle Gain" },
-  { value: "SLIM_FIT_TRAINING",    label: "Slim Fit Training" },
-  { value: "SKILL_DEVELOPING",     label: "Skill Developing" },
-  { value: "BMI_MAINTAINING",      label: "BMI Maintaining" },
-  { value: "PHYSICAL_FITNESS",     label: "Physical Fitness" },
-  { value: "OTHERS",               label: "Others (Specify)" },
-];
-
 const emptyMetrics = () => ({
-  weightKg: "",
   heightCm: "",
-  hipSizeCm: "",
-  breastSizeCm: "",
-  waistSizeCm: "",
-  armSizeCm: "",
-  shoulderSizeCm: "",
-  buttSizeCm: "",
-  fitnessGoals: [],
-  otherGoalSpecification: "",
+  weightKg: "",
+  waistCm: "",
+  hipCm: "",
+  armCm: "",
+  shoulderCm: "",
+  breastCm: "",
+  buttocksCm: "",
+  measurementDate: new Date().toISOString().slice(0, 10),
 });
 
 const metricsToForm = (m) => ({
-  weightKg: m.weightKg ?? "",
   heightCm: m.heightCm ?? "",
-  hipSizeCm: m.hipSizeCm ?? "",
-  breastSizeCm: m.breastSizeCm ?? "",
-  waistSizeCm: m.waistSizeCm ?? "",
-  armSizeCm: m.armSizeCm ?? "",
-  shoulderSizeCm: m.shoulderSizeCm ?? "",
-  buttSizeCm: m.buttSizeCm ?? "",
-  fitnessGoals: m.fitnessGoals ?? [],
-  otherGoalSpecification: m.otherGoalSpecification ?? "",
+  weightKg: m.weightKg ?? "",
+  waistCm: m.waistCm ?? "",
+  hipCm: m.hipCm ?? "",
+  armCm: m.armCm ?? "",
+  shoulderCm: m.shoulderCm ?? "",
+  breastCm: m.breastCm ?? "",
+  buttocksCm: m.buttocksCm ?? "",
+  measurementDate: m.measurementDate ?? new Date().toISOString().slice(0, 10),
 });
 
 const userToForm = (u) => ({
@@ -793,53 +778,105 @@ const PaymentRecordModal = ({ user, onClose, onSaved }) => {
 
 const ClientMetricsModal = ({ user, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyMetrics());
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [latestSavedMeasurement, setLatestSavedMeasurement] = useState(null);
+
+  const numericFields = [
+    { key: "heightCm", label: "Height" },
+    { key: "weightKg", label: "Weight" },
+    { key: "waistCm", label: "Waist" },
+    { key: "hipCm", label: "Hip" },
+    { key: "armCm", label: "Arm" },
+    { key: "shoulderCm", label: "Shoulder" },
+    { key: "breastCm", label: "Breast" },
+    { key: "buttocksCm", label: "Buttocks" },
+  ];
 
   useEffect(() => {
     api.get(`/api/manage/clients/${user.id}/metrics`)
-      .then(({ data }) => setForm(metricsToForm(data)))
+      .then(({ data }) => {
+        if (data?.measurementId) {
+          setForm(metricsToForm(data));
+          setLatestSavedMeasurement(data);
+        } else {
+          setForm(emptyMetrics());
+        }
+      })
       .catch(() => setForm(emptyMetrics()))
       .finally(() => setLoading(false));
+
+    api.get(`/api/manage/clients/${user.id}/metrics/history`)
+      .then(({ data }) => setHistory(Array.isArray(data) ? data : []))
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false));
   }, [user.id]);
 
   const setField = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const toggleGoal = (goal) => {
-    setForm((prev) => {
-      const has = prev.fitnessGoals.includes(goal);
-      return {
-        ...prev,
-        fitnessGoals: has
-          ? prev.fitnessGoals.filter((g) => g !== goal)
-          : [...prev.fitnessGoals, goal],
-      };
-    });
+  const validateForm = () => {
+    if (!form.measurementDate) {
+      return "Measurement date is required.";
+    }
+
+    const missingField = numericFields.find(({ key }) => form[key] === "" || form[key] === null || form[key] === undefined);
+    if (missingField) {
+      return `${missingField.label} is required.`;
+    }
+
+    const invalidField = numericFields.find(({ key }) => Number(form[key]) <= 0 || Number.isNaN(Number(form[key])));
+    if (invalidField) {
+      return `${invalidField.label} must be a positive numeric value.`;
+    }
+
+    return "";
+  };
+
+  const formatRecordedAt = (value) => {
+    if (!value) return "-";
+    const normalized = value.includes("T") ? value : value.replace(" ", "T");
+    const dt = new Date(normalized);
+    if (Number.isNaN(dt.getTime())) return value;
+    return dt.toLocaleString();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setValidationError("");
+
+    const validation = validateForm();
+    if (validation) {
+      setValidationError(validation);
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
-        ...form,
-        weightKg: form.weightKg === "" ? null : form.weightKg,
-        heightCm: form.heightCm === "" ? null : form.heightCm,
-        hipSizeCm: form.hipSizeCm === "" ? null : form.hipSizeCm,
-        breastSizeCm: form.breastSizeCm === "" ? null : form.breastSizeCm,
-        waistSizeCm: form.waistSizeCm === "" ? null : form.waistSizeCm,
-        armSizeCm: form.armSizeCm === "" ? null : form.armSizeCm,
-        shoulderSizeCm: form.shoulderSizeCm === "" ? null : form.shoulderSizeCm,
-        buttSizeCm: form.buttSizeCm === "" ? null : form.buttSizeCm,
+        measurementDate: form.measurementDate,
+        heightCm: Number(form.heightCm),
+        weightKg: Number(form.weightKg),
+        waistCm: Number(form.waistCm),
+        hipCm: Number(form.hipCm),
+        armCm: Number(form.armCm),
+        shoulderCm: Number(form.shoulderCm),
+        breastCm: Number(form.breastCm),
+        buttocksCm: Number(form.buttocksCm),
       };
-      const { data } = await api.put(`/api/manage/clients/${user.id}/metrics`, payload);
+
+      const { data } = await api.post(`/api/manage/clients/${user.id}/metrics`, payload);
+      setLatestSavedMeasurement(data);
+      setHistory((prev) => [data, ...prev]);
       onSaved(data);
-      onClose();
+      setValidationError("");
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data || "Failed to save metrics.");
+      setError(err.response?.data?.message || err.response?.data || "Measurement saving failed. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -857,81 +894,101 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
           <p style={{ padding: "1rem" }}>Loading…</p>
         ) : (
           <form className="edit-form" onSubmit={handleSubmit}>
+            {validationError && <p className="modal-error">{validationError}</p>}
             {error && <p className="modal-error">{error}</p>}
 
-            <div className="form-section-label">Body Measurements</div>
+            {latestSavedMeasurement?.bmi != null && (
+              <div className="measurement-summary-card">
+                <p><strong>Latest BMI:</strong> {Number(latestSavedMeasurement.bmi).toFixed(2)}</p>
+                <p><strong>Measurement Date:</strong> {latestSavedMeasurement.measurementDate || "-"}</p>
+                <p><strong>Recorded At:</strong> {formatRecordedAt(latestSavedMeasurement.recordedAt)}</p>
+              </div>
+            )}
+
+            <div className="form-section-label">Body Measurements (Required)</div>
             <div className="form-row">
               <div className="form-group">
-                <label>Weight (kg)</label>
-                <input type="number" step="0.01" min="0" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" />
+                <label>Measurement Date</label>
+                <input type="date" value={form.measurementDate} onChange={setField("measurementDate")} required />
               </div>
               <div className="form-group">
                 <label>Height (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" />
+                <input type="number" step="0.01" min="0.01" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" required />
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Hip Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.hipSizeCm} onChange={setField("hipSizeCm")} />
+                <label>Weight (kg)</label>
+                <input type="number" step="0.01" min="0.01" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" required />
               </div>
               <div className="form-group">
-                <label>Breast Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.breastSizeCm} onChange={setField("breastSizeCm")} />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Waist Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.waistSizeCm} onChange={setField("waistSizeCm")} />
-              </div>
-              <div className="form-group">
-                <label>Arm Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.armSizeCm} onChange={setField("armSizeCm")} />
+                <label>Waist (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.waistCm} onChange={setField("waistCm")} required />
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Shoulder Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.shoulderSizeCm} onChange={setField("shoulderSizeCm")} />
+                <label>Hip (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.hipCm} onChange={setField("hipCm")} required />
               </div>
               <div className="form-group">
-                <label>Butt Size (cm)</label>
-                <input type="number" step="0.01" min="0" value={form.buttSizeCm} onChange={setField("buttSizeCm")} />
+                <label>Arm (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.armCm} onChange={setField("armCm")} required />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Shoulder (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.shoulderCm} onChange={setField("shoulderCm")} required />
+              </div>
+              <div className="form-group">
+                <label>Breast (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.breastCm} onChange={setField("breastCm")} required />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Buttocks (cm)</label>
+                <input type="number" step="0.01" min="0.01" value={form.buttocksCm} onChange={setField("buttocksCm")} required />
               </div>
             </div>
 
-            <div className="form-section-label">Fitness Requirements</div>
-            <div className="fitness-goals-grid">
-              {FITNESS_GOALS.map(({ value, label }) => (
-                <label key={value} className="goal-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={form.fitnessGoals.includes(value)}
-                    onChange={() => toggleGoal(value)}
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-
-            {form.fitnessGoals.includes("OTHERS") && (
-              <div className="form-row">
-                <div className="form-group full">
-                  <label>Specify Other Goal</label>
-                  <input
-                    value={form.otherGoalSpecification}
-                    onChange={setField("otherGoalSpecification")}
-                    placeholder="Describe the fitness goal…"
-                  />
-                </div>
+            <div className="form-section-label">Measurement History</div>
+            {historyLoading ? (
+              <p className="empty-msg">Loading history...</p>
+            ) : history.length === 0 ? (
+              <p className="empty-msg">No measurements recorded yet.</p>
+            ) : (
+              <div className="table-scroll">
+                <table className="manage-table measurement-history-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Height</th>
+                      <th>Weight</th>
+                      <th>BMI</th>
+                      <th>Recorded At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((entry) => (
+                      <tr key={entry.measurementId || `${entry.measurementDate}-${entry.recordedAt}`}>
+                        <td>{entry.measurementDate || "-"}</td>
+                        <td>{entry.heightCm ?? "-"}</td>
+                        <td>{entry.weightKg ?? "-"}</td>
+                        <td>{entry.bmi != null ? Number(entry.bmi).toFixed(2) : "-"}</td>
+                        <td>{formatRecordedAt(entry.recordedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 
             <div className="modal-actions">
               <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
               <button type="submit" className="btn-save" disabled={saving}>
-                {saving ? "Saving…" : "Save Metrics"}
+                {saving ? "Saving…" : "Save Measurement"}
               </button>
             </div>
           </form>

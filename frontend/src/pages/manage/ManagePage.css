@@ -571,6 +571,23 @@
   margin-bottom: 0.7rem;
 }
 
+.measurement-summary-card {
+  background: #faf7f2;
+  border: 1px solid #eadfcf;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+}
+
+.measurement-summary-card p {
+  margin: 0.25rem 0;
+  font-size: 0.88rem;
+}
+
+.measurement-history-table th,
+.measurement-history-table td {
+  white-space: nowrap;
+}
+
 /* ── Fitness goals grid ──────────────────────────────────────────────────────── */
 .fitness-goals-grid {
   display: grid;
