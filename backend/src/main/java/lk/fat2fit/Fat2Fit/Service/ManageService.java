@@ -2,9 +2,9 @@ package lk.fat2fit.Fat2Fit.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +19,10 @@ import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.ClientMeasurement;
+import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.User;
-import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
 import lk.fat2fit.Fat2Fit.Repository.ClientMeasurementRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
@@ -254,6 +254,21 @@ public class ManageService {
                 .findByClientIdOrderByMeasurementDateDescRecordedAtDescIdDesc(clientId)
                 .stream()
                 .map(measurement -> toMetricsResponse(clientId, measurement))
+                .toList();
+
+        return ResponseEntity.ok(history);
+    }
+
+    public ResponseEntity<?> getMyMetricsHistory() {
+        User self = getCurrentUser();
+        if (!(self instanceof Client client)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only clients can view their own measurement history.");
+        }
+
+        List<ClientMetricsResponse> history = measurementRepository
+                .findByClientIdOrderByMeasurementDateDescRecordedAtDescIdDesc((long) client.getId())
+                .stream()
+                .map(measurement -> toMetricsResponse((long) client.getId(), measurement))
                 .toList();
 
         return ResponseEntity.ok(history);

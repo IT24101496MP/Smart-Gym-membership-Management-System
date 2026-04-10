@@ -89,6 +89,15 @@ public class ManageController {
     }
 
     /**
+     * GET /api/manage/me/metrics/history
+     * Client: view own historical body measurements.
+     */
+    @GetMapping("/me/metrics/history")
+    public ResponseEntity<?> getMyMetricsHistory() {
+        return manageService.getMyMetricsHistory();
+    }
+
+    /**
      * POST /api/manage/clients/{id}/metrics
      * PUT  /api/manage/clients/{id}/metrics
      * Admin or Instructor: record a body measurement entry.
