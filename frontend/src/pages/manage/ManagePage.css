@@ -588,6 +588,70 @@
   white-space: nowrap;
 }
 
+.trend-filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.trend-filter-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.trend-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.trend-chart-card {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: #fff;
+}
+
+.trend-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.trend-chart-head h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+}
+
+.trend-chart-head span {
+  font-size: 0.78rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.trend-chart-svg {
+  width: 100%;
+  height: 170px;
+  display: block;
+}
+
+.trend-compare-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.modal-actions--tight {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+}
+
 /* ── Fitness goals grid ──────────────────────────────────────────────────────── */
 .fitness-goals-grid {
   display: grid;

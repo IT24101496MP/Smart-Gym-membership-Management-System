@@ -77,6 +77,115 @@ const canRenewMembership = (status) => {
   return normalized === "ACTIVE" || normalized === "EXPIRED";
 };
 
+const TREND_METRICS = [
+  { key: "weightKg", label: "Weight", unit: "kg", color: "#c0392b" },
+  { key: "bmi", label: "BMI", unit: "", color: "#1a6b3c" },
+  { key: "waistCm", label: "Waist", unit: "cm", color: "#2c5f8a" },
+];
+
+const formatRecordedAt = (value) => {
+  if (!value) return "-";
+  const normalized = value.includes("T") ? value : value.replace(" ", "T");
+  const dt = new Date(normalized);
+  if (Number.isNaN(dt.getTime())) return value;
+  return dt.toLocaleString();
+};
+
+const toValidDate = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const sortHistoryChronological = (items) => {
+  return [...items].sort((a, b) => {
+    const aDate = toValidDate(a.measurementDate);
+    const bDate = toValidDate(b.measurementDate);
+    if (aDate && bDate) {
+      const byDate = aDate.getTime() - bDate.getTime();
+      if (byDate !== 0) return byDate;
+    }
+
+    const aRecorded = toValidDate(a.recordedAt);
+    const bRecorded = toValidDate(b.recordedAt);
+    if (aRecorded && bRecorded) return aRecorded.getTime() - bRecorded.getTime();
+    if (aRecorded) return 1;
+    if (bRecorded) return -1;
+    return 0;
+  });
+};
+
+const SimpleTrendChart = ({ title, unit, color, entries, valueKey }) => {
+  try {
+    const chartWidth = 520;
+    const chartHeight = 170;
+    const padX = 26;
+    const padY = 18;
+    const width = chartWidth - padX * 2;
+    const height = chartHeight - padY * 2;
+
+    const points = entries
+      .map((entry, index) => {
+        const value = Number(entry[valueKey]);
+        if (Number.isNaN(value)) return null;
+        return { index, value, date: entry.measurementDate };
+      })
+      .filter(Boolean);
+
+    if (points.length < 2) {
+      return (
+        <div className="trend-chart-card">
+          <h4>{title}</h4>
+          <p className="empty-msg">Need at least 2 measurements to render this chart.</p>
+        </div>
+      );
+    }
+
+    const values = points.map((p) => p.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const spread = Math.max(max - min, 1);
+
+    const coords = points.map((point, i) => {
+      const x = padX + (i / (points.length - 1)) * width;
+      const normalized = (point.value - min) / spread;
+      const y = padY + (1 - normalized) * height;
+      return { ...point, x, y };
+    });
+
+    const linePath = coords.map((c) => `${c.x},${c.y}`).join(" ");
+    const latest = coords[coords.length - 1];
+
+    return (
+      <div className="trend-chart-card">
+        <div className="trend-chart-head">
+          <h4>{title}</h4>
+          <span>
+            Latest: {latest.value.toFixed(2)}{unit ? ` ${unit}` : ""}
+          </span>
+        </div>
+        <svg
+          className="trend-chart-svg"
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          role="img"
+          aria-label={`${title} trend chart`}
+        >
+          <line x1={padX} y1={padY + height} x2={padX + width} y2={padY + height} stroke="#d8d8d8" strokeWidth="1" />
+          <line x1={padX} y1={padY} x2={padX} y2={padY + height} stroke="#d8d8d8" strokeWidth="1" />
+          <polyline fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={linePath} />
+          {coords.map((point) => (
+            <circle key={`${valueKey}-${point.index}`} cx={point.x} cy={point.y} r="3.5" fill={color} />
+          ))}
+          <text x={padX + 2} y={padY + 12} fontSize="11" fill="#666">{max.toFixed(2)}</text>
+          <text x={padX + 2} y={padY + height - 4} fontSize="11" fill="#666">{min.toFixed(2)}</text>
+        </svg>
+      </div>
+    );
+  } catch {
+    return <p className="modal-error">Unable to load chart.</p>;
+  }
+};
+
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
 const EditModal = ({ user, onClose, onSave, showIsActive, showMembershipAssignment, membershipPlans }) => {
@@ -774,9 +883,9 @@ const PaymentRecordModal = ({ user, onClose, onSaved }) => {
   );
 };
 
-// ── Client Metrics Modal (ADMIN + INSTRUCTOR) ─────────────────────────────────
+// ── Client Metrics + Trends Modal ─────────────────────────────────────────────
 
-const ClientMetricsModal = ({ user, onClose, onSaved }) => {
+const ClientMetricsModal = ({ user, onClose, onSaved, readOnly = false }) => {
   const [form, setForm] = useState(emptyMetrics());
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -785,6 +894,12 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
   const [error, setError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [latestSavedMeasurement, setLatestSavedMeasurement] = useState(null);
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [activeDateRange, setActiveDateRange] = useState({ fromDate: "", toDate: "" });
+  const [compareDateA, setCompareDateA] = useState("");
+  const [compareDateB, setCompareDateB] = useState("");
 
   const numericFields = [
     { key: "heightCm", label: "Height" },
@@ -798,6 +913,19 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
   ];
 
   useEffect(() => {
+    if (readOnly) {
+      setLoading(false);
+      api.get("/api/manage/me/metrics/history")
+        .then(({ data }) => {
+          const rows = Array.isArray(data) ? data : [];
+          setHistory(rows);
+          setLatestSavedMeasurement(rows[0] || null);
+        })
+        .catch(() => setHistory([]))
+        .finally(() => setHistoryLoading(false));
+      return;
+    }
+
     api.get(`/api/manage/clients/${user.id}/metrics`)
       .then(({ data }) => {
         if (data?.measurementId) {
@@ -811,10 +939,40 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
       .finally(() => setLoading(false));
 
     api.get(`/api/manage/clients/${user.id}/metrics/history`)
-      .then(({ data }) => setHistory(Array.isArray(data) ? data : []))
+      .then(({ data }) => {
+        const rows = Array.isArray(data) ? data : [];
+        setHistory(rows);
+        if (rows.length > 0) {
+          setLatestSavedMeasurement(rows[0]);
+        }
+      })
       .catch(() => setHistory([]))
       .finally(() => setHistoryLoading(false));
-  }, [user.id]);
+  }, [user.id, readOnly]);
+
+  const sortedHistory = sortHistoryChronological(history);
+
+  const filteredHistory = sortedHistory.filter((entry) => {
+    const date = entry.measurementDate || "";
+    if (!date) return false;
+    if (activeDateRange.fromDate && date < activeDateRange.fromDate) return false;
+    if (activeDateRange.toDate && date > activeDateRange.toDate) return false;
+    return true;
+  });
+
+  const uniqueDates = [...new Set(sortedHistory.map((entry) => entry.measurementDate).filter(Boolean))];
+  const uniqueDatesKey = uniqueDates.join("|");
+
+  useEffect(() => {
+    if (uniqueDates.length < 2) {
+      setCompareDateA("");
+      setCompareDateB("");
+      return;
+    }
+
+    setCompareDateA((prev) => (prev && uniqueDates.includes(prev) ? prev : uniqueDates[0]));
+    setCompareDateB((prev) => (prev && uniqueDates.includes(prev) ? prev : uniqueDates[uniqueDates.length - 1]));
+  }, [uniqueDatesKey]);
 
   const setField = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -835,14 +993,6 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
     }
 
     return "";
-  };
-
-  const formatRecordedAt = (value) => {
-    if (!value) return "-";
-    const normalized = value.includes("T") ? value : value.replace(" ", "T");
-    const dt = new Date(normalized);
-    if (Number.isNaN(dt.getTime())) return value;
-    return dt.toLocaleString();
   };
 
   const handleSubmit = async (e) => {
@@ -872,7 +1022,7 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
 
       const { data } = await api.post(`/api/manage/clients/${user.id}/metrics`, payload);
       setLatestSavedMeasurement(data);
-      setHistory((prev) => [data, ...prev]);
+      setHistory((prev) => [...prev, data]);
       onSaved(data);
       setValidationError("");
     } catch (err) {
@@ -882,116 +1032,251 @@ const ClientMetricsModal = ({ user, onClose, onSaved }) => {
     }
   };
 
+  const handleApplyDateFilter = () => {
+    setActiveDateRange({ fromDate, toDate });
+  };
+
+  const handleClearDateFilter = () => {
+    setFromDate("");
+    setToDate("");
+    setActiveDateRange({ fromDate: "", toDate: "" });
+  };
+
+  const pickMeasurementByDate = (dateValue) => {
+    if (!dateValue) return null;
+    const matches = sortedHistory.filter((entry) => entry.measurementDate === dateValue);
+    if (matches.length === 0) return null;
+    return matches[matches.length - 1];
+  };
+
+  const compareA = pickMeasurementByDate(compareDateA);
+  const compareB = pickMeasurementByDate(compareDateB);
+
+  const comparisonRows = [
+    { key: "weightKg", label: "Weight", unit: "kg" },
+    { key: "bmi", label: "BMI", unit: "" },
+    { key: "waistCm", label: "Waist", unit: "cm" },
+    { key: "hipCm", label: "Hip", unit: "cm" },
+  ];
+
+  const displayDelta = (a, b, unit) => {
+    if (a == null || b == null) return "-";
+    const delta = Number(b) - Number(a);
+    if (Number.isNaN(delta)) return "-";
+    const sign = delta > 0 ? "+" : "";
+    return `${sign}${delta.toFixed(2)}${unit ? ` ${unit}` : ""}`;
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Body Metrics — {user.firstName} {user.lastName}</h2>
+          <h2 className="modal-title">Body Metrics & Trends — {user.firstName} {user.lastName}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         {loading ? (
           <p style={{ padding: "1rem" }}>Loading…</p>
         ) : (
-          <form className="edit-form" onSubmit={handleSubmit}>
-            {validationError && <p className="modal-error">{validationError}</p>}
-            {error && <p className="modal-error">{error}</p>}
+          <div className="edit-form">
+            {!readOnly && (
+              <form className="edit-form" onSubmit={handleSubmit}>
+                {validationError && <p className="modal-error">{validationError}</p>}
+                {error && <p className="modal-error">{error}</p>}
 
-            {latestSavedMeasurement?.bmi != null && (
-              <div className="measurement-summary-card">
-                <p><strong>Latest BMI:</strong> {Number(latestSavedMeasurement.bmi).toFixed(2)}</p>
-                <p><strong>Measurement Date:</strong> {latestSavedMeasurement.measurementDate || "-"}</p>
-                <p><strong>Recorded At:</strong> {formatRecordedAt(latestSavedMeasurement.recordedAt)}</p>
-              </div>
+                {latestSavedMeasurement?.bmi != null && (
+                  <div className="measurement-summary-card">
+                    <p><strong>Latest BMI:</strong> {Number(latestSavedMeasurement.bmi).toFixed(2)}</p>
+                    <p><strong>Measurement Date:</strong> {latestSavedMeasurement.measurementDate || "-"}</p>
+                    <p><strong>Recorded At:</strong> {formatRecordedAt(latestSavedMeasurement.recordedAt)}</p>
+                  </div>
+                )}
+
+                <div className="form-section-label">Body Measurements (Required)</div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Measurement Date</label>
+                    <input type="date" value={form.measurementDate} onChange={setField("measurementDate")} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" required />
+                  </div>
+                  <div className="form-group">
+                    <label>Waist (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.waistCm} onChange={setField("waistCm")} required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Hip (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.hipCm} onChange={setField("hipCm")} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Arm (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.armCm} onChange={setField("armCm")} required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Shoulder (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.shoulderCm} onChange={setField("shoulderCm")} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Breast (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.breastCm} onChange={setField("breastCm")} required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Buttocks (cm)</label>
+                    <input type="number" step="0.01" min="0.01" value={form.buttocksCm} onChange={setField("buttocksCm")} required />
+                  </div>
+                </div>
+
+                <div className="modal-actions modal-actions--tight">
+                  <button type="submit" className="btn-save" disabled={saving}>
+                    {saving ? "Saving..." : "Save Measurement"}
+                  </button>
+                </div>
+              </form>
             )}
 
-            <div className="form-section-label">Body Measurements (Required)</div>
-            <div className="form-row">
+            <div className="form-section-label">View Trends</div>
+
+            <div className="trend-filter-row">
               <div className="form-group">
-                <label>Measurement Date</label>
-                <input type="date" value={form.measurementDate} onChange={setField("measurementDate")} required />
+                <label>From Date</label>
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
               </div>
               <div className="form-group">
-                <label>Height (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.heightCm} onChange={setField("heightCm")} placeholder="e.g. 170" required />
+                <label>To Date</label>
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Weight (kg)</label>
-                <input type="number" step="0.01" min="0.01" value={form.weightKg} onChange={setField("weightKg")} placeholder="e.g. 72.5" required />
-              </div>
-              <div className="form-group">
-                <label>Waist (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.waistCm} onChange={setField("waistCm")} required />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Hip (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.hipCm} onChange={setField("hipCm")} required />
-              </div>
-              <div className="form-group">
-                <label>Arm (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.armCm} onChange={setField("armCm")} required />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Shoulder (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.shoulderCm} onChange={setField("shoulderCm")} required />
-              </div>
-              <div className="form-group">
-                <label>Breast (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.breastCm} onChange={setField("breastCm")} required />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Buttocks (cm)</label>
-                <input type="number" step="0.01" min="0.01" value={form.buttocksCm} onChange={setField("buttocksCm")} required />
+              <div className="trend-filter-actions">
+                <button type="button" className="btn-save" onClick={handleApplyDateFilter}>Apply Filter</button>
+                <button type="button" className="btn-cancel" onClick={handleClearDateFilter}>Clear</button>
               </div>
             </div>
 
-            <div className="form-section-label">Measurement History</div>
             {historyLoading ? (
               <p className="empty-msg">Loading history...</p>
             ) : history.length === 0 ? (
-              <p className="empty-msg">No measurements recorded yet.</p>
+              <p className="empty-msg">No measurement data available.</p>
             ) : (
-              <div className="table-scroll">
-                <table className="manage-table measurement-history-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Height</th>
-                      <th>Weight</th>
-                      <th>BMI</th>
-                      <th>Recorded At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((entry) => (
-                      <tr key={entry.measurementId || `${entry.measurementDate}-${entry.recordedAt}`}>
-                        <td>{entry.measurementDate || "-"}</td>
-                        <td>{entry.heightCm ?? "-"}</td>
-                        <td>{entry.weightKg ?? "-"}</td>
-                        <td>{entry.bmi != null ? Number(entry.bmi).toFixed(2) : "-"}</td>
-                        <td>{formatRecordedAt(entry.recordedAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {filteredHistory.length === 0 ? (
+                  <p className="empty-msg">No measurements found in the selected date range.</p>
+                ) : (
+                  <>
+                    <div className="trend-charts-grid">
+                      {TREND_METRICS.map((metric) => (
+                        <SimpleTrendChart
+                          key={metric.key}
+                          title={`${metric.label} Trend`}
+                          unit={metric.unit}
+                          color={metric.color}
+                          entries={filteredHistory}
+                          valueKey={metric.key}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="form-section-label">Compare Two Dates</div>
+                    <div className="trend-compare-controls">
+                      <div className="form-group">
+                        <label>Date A</label>
+                        <select value={compareDateA} onChange={(e) => setCompareDateA(e.target.value)}>
+                          <option value="">Select date</option>
+                          {uniqueDates.map((dateValue) => (
+                            <option key={`a-${dateValue}`} value={dateValue}>{dateValue}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Date B</label>
+                        <select value={compareDateB} onChange={(e) => setCompareDateB(e.target.value)}>
+                          <option value="">Select date</option>
+                          {uniqueDates.map((dateValue) => (
+                            <option key={`b-${dateValue}`} value={dateValue}>{dateValue}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {compareA && compareB ? (
+                      <div className="table-scroll">
+                        <table className="manage-table measurement-history-table">
+                          <thead>
+                            <tr>
+                              <th>Metric</th>
+                              <th>{compareDateA}</th>
+                              <th>{compareDateB}</th>
+                              <th>Change</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {comparisonRows.map((row) => {
+                              const valA = compareA[row.key];
+                              const valB = compareB[row.key];
+                              return (
+                                <tr key={row.key}>
+                                  <td>{row.label}</td>
+                                  <td>{valA != null ? `${Number(valA).toFixed(2)}${row.unit ? ` ${row.unit}` : ""}` : "-"}</td>
+                                  <td>{valB != null ? `${Number(valB).toFixed(2)}${row.unit ? ` ${row.unit}` : ""}` : "-"}</td>
+                                  <td>{displayDelta(valA, valB, row.unit)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="empty-msg">Select two dates to compare measurements.</p>
+                    )}
+
+                    <div className="form-section-label">Measurement History (Chronological)</div>
+                    <div className="table-scroll">
+                      <table className="manage-table measurement-history-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Height</th>
+                            <th>Weight</th>
+                            <th>BMI</th>
+                            <th>Waist</th>
+                            <th>Recorded At</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredHistory.map((entry) => (
+                            <tr key={entry.measurementId || `${entry.measurementDate}-${entry.recordedAt}`}>
+                              <td>{entry.measurementDate || "-"}</td>
+                              <td>{entry.heightCm != null ? Number(entry.heightCm).toFixed(2) : "-"}</td>
+                              <td>{entry.weightKg != null ? Number(entry.weightKg).toFixed(2) : "-"}</td>
+                              <td>{entry.bmi != null ? Number(entry.bmi).toFixed(2) : "-"}</td>
+                              <td>{entry.waistCm != null ? Number(entry.waistCm).toFixed(2) : "-"}</td>
+                              <td>{formatRecordedAt(entry.recordedAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </>
             )}
 
             <div className="modal-actions">
-              <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn-save" disabled={saving}>
-                {saving ? "Saving…" : "Save Measurement"}
-              </button>
+              <button type="button" className="btn-cancel" onClick={onClose}>Close</button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>
@@ -1096,7 +1381,7 @@ const UserTable = ({
                   )}
                   {/* Body metrics: ADMIN + INSTRUCTOR for clients only */}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
-                    <button className="btn-metrics" onClick={() => onEditMetrics(u)}>Metrics</button>
+                    <button className="btn-metrics" onClick={() => onEditMetrics(u)}>View Trends</button>
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-membership-profile" onClick={() => onOpenMemberProfile(u)}>Profile</button>
@@ -1260,6 +1545,7 @@ const ManagePage = () => {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);              // personal-details modal
   const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
+  const [selfTrendsOpen, setSelfTrendsOpen] = useState(false);
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
   const [recordingPayment, setRecordingPayment] = useState(null);
   const [memberProfile, setMemberProfile] = useState(null);
@@ -1404,6 +1690,8 @@ const ManagePage = () => {
   const closeModal = () => setEditing(null);
   const handleOpenMetrics = (user) => setEditingMetrics(user);
   const closeMetricsModal = () => setEditingMetrics(null);
+  const handleOpenSelfTrends = () => setSelfTrendsOpen(true);
+  const closeSelfTrendsModal = () => setSelfTrendsOpen(false);
   const handleOpenEmployment = (user) => setEditingEmployment(user);
   const closeEmploymentModal = () => setEditingEmployment(null);
   const handleOpenPaymentRecord = (user) => setRecordingPayment(user);
@@ -1654,6 +1942,11 @@ const ManagePage = () => {
                 </button>
               </>
             )}
+            {role === "CLIENT" && (
+              <button className="btn-metrics" onClick={handleOpenSelfTrends}>
+                View Trends
+              </button>
+            )}
             <button className="btn-back" onClick={() => navigate("/profile")}>
               ← Profile
             </button>
@@ -1848,6 +2141,15 @@ const ManagePage = () => {
           user={editingMetrics}
           onClose={closeMetricsModal}
           onSaved={() => {}}
+        />
+      )}
+
+      {selfTrendsOpen && selfUser && (
+        <ClientMetricsModal
+          user={selfUser}
+          onClose={closeSelfTrendsModal}
+          onSaved={() => {}}
+          readOnly
         />
       )}
 
