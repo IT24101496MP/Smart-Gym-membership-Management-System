@@ -1,6 +1,7 @@
 package lk.fat2fit.Fat2Fit.Service;
 
-import java.util.HashSet;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDate;
@@ -17,12 +18,12 @@ import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserDetailResponse;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Entity.Client;
-import lk.fat2fit.Fat2Fit.Entity.ClientBodyMetrics;
+import lk.fat2fit.Fat2Fit.Entity.ClientMeasurement;
 import lk.fat2fit.Fat2Fit.Entity.Instructor;
 import lk.fat2fit.Fat2Fit.Entity.MembershipPlan;
 import lk.fat2fit.Fat2Fit.Entity.User;
 import lk.fat2fit.Fat2Fit.Entity.Enum.MembershipPlanStatus;
-import lk.fat2fit.Fat2Fit.Repository.ClientBodyMetricsRepository;
+import lk.fat2fit.Fat2Fit.Repository.ClientMeasurementRepository;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;
 import lk.fat2fit.Fat2Fit.Repository.MembershipPlanRepository;
 import lk.fat2fit.Fat2Fit.Repository.UserRepository;
@@ -34,7 +35,7 @@ public class ManageService {
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
-    private final ClientBodyMetricsRepository metricsRepository;
+    private final ClientMeasurementRepository measurementRepository;
     private final MembershipPlanRepository membershipPlanRepository;
     
     private User getCurrentUser() {
@@ -238,9 +239,24 @@ public class ManageService {
         if (!clientRepository.existsById(clientId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
-        ClientBodyMetrics m = metricsRepository.findByClientId(clientId)
-                .orElse(ClientBodyMetrics.builder().build()); // return empty shell if not yet set
-        return ResponseEntity.ok(toMetricsResponse(clientId, m));
+
+        return measurementRepository.findTopByClientIdOrderByMeasurementDateDescRecordedAtDescIdDesc(clientId)
+                .<ResponseEntity<?>>map(measurement -> ResponseEntity.ok(toMetricsResponse(clientId, measurement)))
+                .orElseGet(() -> ResponseEntity.ok(ClientMetricsResponse.builder().clientId(clientId).build()));
+    }
+
+    public ResponseEntity<?> getClientMetricsHistory(Long clientId) {
+        if (!clientRepository.existsById(clientId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        List<ClientMetricsResponse> history = measurementRepository
+                .findByClientIdOrderByMeasurementDateDescRecordedAtDescIdDesc(clientId)
+                .stream()
+                .map(measurement -> toMetricsResponse(clientId, measurement))
+                .toList();
+
+        return ResponseEntity.ok(history);
     }
 
     // ── Admin / Instructor: save client body metrics ──────────────────────────
@@ -251,50 +267,82 @@ public class ManageService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
 
-        ClientBodyMetrics metrics = metricsRepository.findByClientId(clientId)
-                .orElse(ClientBodyMetrics.builder()
-                        .client(clientOpt.get())
-                        .fitnessGoals(new HashSet<>())
-                        .build());
+        String validationError = validateMeasurementRequest(req);
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(validationError);
+        }
 
-        if (req.getWeightKg() != null)
-            metrics.setWeightKg(req.getWeightKg());
-        if (req.getHeightCm() != null)
-            metrics.setHeightCm(req.getHeightCm());
-        if (req.getHipSizeCm() != null)
-            metrics.setHipSizeCm(req.getHipSizeCm());
-        if (req.getBreastSizeCm() != null)
-            metrics.setBreastSizeCm(req.getBreastSizeCm());
-        if (req.getWaistSizeCm() != null)
-            metrics.setWaistSizeCm(req.getWaistSizeCm());
-        if (req.getArmSizeCm() != null)
-            metrics.setArmSizeCm(req.getArmSizeCm());
-        if (req.getShoulderSizeCm() != null)
-            metrics.setShoulderSizeCm(req.getShoulderSizeCm());
-        if (req.getButtSizeCm() != null)
-            metrics.setButtSizeCm(req.getButtSizeCm());
-        if (req.getFitnessGoals() != null)
-            metrics.setFitnessGoals(req.getFitnessGoals());
-        metrics.setOtherGoalSpecification(req.getOtherGoalSpecification());
+        ClientMeasurement measurement = ClientMeasurement.builder()
+                .client(clientOpt.get())
+                .heightCm(req.getHeightCm())
+                .weightKg(req.getWeightKg())
+                .waistCm(req.getWaistCm())
+                .hipCm(req.getHipCm())
+                .armCm(req.getArmCm())
+                .shoulderCm(req.getShoulderCm())
+                .breastCm(req.getBreastCm())
+                .buttocksCm(req.getButtocksCm())
+                .measurementDate(req.getMeasurementDate())
+                .bmi(calculateBmi(req.getHeightCm(), req.getWeightKg()))
+                .build();
 
-        metricsRepository.save(metrics);
-        return ResponseEntity.ok(toMetricsResponse(clientId, metrics));
+        ClientMeasurement saved = measurementRepository.save(measurement);
+        return ResponseEntity.ok(toMetricsResponse(clientId, saved));
     }
 
-    private ClientMetricsResponse toMetricsResponse(Long clientId, ClientBodyMetrics m) {
+    private String validateMeasurementRequest(ClientMetricsRequest req) {
+        if (req == null
+                || req.getHeightCm() == null
+                || req.getWeightKg() == null
+                || req.getWaistCm() == null
+                || req.getHipCm() == null
+                || req.getArmCm() == null
+                || req.getShoulderCm() == null
+                || req.getBreastCm() == null
+                || req.getButtocksCm() == null
+                || req.getMeasurementDate() == null) {
+            return "All measurement fields are required.";
+        }
+
+        if (isNonPositive(req.getHeightCm())
+                || isNonPositive(req.getWeightKg())
+                || isNonPositive(req.getWaistCm())
+                || isNonPositive(req.getHipCm())
+                || isNonPositive(req.getArmCm())
+                || isNonPositive(req.getShoulderCm())
+                || isNonPositive(req.getBreastCm())
+                || isNonPositive(req.getButtocksCm())) {
+            return "Measurement values must be positive numbers.";
+        }
+
+        return null;
+    }
+
+    private boolean isNonPositive(BigDecimal value) {
+        return value.compareTo(BigDecimal.ZERO) <= 0;
+    }
+
+    private BigDecimal calculateBmi(BigDecimal heightCm, BigDecimal weightKg) {
+        BigDecimal heightM = heightCm.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+        BigDecimal heightSquared = heightM.multiply(heightM);
+        return weightKg.divide(heightSquared, 2, RoundingMode.HALF_UP);
+    }
+
+    private ClientMetricsResponse toMetricsResponse(Long clientId, ClientMeasurement m) {
         return ClientMetricsResponse.builder()
+                .measurementId(m.getId())
                 .clientId(clientId)
-                .weightKg(m.getWeightKg())
                 .heightCm(m.getHeightCm())
-                .hipSizeCm(m.getHipSizeCm())
-                .breastSizeCm(m.getBreastSizeCm())
-                .waistSizeCm(m.getWaistSizeCm())
-                .armSizeCm(m.getArmSizeCm())
-                .shoulderSizeCm(m.getShoulderSizeCm())
-                .buttSizeCm(m.getButtSizeCm())
-                .fitnessGoals(m.getFitnessGoals())
-                .otherGoalSpecification(m.getOtherGoalSpecification())
-                .updatedAt(m.getUpdatedAt())
+                .weightKg(m.getWeightKg())
+                .waistCm(m.getWaistCm())
+                .hipCm(m.getHipCm())
+                .armCm(m.getArmCm())
+                .shoulderCm(m.getShoulderCm())
+                .breastCm(m.getBreastCm())
+                .buttocksCm(m.getButtocksCm())
+                .measurementDate(m.getMeasurementDate())
+                .bmi(m.getBmi())
+                .recordedAt(m.getRecordedAt())
                 .build();
     }
 
