@@ -3,6 +3,7 @@ package lk.fat2fit.Fat2Fit.Controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -79,13 +80,28 @@ public class ManageController {
     }
 
     /**
-     * PUT /api/manage/clients/{id}/metrics
-     * Admin or Instructor: create/update a client's body metrics & fitness goals.
+     * GET /api/manage/clients/{id}/metrics/history
+     * Admin or Instructor: view historical body measurements for a client.
      */
+    @GetMapping("/clients/{id}/metrics/history")
+    public ResponseEntity<?> getClientMetricsHistory(@PathVariable Long id) {
+        return manageService.getClientMetricsHistory(id);
+    }
+
+    /**
+     * POST /api/manage/clients/{id}/metrics
+     * PUT  /api/manage/clients/{id}/metrics
+     * Admin or Instructor: record a body measurement entry.
+     */
+    @PostMapping("/clients/{id}/metrics")
     @PutMapping("/clients/{id}/metrics")
     public ResponseEntity<?> saveClientMetrics(@PathVariable Long id,
             @RequestBody ClientMetricsRequest req) {
-        return manageService.saveClientMetrics(id, req);
+        try {
+            return manageService.saveClientMetrics(id, req);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Measurement saving failed. Please try again.");
+        }
     }
 
     /**
