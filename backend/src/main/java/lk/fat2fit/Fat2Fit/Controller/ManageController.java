@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.HealthScreeningRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Service.ManageService;
 import lombok.RequiredArgsConstructor;
@@ -111,6 +112,29 @@ public class ManageController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Measurement saving failed. Please try again.");
         }
+    }
+
+    /**
+     * POST /api/manage/clients/{id}/health-screening
+     * Admin or Instructor: record a client's health readiness questionnaire.
+     */
+    @PostMapping("/clients/{id}/health-screening")
+    public ResponseEntity<?> saveClientHealthScreening(@PathVariable Long id,
+            @RequestBody HealthScreeningRequest req) {
+        try {
+            return manageService.saveClientHealthScreening(id, req);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Health screening submission failed.");
+        }
+    }
+
+    /**
+     * GET /api/manage/clients/{id}/health-screening/latest
+     * Admin or Instructor: fetch the latest saved health screening for a client.
+     */
+    @GetMapping("/clients/{id}/health-screening/latest")
+    public ResponseEntity<?> getLatestClientHealthScreening(@PathVariable Long id) {
+        return manageService.getLatestClientHealthScreening(id);
     }
 
     /**
