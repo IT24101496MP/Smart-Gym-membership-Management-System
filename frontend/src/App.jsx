@@ -9,8 +9,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import ManagePage from "./pages/manage/ManagePage";
-import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
+import MembershipPlansOverviewPage from "./pages/membership/MembershipPlansOverviewPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 
 function App() {
@@ -77,8 +77,8 @@ function App() {
           <Route
             path="/membership-plans"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "CLIENT"]}>
-                <MembershipPlanPage />
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "CLIENT"]}>
+                <MembershipPlansOverviewPage />
               </ProtectedRoute>
             }
           />
