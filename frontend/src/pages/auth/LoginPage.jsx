@@ -169,6 +169,10 @@ const LoginPage = () => {
               Register
             </Link>
           </p>
+
+          <Link to="/membership-plans" className="plans-link-button">
+            View Membership Plans
+          </Link>
         </form>
       </div>
     </div>
