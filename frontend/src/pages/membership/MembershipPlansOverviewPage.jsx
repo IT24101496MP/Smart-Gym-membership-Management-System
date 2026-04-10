@@ -1,17 +1,327 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRole } from "../../utils/auth";
+import api, { publicApi } from "../../utils/api";
 import fat2fitLogo from "../../assets/Fat2fit Logo.jpg";
-import {
-  createMembershipPlanByAdmin,
-  getClientsMembershipAssignments,
-  getActiveMembershipPlans,
-  getCurrentUserProfile,
-  renewMembershipPlan,
-  updateMembershipPlanByAdmin,
-} from "./membershipOverviewApi";
-import { membershipOverviewFallbackData } from "./membershipOverviewFallbackData";
 import "./MembershipPlansOverviewPage.css";
+
+const normalizePlan = (plan) => ({
+  id: plan.id ?? null,
+  planName: plan.planName ?? "Unknown Plan",
+  description: plan.description ?? "",
+  durationDays: plan.durationDays ?? null,
+  monthlyPrice: plan.monthlyPrice ?? null,
+  admissionFee: plan.admissionFee ?? null,
+  maximumMembers: plan.maximumMembers ?? null,
+  status: plan.status ?? "ACTIVE",
+});
+
+const getActiveMembershipPlans = async () => {
+  const { data } = await publicApi.get("/api/membership-plans/active");
+  if (!Array.isArray(data)) return [];
+  return data.map(normalizePlan);
+};
+
+const getCurrentUserProfile = async () => {
+  const { data } = await api.get("/api/auth/me");
+  return data;
+};
+
+const getClientsMembershipAssignments = async () => {
+  const { data } = await api.get("/api/manage/clients");
+  return Array.isArray(data) ? data : [];
+};
+
+const createMembershipPlanByAdmin = async (payload) => {
+  const { data } = await api.post("/api/membership-plans", payload);
+  return normalizePlan(data);
+};
+
+const updateMembershipPlanByAdmin = async (planId, payload) => {
+  const { data } = await api.put(`/api/membership-plans/${planId}`, payload);
+  return normalizePlan(data);
+};
+
+const renewMembershipPlan = async ({
+  clientId,
+  plan,
+  renewalDate,
+}) => {
+  const payload = {
+    clientId,
+    planId: plan.id,
+    planName: plan.planName,
+    durationMonths: plan.durationDays ? Math.max(1, Math.round(plan.durationDays / 30)) : 1,
+    price: typeof plan.monthlyPrice === "number" ? plan.monthlyPrice : Number(plan.monthlyPrice),
+    renewalDate,
+  };
+
+  const { data } = await api.post("/api/membership-plans/renew", payload);
+  return data;
+};
+
+const membershipOverviewFallbackData = [
+  {
+    id: "single-day",
+    planName: "Gym - Single",
+    description: "Daily access for one member.",
+    durationDays: 1,
+    monthlyPrice: 750,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "single-1m",
+    planName: "Gym - Single",
+    description: "Standard individual monthly membership.",
+    durationDays: 30,
+    monthlyPrice: 5000,
+    admissionFee: 2000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "single-3m",
+    planName: "Gym - Single",
+    description: "Quarterly individual membership at a better rate.",
+    durationDays: 90,
+    monthlyPrice: 13500,
+    admissionFee: 2000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "single-6m",
+    planName: "Gym - Single",
+    description: "Half-year individual membership.",
+    durationDays: 180,
+    monthlyPrice: 24000,
+    admissionFee: 2000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "single-1y",
+    planName: "Gym - Single",
+    description: "Annual individual membership with free admission.",
+    durationDays: 365,
+    monthlyPrice: 42000,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-2p-1m",
+    planName: "Gym - Family (02 P)",
+    description: "Family/couple membership for two people.",
+    durationDays: 30,
+    monthlyPrice: 9000,
+    admissionFee: 3000,
+    maximumMembers: 2,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-2p-3m",
+    planName: "Gym - Family (02 P)",
+    description: "Three-month package for two people.",
+    durationDays: 90,
+    monthlyPrice: 24000,
+    admissionFee: 3000,
+    maximumMembers: 2,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-2p-6m",
+    planName: "Gym - Family (02 P)",
+    description: "Six-month package for two people.",
+    durationDays: 180,
+    monthlyPrice: 42000,
+    admissionFee: 3000,
+    maximumMembers: 2,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-2p-1y",
+    planName: "Gym - Family (02 P)",
+    description: "Annual two-person package with free admission.",
+    durationDays: 365,
+    monthlyPrice: 72000,
+    admissionFee: 0,
+    maximumMembers: 2,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-3to5-1m",
+    planName: "Gym - Family (3-5 P)",
+    description: "Monthly package priced per member.",
+    durationDays: 30,
+    monthlyPrice: 4000,
+    admissionFee: 750,
+    maximumMembers: 5,
+    status: "ACTIVE",
+  },
+  {
+    id: "family-6plus-1m",
+    planName: "Gym - Family (6 P to up)",
+    description: "Monthly large-family package priced per member.",
+    durationDays: 30,
+    monthlyPrice: 3500,
+    admissionFee: 500,
+    maximumMembers: 6,
+    status: "ACTIVE",
+  },
+  {
+    id: "aerobics-day",
+    planName: "Aerobics",
+    description: "Per day aerobics access.",
+    durationDays: 1,
+    monthlyPrice: 750,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "aerobics-1m",
+    planName: "Aerobics",
+    description: "Monthly aerobics membership.",
+    durationDays: 30,
+    monthlyPrice: 5000,
+    admissionFee: 1000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "zumba-day",
+    planName: "Zumba",
+    description: "Per day zumba access.",
+    durationDays: 1,
+    monthlyPrice: 750,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "zumba-1m",
+    planName: "Zumba",
+    description: "Monthly zumba membership.",
+    durationDays: 30,
+    monthlyPrice: 5000,
+    admissionFee: 1000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "muay-thai-day",
+    planName: "Muay Thai",
+    description: "Per day Muay Thai access.",
+    durationDays: 1,
+    monthlyPrice: 750,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "muay-thai-1m",
+    planName: "Muay Thai",
+    description: "Monthly Muay Thai membership.",
+    durationDays: 30,
+    monthlyPrice: 5000,
+    admissionFee: 1000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "combo-azy-1m",
+    planName: "Aerobics/Zumba/Yoga",
+    description: "Combined class package for one month.",
+    durationDays: 30,
+    monthlyPrice: 5000,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "personal-training-day",
+    planName: "Personal Training",
+    description: "One day personal training package.",
+    durationDays: 1,
+    monthlyPrice: 2500,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "group-training-day",
+    planName: "Group Training (10 Persons)",
+    description: "One day group package up to 10 people.",
+    durationDays: 1,
+    monthlyPrice: 10000,
+    admissionFee: 0,
+    maximumMembers: 10,
+    status: "ACTIVE",
+  },
+  {
+    id: "doctor-consult-3m",
+    planName: "Doctor Consulting",
+    description: "Consultation package once in 3 months.",
+    durationDays: 90,
+    monthlyPrice: 2000,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "counseling-inspection",
+    planName: "Counseling",
+    description: "Single inspection counseling package.",
+    durationDays: null,
+    monthlyPrice: 2500,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "physio-full-body",
+    planName: "Physiotherapy (Full Body)",
+    description: "Full body physiotherapy package.",
+    durationDays: null,
+    monthlyPrice: 5000,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "physio-head-shoulders",
+    planName: "Physiotherapy (Head and Shoulders)",
+    description: "Head and shoulders physiotherapy package.",
+    durationDays: null,
+    monthlyPrice: 3500,
+    admissionFee: 0,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "gym-zumba-1m",
+    planName: "Gym + Zumba",
+    description: "One-month combined gym and zumba package.",
+    durationDays: 30,
+    monthlyPrice: 8000,
+    admissionFee: 2000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+  {
+    id: "gym-yoga-1m",
+    planName: "Gym + Yoga",
+    description: "One-month combined gym and yoga package.",
+    durationDays: 30,
+    monthlyPrice: 8000,
+    admissionFee: 2000,
+    maximumMembers: 1,
+    status: "ACTIVE",
+  },
+];
 
 const categoryOptions = ["All", "Single", "Couple", "Family", "Class", "Therapy", "Training"];
 const durationOptions = ["All", "Day", "3 Months", "6 Months", "One Year", "Custom"];
@@ -274,9 +584,7 @@ const MembershipPlansOverviewPage = () => {
     setMessage("");
 
     if (!role) {
-      setMessageType("error");
-      setMessage("Please log in to join a membership plan.");
-      navigate("/login");
+      navigate("/client/register");
       return;
     }
 
@@ -311,7 +619,7 @@ const MembershipPlansOverviewPage = () => {
     }
   };
 
-  const ctaText = role === "CLIENT" ? "Join Now" : role === "ADMIN" ? "Edit Plan" : "Select Plan";
+  const ctaText = !role || role === "CLIENT" ? "Join Now" : role === "ADMIN" ? "Edit Plan" : "Select Plan";
 
   return (
     <div className="membership-overview-page">

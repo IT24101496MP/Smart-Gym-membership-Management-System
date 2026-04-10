@@ -76,11 +76,7 @@ function App() {
 
           <Route
             path="/membership-plans"
-            element={
-              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "CLIENT"]}>
-                <MembershipPlansOverviewPage />
-              </ProtectedRoute>
-            }
+            element={<MembershipPlansOverviewPage />}
           />
 
           <Route
