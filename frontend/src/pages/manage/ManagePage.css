@@ -131,6 +131,27 @@
 .status-badge.active   { background: #e8f5e9; color: #2e7d32; }
 .status-badge.inactive { background: #fce4ec; color: #c62828; }
 
+.health-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.health-risk-badge.high {
+  background: #fce4ec;
+  color: #9b1c1c;
+}
+
+.health-risk-badge.normal {
+  background: #e8f5e9;
+  color: #1f6a31;
+}
+
 .membership-status-badge {
   font-size: 0.72rem;
   font-weight: 700;
@@ -351,6 +372,22 @@
 }
 .btn-payment:hover {
   background: #5c3f2a;
+}
+
+.btn-health {
+  padding: 0.35rem 0.9rem;
+  background: #7a1f1f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-health:hover {
+  background: #611818;
 }
 
 .btn-employment {
@@ -831,7 +868,8 @@ select.emp-input--readonly {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   padding: 0.55rem 0.8rem;
   border: 1.5px solid #ddd;
   border-radius: 7px;
@@ -845,8 +883,57 @@ select.emp-input--readonly {
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   border-color: #c0392b;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.health-question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.health-question-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.health-question-row label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.health-question-options {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.health-question-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #222;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.health-question-options input[type="radio"] {
+  accent-color: #c0392b;
 }
 
 .form-section-label {

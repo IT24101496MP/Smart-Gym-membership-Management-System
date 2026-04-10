@@ -20,6 +20,26 @@ const PAYMENT_METHOD_OPTIONS = [
   { value: "CARD", label: "Card" },
 ];
 
+const HEALTH_SCREENING_QUESTIONS = [
+  { key: "cardiacConditions", label: "Cardiac conditions" },
+  { key: "respiratoryIssues", label: "Respiratory issues" },
+  { key: "faintingOrBalanceProblems", label: "Fainting or balance problems" },
+  { key: "jointOrMuscleDisorders", label: "Joint or muscle disorders" },
+  { key: "highBloodPressure", label: "High blood pressure" },
+  { key: "cholesterolLevels", label: "Cholesterol levels" },
+  { key: "currentMedications", label: "Current medications" },
+  { key: "disabilitiesOrPhysicalLimitations", label: "Disabilities or physical limitations" },
+];
+
+const emptyHealthScreeningForm = () =>
+  HEALTH_SCREENING_QUESTIONS.reduce(
+    (acc, item) => ({ ...acc, [item.key]: "" }),
+    { additionalNotes: "" }
+  );
+
+const screeningValueToBool = (value) => value === "YES";
+const boolToScreeningValue = (value) => (value ? "YES" : "NO");
+
 const emptyMetrics = () => ({
   heightCm: "",
   weightKg: "",
@@ -890,6 +910,184 @@ const PaymentRecordModal = ({ user, onClose, onSaved }) => {
   );
 };
 
+const HealthScreeningModal = ({ user, onClose, onSaved }) => {
+  const [form, setForm] = useState(emptyHealthScreeningForm());
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingLatest, setLoadingLatest] = useState(true);
+  const [latestSaved, setLatestSaved] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const loadLatestScreening = async () => {
+      setLoadingLatest(true);
+      try {
+        const { data } = await api.get(`/api/manage/clients/${user.id}/health-screening/latest`);
+        setLatestSaved(data);
+        const restored = HEALTH_SCREENING_QUESTIONS.reduce((acc, question) => {
+          acc[question.key] = boolToScreeningValue(Boolean(data[question.key]));
+          return acc;
+        }, {});
+        restored.additionalNotes = data.additionalNotes ?? "";
+        setForm(restored);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setLatestSaved(null);
+          setForm(emptyHealthScreeningForm());
+        } else {
+          setError("Failed to load existing health screening data.");
+        }
+      } finally {
+        setLoadingLatest(false);
+      }
+    };
+
+    loadLatestScreening();
+  }, [user.id]);
+
+  const setQuestion = (field) => (event) => {
+    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const setNotes = (event) => {
+    setForm((prev) => ({ ...prev, additionalNotes: event.target.value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+
+    const hasMissingResponses = HEALTH_SCREENING_QUESTIONS.some(
+      ({ key }) => form[key] !== "YES" && form[key] !== "NO"
+    );
+
+    if (hasMissingResponses) {
+      setError("Please answer all required questionnaire responses.");
+      return;
+    }
+
+    const payload = HEALTH_SCREENING_QUESTIONS.reduce((acc, question) => {
+      acc[question.key] = screeningValueToBool(form[question.key]);
+      return acc;
+    }, {});
+
+    payload.additionalNotes = form.additionalNotes.trim() || null;
+
+    setSubmitting(true);
+    try {
+      const { data } = await api.post(`/api/manage/clients/${user.id}/health-screening`, payload);
+      setLatestSaved(data);
+      setSuccess("Health screening submitted successfully.");
+      onSaved?.(data);
+      setTimeout(() => onClose(), 700);
+    } catch (err) {
+      if (err.response?.status === 400) {
+        setError(err.response?.data || "Please answer all required questionnaire responses.");
+      } else {
+        setError("Health screening submission failed.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const activeRiskLabels = latestSaved
+    ? HEALTH_SCREENING_QUESTIONS.filter((question) => latestSaved[question.key]).map((question) => question.label)
+    : [];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Health Screening - {user.firstName} {user.lastName}</h2>
+          <button className="modal-close" onClick={onClose}>X</button>
+        </div>
+
+        <div className="member-profile-grid">
+          <div className="member-profile-item">
+            <span className="member-profile-label">Member ID</span>
+            <span className="member-profile-value">#{user.id}</span>
+          </div>
+          <div className="member-profile-item">
+            <span className="member-profile-label">Current Risk Flag</span>
+            <span className={`health-risk-badge ${user.highRiskMember ? "high" : "normal"}`}>
+              {user.highRiskMember ? "High Risk" : "Normal"}
+            </span>
+          </div>
+        </div>
+
+        {error && <p className="modal-error">{error}</p>}
+        {success && <p className="form-success">{success}</p>}
+
+        {loadingLatest ? (
+          <p className="empty-msg">Loading latest screening...</p>
+        ) : latestSaved ? (
+          <div className="measurement-summary-card">
+            <p><strong>Last Screening:</strong> {formatRecordedAt(latestSaved.recordedAt)}</p>
+            <p><strong>Saved Risk Status:</strong> {latestSaved.highRisk ? "High Risk" : "Normal"}</p>
+            <p>
+              <strong>Identified Risk Areas:</strong>{" "}
+              {activeRiskLabels.length > 0 ? activeRiskLabels.join(", ") : "None"}
+            </p>
+          </div>
+        ) : (
+          <p className="empty-msg">No previous health screening found for this member.</p>
+        )}
+
+        <form className="edit-form" onSubmit={handleSubmit}>
+          <div className="health-question-list">
+            {HEALTH_SCREENING_QUESTIONS.map((question) => (
+              <div className="health-question-row" key={question.key}>
+                <label>{question.label}<span className="req"> *</span></label>
+                <div className="health-question-options">
+                  <label>
+                    <input
+                      type="radio"
+                      name={question.key}
+                      value="YES"
+                      checked={form[question.key] === "YES"}
+                      onChange={setQuestion(question.key)}
+                    />
+                    Yes
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name={question.key}
+                      value="NO"
+                      checked={form[question.key] === "NO"}
+                      onChange={setQuestion(question.key)}
+                    />
+                    No
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="form-group">
+            <label>Additional Notes</label>
+            <textarea
+              value={form.additionalNotes}
+              onChange={setNotes}
+              rows={3}
+              placeholder="Optional notes about safety concerns"
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-save" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Screening"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ── Client Metrics + Trends Modal ─────────────────────────────────────────────
 
 const ClientMetricsModal = ({ user, onClose, onSaved, readOnly = false }) => {
@@ -1339,6 +1537,7 @@ const UserTable = ({
   onEditMetrics,
   onEditEmployment,
   onOpenMemberProfile,
+  onOpenHealthScreening,
   onRecordPayment,
   title,
   viewerRole,
@@ -1359,6 +1558,7 @@ const UserTable = ({
               <th>Phone</th>
               <th>Role</th>
               <th>Membership</th>
+              <th>Health Risk</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -1388,6 +1588,15 @@ const UserTable = ({
                   )}
                 </td>
                 <td>
+                  {u.role === "CLIENT" ? (
+                    <span className={`health-risk-badge ${u.highRiskMember ? "high" : "normal"}`}>
+                      {u.highRiskMember ? "High Risk" : "Normal"}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                <td>
                   <span className={`status-badge ${u.isActive ? "active" : "inactive"}`}>
                     {u.isActive ? "Active" : "Inactive"}
                   </span>
@@ -1403,6 +1612,9 @@ const UserTable = ({
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-membership-profile" onClick={() => onOpenMemberProfile(u)}>Profile</button>
+                  )}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-health" onClick={() => onOpenHealthScreening(u)}>Health</button>
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-payment" onClick={() => onRecordPayment(u)}>Record Payment</button>
@@ -1566,6 +1778,7 @@ const ManagePage = () => {
   const [selfTrendsOpen, setSelfTrendsOpen] = useState(false);
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
   const [recordingPayment, setRecordingPayment] = useState(null);
+  const [screeningClient, setScreeningClient] = useState(null);
   const [memberProfile, setMemberProfile] = useState(null);
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [membershipHistoryLoading, setMembershipHistoryLoading] = useState(false);
@@ -1714,6 +1927,8 @@ const ManagePage = () => {
   const closeEmploymentModal = () => setEditingEmployment(null);
   const handleOpenPaymentRecord = (user) => setRecordingPayment(user);
   const closePaymentRecordModal = () => setRecordingPayment(null);
+  const handleOpenHealthScreening = (user) => setScreeningClient(user);
+  const closeHealthScreeningModal = () => setScreeningClient(null);
 
   const handleOpenMemberProfile = async (user) => {
     setMemberProfile(user);
@@ -1990,6 +2205,7 @@ const ManagePage = () => {
               onEditMetrics={handleOpenMetrics}
               onEditEmployment={handleOpenEmployment}
               onOpenMemberProfile={handleOpenMemberProfile}
+              onOpenHealthScreening={handleOpenHealthScreening}
               onRecordPayment={handleOpenPaymentRecord}
               viewerRole={role}
               navigate={navigate}
@@ -2190,6 +2406,29 @@ const ManagePage = () => {
             if (refreshed) {
               setRecordingPayment(refreshed);
             }
+          }}
+        />
+      )}
+
+      {screeningClient && (
+        <HealthScreeningModal
+          user={screeningClient}
+          onClose={closeHealthScreeningModal}
+          onSaved={(saved) => {
+            const updatedRisk = saved?.memberHighRisk ?? saved?.highRisk ?? false;
+
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.id === screeningClient.id
+                  ? { ...u, highRiskMember: updatedRisk }
+                  : u
+              )
+            );
+
+            setMemberProfile((prev) => {
+              if (!prev || prev.id !== screeningClient.id) return prev;
+              return { ...prev, highRiskMember: updatedRisk };
+            });
           }}
         />
       )}
