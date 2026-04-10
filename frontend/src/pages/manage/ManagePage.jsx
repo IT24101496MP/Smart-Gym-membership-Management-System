@@ -77,10 +77,17 @@ const canRenewMembership = (status) => {
   return normalized === "ACTIVE" || normalized === "EXPIRED";
 };
 
+const BMI_TREND_METRIC = { key: "bmi", label: "BMI", unit: "", color: "#1a6b3c" };
+
 const TREND_METRICS = [
+  { key: "heightCm", label: "Height", unit: "cm", color: "#34495e" },
   { key: "weightKg", label: "Weight", unit: "kg", color: "#c0392b" },
-  { key: "bmi", label: "BMI", unit: "", color: "#1a6b3c" },
   { key: "waistCm", label: "Waist", unit: "cm", color: "#2c5f8a" },
+  { key: "hipCm", label: "Hip", unit: "cm", color: "#8e44ad" },
+  { key: "armCm", label: "Arm", unit: "cm", color: "#16a085" },
+  { key: "shoulderCm", label: "Shoulder", unit: "cm", color: "#d35400" },
+  { key: "breastCm", label: "Breast", unit: "cm", color: "#7f8c8d" },
+  { key: "buttocksCm", label: "Buttocks", unit: "cm", color: "#2e86c1" },
 ];
 
 const formatRecordedAt = (value) => {
@@ -1175,6 +1182,17 @@ const ClientMetricsModal = ({ user, onClose, onSaved, readOnly = false }) => {
                   <p className="empty-msg">No measurements found in the selected date range.</p>
                 ) : (
                   <>
+                    <div className="trend-chart-solo">
+                      <SimpleTrendChart
+                        key={BMI_TREND_METRIC.key}
+                        title={`${BMI_TREND_METRIC.label} Trend`}
+                        unit={BMI_TREND_METRIC.unit}
+                        color={BMI_TREND_METRIC.color}
+                        entries={filteredHistory}
+                        valueKey={BMI_TREND_METRIC.key}
+                      />
+                    </div>
+
                     <div className="trend-charts-grid">
                       {TREND_METRICS.map((metric) => (
                         <SimpleTrendChart
