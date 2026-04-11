@@ -12,13 +12,15 @@ import ManagePage from "./pages/manage/ManagePage";
 import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import PaymentPage from "./pages/payment/PaymentPage";
+import HomePage from "./pages/home/HomePage";
 
 function App() {
   return (
       <BrowserRouter>
         <Routes>
 
-          {/* Login/Signup Page */}
+          {/* Home + Login/Signup */}
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
 
           {/* public pages */}
@@ -92,11 +94,10 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Catch all unknown routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </BrowserRouter>
