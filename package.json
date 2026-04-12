@@ -1,0 +1,20 @@
+{
+  "name": "smart-gym-membership-management-system",
+  "version": "1.0.0",
+  "description": "Mrs. Niluka Pathirana  \r Owner - Fat2Fit Wellness Studio",
+  "main": "cypress.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-sliit:IT24101496MP/Smart-Gym-membership-Management-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "cypress": "^15.13.1"
+  }
+}
