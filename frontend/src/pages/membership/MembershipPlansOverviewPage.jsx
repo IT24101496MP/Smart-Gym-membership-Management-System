@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getRole } from "../../utils/auth";
+import { getRole, isAuthenticated } from "../../utils/auth";
 import api, { publicApi } from "../../utils/api";
 import fat2fitLogo from "../../assets/Fat2fit Logo.jpg";
 import "./MembershipPlansOverviewPage.css";
@@ -583,12 +583,30 @@ const MembershipPlansOverviewPage = () => {
   const joinPlan = async (plan) => {
     setMessage("");
 
-    if (!role) {
+    const authenticated = await isAuthenticated();
+    const currentRole = getRole();
+
+    if (!authenticated || !currentRole) {
+      setMessageType("error");
+      setMessage("Please register or log in before joining a membership plan.");
       navigate("/client/register");
       return;
     }
 
-    if (role === "CLIENT") {
+    if (currentRole === "CLIENT") {
+      let verifiedUser = me;
+      if (!verifiedUser?.id) {
+        try {
+          verifiedUser = await getCurrentUserProfile();
+          setMe(verifiedUser);
+        } catch {
+          setMessageType("error");
+          setMessage("Please register or log in before joining a membership plan.");
+          navigate("/client/register");
+          return;
+        }
+      }
+
       if (!plan.id) {
         setMessageType("error");
         setMessage("This plan is currently unavailable for online joining.");

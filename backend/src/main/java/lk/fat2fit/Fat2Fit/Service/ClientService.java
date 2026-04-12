@@ -6,7 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import lk.fat2fit.Fat2Fit.DTO.ClientRegister;
-import lk.fat2fit.Fat2Fit.DTO.ClientSearchResponseDTO;
+import lk.fat2fit.Fat2Fit.DTO.Attendance.ClientSearchResponseDTO;
 import lk.fat2fit.Fat2Fit.Entity.Client;
 import lk.fat2fit.Fat2Fit.Entity.Enum.Role;
 import lk.fat2fit.Fat2Fit.Repository.ClientRepository;

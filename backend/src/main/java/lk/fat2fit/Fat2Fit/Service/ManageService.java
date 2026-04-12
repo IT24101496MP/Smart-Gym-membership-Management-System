@@ -126,6 +126,16 @@ public class ManageService {
         return (v == null || v.trim().isEmpty()) ? null : v.trim();
     }
 
+    private Optional<Client> findClientById(Long clientId) {
+        if (clientId == null) {
+            return Optional.empty();
+        }
+        if (clientId > Integer.MAX_VALUE || clientId < Integer.MIN_VALUE) {
+            return Optional.empty();
+        }
+        return clientRepository.findById(clientId.intValue());
+    }
+
     // ── Admin: get all users except self ──────────────────────────────────────
 
     public ResponseEntity<?> getAllUsersExceptSelf() {
@@ -182,7 +192,7 @@ public class ManageService {
     // ── Admin / Instructor: edit a client's details ────────────────────────────
 
     public ResponseEntity<?> editClient(Long clientId, UserEditRequest req) {
-        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        Optional<Client> clientOpt = findClientById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
@@ -235,7 +245,7 @@ public class ManageService {
     // ── Admin / Instructor: get client body metrics ───────────────────────────
 
     public ResponseEntity<?> getClientMetrics(Long clientId) {
-        if (!clientRepository.existsById(clientId)) {
+        if (findClientById(clientId).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
         ClientBodyMetrics m = metricsRepository.findByClientId(clientId)
@@ -246,7 +256,7 @@ public class ManageService {
     // ── Admin / Instructor: save client body metrics ──────────────────────────
 
     public ResponseEntity<?> saveClientMetrics(Long clientId, ClientMetricsRequest req) {
-        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        Optional<Client> clientOpt = findClientById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
@@ -325,10 +335,14 @@ public class ManageService {
 
     // ── Admin / Instructor: suspend/unsuspend a client's membership ──────────
 
-    public ResponseEntity<?> updateClientMembershipSuspension(int clientId, ClientMembershipSuspendRequest req) {
-        Optional<Client> clientOpt = clientRepository.findById((long) clientId);
+    public ResponseEntity<?> updateClientMembershipSuspension(Long clientId, ClientMembershipSuspendRequest req) {
+        Optional<Client> clientOpt = findClientById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
+        }
+
+        if (req == null) {
+            return ResponseEntity.badRequest().body("Request payload is required.");
         }
 
         Client client = clientOpt.get();
@@ -343,18 +357,19 @@ public class ManageService {
 
     // ── Admin / Instructor: renew a client's membership from a start date ────
 
-    public ResponseEntity<?> renewClientMembership(int clientId, ClientMembershipRenewRequest req) {
-        Optional<Client> clientOpt = clientRepository.findById((long) clientId);
+    public ResponseEntity<?> renewClientMembership(Long clientId, ClientMembershipRenewRequest req) {
+        Optional<Client> clientOpt = findClientById(clientId);
         if (clientOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found.");
         }
 
         Client client = clientOpt.get();
+        ClientMembershipRenewRequest safeReq = (req == null) ? new ClientMembershipRenewRequest() : req;
 
         // Determine which membership plan to use
         Optional<MembershipPlan> planOpt;
-        if (req.getMembershipPlanId() != null && req.getMembershipPlanId() > 0) {
-            planOpt = membershipPlanRepository.findById(req.getMembershipPlanId());
+        if (safeReq.getMembershipPlanId() != null && safeReq.getMembershipPlanId() > 0) {
+            planOpt = membershipPlanRepository.findById(safeReq.getMembershipPlanId());
         } else if (client.getMembershipPlan() != null) {
             planOpt = Optional.of(client.getMembershipPlan());
         } else {
@@ -371,7 +386,7 @@ public class ManageService {
         }
 
         // Determine start date
-        LocalDate startDate = req.getStartDate() != null ? req.getStartDate() : LocalDate.now();
+        LocalDate startDate = safeReq.getStartDate() != null ? safeReq.getStartDate() : LocalDate.now();
         LocalDate endDate = startDate.plusDays(plan.getDurationDays().longValue());
 
         client.setMembershipPlan(plan);

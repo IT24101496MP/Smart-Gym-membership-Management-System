@@ -12,11 +12,15 @@ import ManagePage from "./pages/manage/ManagePage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import MembershipPlansOverviewPage from "./pages/membership/MembershipPlansOverviewPage";
 import PaymentPage from "./pages/payment/PaymentPage";
+import LandingPage from "./pages/home/LandingPage";
+import AdminContactMessagesPage from "./pages/admin/AdminContactMessagesPage";
 
 function App() {
   return (
       <BrowserRouter>
         <Routes>
+
+          <Route path="/" element={<LandingPage />} />
 
           {/* Login/Signup Page */}
           <Route path="/login" element={<LoginPage />} />
@@ -80,6 +84,15 @@ function App() {
           />
 
           <Route
+            path="/admin/contact-messages"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminContactMessagesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/payment/:planId"
             element={
               <ProtectedRoute allowedRoles={["CLIENT"]}>
@@ -88,11 +101,10 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Catch all unknown routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </BrowserRouter>
