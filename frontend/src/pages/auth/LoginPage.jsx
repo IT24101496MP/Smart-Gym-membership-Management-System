@@ -169,6 +169,13 @@ const LoginPage = () => {
               Register
             </Link>
           </p>
+
+          <p className="register-prompt testimonials-prompt">
+            Want to hear from members?{" "}
+            <Link to="/testimonials" className="register-link">
+              View Testimonials
+            </Link>
+          </p>
         </form>
       </div>
     </div>

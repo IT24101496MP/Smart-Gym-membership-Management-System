@@ -247,3 +247,7 @@ html, body, #root {
 .register-link:hover {
   color: #b71f1f;
 }
+
+.testimonials-prompt {
+  margin-top: -10px;
+}

@@ -12,6 +12,7 @@ import ManagePage from "./pages/manage/ManagePage";
 import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import PaymentPage from "./pages/payment/PaymentPage";
+import TestimonialsPage from "./pages/testimonials/TestimonialsPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           {/* public pages */}
           <Route path="/client/register" element={<ClientRegistrationPage />} />
           <Route path="/instructor/register" element={<InstructorRegistrationPage />} />
+          <Route path="/testimonials" element={<TestimonialsPage />} />
             
           {/* ADMIN-only */}
           <Route
