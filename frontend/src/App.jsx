@@ -14,6 +14,7 @@ import MembershipPlansOverviewPage from "./pages/membership/MembershipPlansOverv
 import PaymentPage from "./pages/payment/PaymentPage";
 import LandingPage from "./pages/home/LandingPage";
 import AdminContactMessagesPage from "./pages/admin/AdminContactMessagesPage";
+import TestimonialsPage from "./pages/testimonials/TestimonialsPage";
 
 function App() {
   return (
@@ -82,6 +83,8 @@ function App() {
             path="/membership-plans"
             element={<MembershipPlansOverviewPage />}
           />
+
+          <Route path="/testimonials" element={<TestimonialsPage />} />
 
           <Route
             path="/admin/contact-messages"

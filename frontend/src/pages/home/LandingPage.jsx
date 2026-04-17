@@ -313,7 +313,7 @@ const LandingPage = () => {
           <button type="button" onClick={() => scrollTo(galleryRef)}>
             Gallery
           </button>
-          <button type="button" className="nav-coming-soon" disabled title="Coming soon">
+          <button type="button" onClick={() => navigate("/testimonials")}>
             Testimonials
           </button>
           <button type="button" className="nav-coming-soon" disabled title="Coming soon">
