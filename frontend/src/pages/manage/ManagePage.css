@@ -344,6 +344,22 @@
   background: #c0392b;
 }
 
+.btn-goals {
+  padding: 0.35rem 0.9rem;
+  background: #5e3b22;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-goals:hover {
+  background: #452b18;
+}
+
 .btn-membership-profile {
   padding: 0.35rem 0.9rem;
   background: #1565c0;
@@ -699,6 +715,39 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.5rem 1rem;
   margin-bottom: 1rem;
+}
+
+.fitness-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.fitness-goal-card {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: #fff;
+}
+
+.fitness-goal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fitness-goal-card-header h4 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.fitness-goal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .goal-checkbox {
