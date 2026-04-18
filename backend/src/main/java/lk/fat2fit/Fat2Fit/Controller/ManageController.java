@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipRenewRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMembershipSuspendRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.ClientMetricsRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.AssignFitnessGoalRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.HealthScreeningRequest;
+import lk.fat2fit.Fat2Fit.DTO.Manage.UpdateMyFitnessGoalRequest;
 import lk.fat2fit.Fat2Fit.DTO.Manage.UserEditRequest;
 import lk.fat2fit.Fat2Fit.Service.ManageService;
 import lombok.RequiredArgsConstructor;
@@ -112,6 +114,55 @@ public class ManageController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Measurement saving failed. Please try again.");
         }
+    }
+
+    /**
+     * GET /api/manage/clients/{id}/fitness-goals
+     * Admin or Instructor: view assigned fitness goals for a client.
+     */
+    @GetMapping("/clients/{id}/fitness-goals")
+    public ResponseEntity<?> getClientFitnessGoals(@PathVariable Long id) {
+        return manageService.getClientFitnessGoals(id);
+    }
+
+    /**
+     * POST /api/manage/clients/{id}/fitness-goals
+     * Instructor: create and assign a fitness goal to a client.
+     */
+    @PostMapping("/clients/{id}/fitness-goals")
+    public ResponseEntity<?> assignClientFitnessGoal(@PathVariable Long id,
+            @RequestBody AssignFitnessGoalRequest req) {
+        return manageService.assignClientFitnessGoal(id, req);
+    }
+
+    /**
+     * PUT /api/manage/clients/{id}/fitness-goals/{goalId}
+     * Instructor: edit an already assigned fitness goal for a client.
+     */
+    @PutMapping("/clients/{id}/fitness-goals/{goalId}")
+    public ResponseEntity<?> updateClientFitnessGoal(@PathVariable Long id,
+            @PathVariable Long goalId,
+            @RequestBody AssignFitnessGoalRequest req) {
+        return manageService.updateClientFitnessGoal(id, goalId, req);
+    }
+
+    /**
+     * GET /api/manage/me/fitness-goals
+     * Client: view own instructor-assigned fitness goals.
+     */
+    @GetMapping("/me/fitness-goals")
+    public ResponseEntity<?> getMyFitnessGoals() {
+        return manageService.getMyFitnessGoals();
+    }
+
+    /**
+     * PUT /api/manage/me/fitness-goals/{goalId}
+     * Client: update own assigned goal status and progress.
+     */
+    @PutMapping("/me/fitness-goals/{goalId}")
+    public ResponseEntity<?> updateMyFitnessGoal(@PathVariable Long goalId,
+            @RequestBody UpdateMyFitnessGoalRequest req) {
+        return manageService.updateMyFitnessGoal(goalId, req);
     }
 
     /**
