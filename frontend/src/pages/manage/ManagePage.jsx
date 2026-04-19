@@ -55,6 +55,24 @@ const emptyHealthScreeningForm = () =>
 const screeningValueToBool = (value) => value === "YES";
 const boolToScreeningValue = (value) => (value ? "YES" : "NO");
 
+const emptyWorkoutScheduleForm = () => ({
+  trainingType: "",
+  fitnessGoal: "FAT_BURNING",
+  exercises: "",
+  durationMinutes: "",
+  frequencyPerWeek: "",
+  specialInstructions: "",
+});
+
+const workoutScheduleToForm = (schedule) => ({
+  trainingType: schedule?.trainingType ?? "",
+  fitnessGoal: schedule?.fitnessGoal ?? "FAT_BURNING",
+  exercises: schedule?.exercises ?? "",
+  durationMinutes: schedule?.durationMinutes != null ? String(schedule.durationMinutes) : "",
+  frequencyPerWeek: schedule?.frequencyPerWeek != null ? String(schedule.frequencyPerWeek) : "",
+  specialInstructions: schedule?.specialInstructions ?? "",
+});
+
 const emptyMetrics = () => ({
   heightCm: "",
   weightKg: "",
@@ -2066,6 +2084,260 @@ const FitnessGoalsModal = ({ user, onClose, selfManage = false, onSaved }) => {
   );
 };
 
+const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onSaved }) => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [schedule, setSchedule] = useState(null);
+  const [form, setForm] = useState(emptyWorkoutScheduleForm());
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [permissionError, setPermissionError] = useState("");
+
+  const canEdit = viewerRole === "INSTRUCTOR" && !selfView;
+
+  useEffect(() => {
+    const loadSchedule = async () => {
+      setLoading(true);
+      setError("");
+      setPermissionError("");
+      try {
+        if (!selfView && !user?.id) {
+          setError("Please select a member before assigning a workout schedule.");
+          return;
+        }
+
+        const endpoint = selfView
+          ? "/api/manage/me/workout-schedule"
+          : `/api/manage/clients/${user.id}/workout-schedule`;
+        const { data } = await api.get(endpoint);
+        setSchedule(data);
+        setForm(workoutScheduleToForm(data));
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setSchedule(null);
+          setForm(emptyWorkoutScheduleForm());
+        } else if (err.response?.status === 403) {
+          setPermissionError(err.response?.data || "You are not authorized to access workout schedules.");
+        } else {
+          setError("Failed to load workout schedule.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSchedule();
+  }, [selfView, user?.id]);
+
+  const set = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setError("");
+    setSuccess("");
+    setPermissionError("");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setPermissionError("");
+
+    if (!canEdit) {
+      setPermissionError("You are not authorized to modify this workout schedule.");
+      return;
+    }
+
+    if (!user?.id) {
+      setError("Please select a member before assigning a workout schedule.");
+      return;
+    }
+
+    if (!form.trainingType.trim() || !form.fitnessGoal.trim() || !form.exercises.trim()
+      || !form.durationMinutes || !form.frequencyPerWeek) {
+      setError("All required schedule details must be provided.");
+      return;
+    }
+
+    const durationMinutes = Number(form.durationMinutes);
+    const frequencyPerWeek = Number(form.frequencyPerWeek);
+    if (Number.isNaN(durationMinutes) || durationMinutes <= 0) {
+      setError("Duration must be a positive number.");
+      return;
+    }
+    if (Number.isNaN(frequencyPerWeek) || frequencyPerWeek <= 0) {
+      setError("Frequency must be a positive number.");
+      return;
+    }
+
+    const payload = {
+      trainingType: form.trainingType.trim(),
+      fitnessGoal: form.fitnessGoal.trim(),
+      exercises: form.exercises.trim(),
+      durationMinutes,
+      frequencyPerWeek,
+      specialInstructions: form.specialInstructions.trim() || null,
+    };
+
+    const hasExisting = Boolean(schedule?.id);
+    const method = hasExisting ? "put" : "post";
+    const endpoint = `/api/manage/clients/${user.id}/workout-schedule`;
+
+    setSaving(true);
+    try {
+      const { data } = await api[method](endpoint, payload);
+      setSchedule(data);
+      setForm(workoutScheduleToForm(data));
+      setSuccess(hasExisting ? "Workout schedule updated successfully." : "Workout schedule assigned successfully.");
+      onSaved?.(data);
+    } catch (err) {
+      if (err.response?.status === 403) {
+        setPermissionError(err.response?.data || "You are not authorized to modify this workout schedule.");
+      } else if (method === "put") {
+        setError(err.response?.data || "Schedule update failed. Please try again.");
+      } else {
+        setError(err.response?.data || "Workout schedule saving failed. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMemberEditAttempt = () => {
+    setPermissionError("You are not authorized to modify this workout schedule.");
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {selfView ? "My Workout Schedule" : `Workout Schedule - ${user.firstName} ${user.lastName}`}
+          </h2>
+          <button className="modal-close" onClick={onClose}>X</button>
+        </div>
+
+        {loading ? (
+          <p className="empty-msg">Loading workout schedule...</p>
+        ) : (
+          <>
+            {error && <p className="modal-error">{error}</p>}
+            {permissionError && <p className="modal-error">{permissionError}</p>}
+            {success && <p className="form-success">{success}</p>}
+
+            {schedule ? (
+              <div className="measurement-summary-card">
+                <p><strong>Assigned Goal:</strong> {fitnessGoalLabel(schedule.fitnessGoal)}</p>
+                <p><strong>Duration:</strong> {schedule.durationMinutes} minutes</p>
+                <p><strong>Frequency:</strong> {schedule.frequencyPerWeek} sessions per week</p>
+                <p><strong>Last Updated:</strong> {formatRecordedAt(schedule.updatedAt)}</p>
+              </div>
+            ) : (
+              <p className="empty-msg">
+                {canEdit ? "No workout schedule assigned yet. Create one below." : "No workout schedule assigned yet."}
+              </p>
+            )}
+
+            <form className="edit-form" onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Training Type</label>
+                  <input
+                    value={form.trainingType}
+                    onChange={set("trainingType")}
+                    disabled={!canEdit}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Fitness Goal</label>
+                  <select
+                    value={form.fitnessGoal}
+                    onChange={set("fitnessGoal")}
+                    disabled={!canEdit}
+                    required
+                  >
+                    {FITNESS_GOAL_OPTIONS.map((goal) => (
+                      <option key={goal.value} value={goal.value}>{goal.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group full">
+                  <label>Exercises</label>
+                  <textarea
+                    rows={4}
+                    value={form.exercises}
+                    onChange={set("exercises")}
+                    disabled={!canEdit}
+                    placeholder="List workout exercises and sets"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Duration (minutes)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.durationMinutes}
+                    onChange={set("durationMinutes")}
+                    disabled={!canEdit}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Frequency (sessions/week)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.frequencyPerWeek}
+                    onChange={set("frequencyPerWeek")}
+                    disabled={!canEdit}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group full">
+                  <label>Special Instructions</label>
+                  <textarea
+                    rows={3}
+                    value={form.specialInstructions}
+                    onChange={set("specialInstructions")}
+                    disabled={!canEdit}
+                    placeholder="Optional coach notes and cautions"
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions modal-actions--tight">
+                {canEdit ? (
+                  <button type="submit" className="btn-save" disabled={saving}>
+                    {saving ? "Saving..." : schedule ? "Update Schedule" : "Assign Schedule"}
+                  </button>
+                ) : (
+                  <button type="button" className="btn-cancel" onClick={handleMemberEditAttempt}>
+                    Edit Schedule
+                  </button>
+                )}
+              </div>
+            </form>
+
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={onClose}>Close</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── Search + Filter Toolbar ──────────────────────────────────────────────────────
 
 const Toolbar = ({ search, onSearch, roleFilter, onRoleFilter, viewerRole }) => {
@@ -2103,6 +2375,7 @@ const UserTable = ({
   onEdit,
   onEditMetrics,
   onManageGoals,
+  onManageWorkout,
   onEditEmployment,
   onOpenMemberProfile,
   onOpenHealthScreening,
@@ -2180,6 +2453,9 @@ const UserTable = ({
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-goals" onClick={() => onManageGoals(u)}>Goals</button>
+                  )}
+                  {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
+                    <button className="btn-workout" onClick={() => onManageWorkout(u)}>Workout</button>
                   )}
                   {(viewerRole === "ADMIN" || viewerRole === "INSTRUCTOR") && u.role === "CLIENT" && (
                     <button className="btn-membership-profile" onClick={() => onOpenMemberProfile(u)}>Profile</button>
@@ -2347,8 +2623,10 @@ const ManagePage = () => {
   const [editing, setEditing] = useState(null);              // personal-details modal
   const [editingMetrics, setEditingMetrics] = useState(null);  // metrics modal
   const [goalsClient, setGoalsClient] = useState(null);
+  const [workoutClient, setWorkoutClient] = useState(null);
   const [selfTrendsOpen, setSelfTrendsOpen] = useState(false);
   const [selfGoalsOpen, setSelfGoalsOpen] = useState(false);
+  const [selfWorkoutOpen, setSelfWorkoutOpen] = useState(false);
   const [editingEmployment, setEditingEmployment] = useState(null); // employment modal
   const [recordingPayment, setRecordingPayment] = useState(null);
   const [screeningClient, setScreeningClient] = useState(null);
@@ -2496,10 +2774,14 @@ const ManagePage = () => {
   const closeMetricsModal = () => setEditingMetrics(null);
   const handleOpenGoals = (user) => setGoalsClient(user);
   const closeGoalsModal = () => setGoalsClient(null);
+  const handleOpenWorkout = (user) => setWorkoutClient(user);
+  const closeWorkoutModal = () => setWorkoutClient(null);
   const handleOpenSelfTrends = () => setSelfTrendsOpen(true);
   const closeSelfTrendsModal = () => setSelfTrendsOpen(false);
   const handleOpenSelfGoals = () => setSelfGoalsOpen(true);
   const closeSelfGoalsModal = () => setSelfGoalsOpen(false);
+  const handleOpenSelfWorkout = () => setSelfWorkoutOpen(true);
+  const closeSelfWorkoutModal = () => setSelfWorkoutOpen(false);
   const handleOpenEmployment = (user) => setEditingEmployment(user);
   const closeEmploymentModal = () => setEditingEmployment(null);
   const handleOpenPaymentRecord = (user) => setRecordingPayment(user);
@@ -2760,6 +3042,9 @@ const ManagePage = () => {
                 <button className="btn-goals" onClick={handleOpenSelfGoals}>
                   Manage Goals
                 </button>
+                <button className="btn-workout" onClick={handleOpenSelfWorkout}>
+                  Workout Schedule
+                </button>
               </>
             )}
             <button className="btn-back" onClick={() => navigate("/profile")}>
@@ -2786,6 +3071,7 @@ const ManagePage = () => {
               onEdit={handleEdit}
               onEditMetrics={handleOpenMetrics}
               onManageGoals={handleOpenGoals}
+              onManageWorkout={handleOpenWorkout}
               onEditEmployment={handleOpenEmployment}
               onOpenMemberProfile={handleOpenMemberProfile}
               onOpenHealthScreening={handleOpenHealthScreening}
@@ -2985,6 +3271,27 @@ const ManagePage = () => {
           user={selfUser}
           selfManage
           onClose={closeSelfGoalsModal}
+          onSaved={() => {}}
+        />
+      )}
+
+      {workoutClient && (
+        <WorkoutScheduleModal
+          user={workoutClient}
+          viewerRole={role}
+          onClose={closeWorkoutModal}
+          onSaved={async () => {
+            await refreshUserList();
+          }}
+        />
+      )}
+
+      {selfWorkoutOpen && selfUser && (
+        <WorkoutScheduleModal
+          user={selfUser}
+          viewerRole={role}
+          selfView
+          onClose={closeSelfWorkoutModal}
           onSaved={() => {}}
         />
       )}

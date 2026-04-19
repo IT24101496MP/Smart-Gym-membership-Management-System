@@ -360,6 +360,22 @@
   background: #452b18;
 }
 
+.btn-workout {
+  padding: 0.35rem 0.9rem;
+  background: #2d6a4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-workout:hover {
+  background: #24543f;
+}
+
 .btn-membership-profile {
   padding: 0.35rem 0.9rem;
   background: #1565c0;
