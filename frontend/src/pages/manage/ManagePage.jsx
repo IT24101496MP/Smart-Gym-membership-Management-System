@@ -2202,10 +2202,6 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
     }
   };
 
-  const handleMemberEditAttempt = () => {
-    setPermissionError("You are not authorized to modify this workout schedule.");
-  };
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
@@ -2315,17 +2311,13 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                 </div>
               </div>
 
-              <div className="modal-actions modal-actions--tight">
-                {canEdit ? (
+              {canEdit && (
+                <div className="modal-actions modal-actions--tight">
                   <button type="submit" className="btn-save" disabled={saving}>
                     {saving ? "Saving..." : schedule ? "Update Schedule" : "Assign Schedule"}
                   </button>
-                ) : (
-                  <button type="button" className="btn-cancel" onClick={handleMemberEditAttempt}>
-                    Edit Schedule
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
             </form>
 
             <div className="modal-actions">
