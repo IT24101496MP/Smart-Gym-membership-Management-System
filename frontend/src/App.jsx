@@ -15,6 +15,7 @@ import PaymentPage from "./pages/payment/PaymentPage";
 import LandingPage from "./pages/home/LandingPage";
 import AdminContactMessagesPage from "./pages/admin/AdminContactMessagesPage";
 import TestimonialsPage from "./pages/testimonials/TestimonialsPage";
+import AboutUsPage from "./pages/about/AboutUsPage";
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function App() {
           />
 
           <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/about-us" element={<AboutUsPage />} />
 
           <Route
             path="/admin/contact-messages"

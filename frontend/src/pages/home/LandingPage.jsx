@@ -316,7 +316,7 @@ const LandingPage = () => {
           <button type="button" onClick={() => navigate("/testimonials")}>
             Testimonials
           </button>
-          <button type="button" className="nav-coming-soon" disabled title="Coming soon">
+          <button type="button" onClick={() => navigate("/about-us")}>
             About Us
           </button>
           <button type="button" onClick={() => scrollTo(contactRef)}>
