@@ -2088,12 +2088,15 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [schedule, setSchedule] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(emptyWorkoutScheduleForm());
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [permissionError, setPermissionError] = useState("");
 
-  const canEdit = viewerRole === "INSTRUCTOR" && !selfView;
+  const isInstructor = viewerRole === "INSTRUCTOR" && !selfView;
+  const hasExistingSchedule = Boolean(schedule?.id);
+  const canEditFields = isInstructor && (!hasExistingSchedule || isEditing);
 
   useEffect(() => {
     const loadSchedule = async () => {
@@ -2112,10 +2115,12 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
         const { data } = await api.get(endpoint);
         setSchedule(data);
         setForm(workoutScheduleToForm(data));
+        setIsEditing(false);
       } catch (err) {
         if (err.response?.status === 404) {
           setSchedule(null);
           setForm(emptyWorkoutScheduleForm());
+          setIsEditing(isInstructor);
         } else if (err.response?.status === 403) {
           setPermissionError(err.response?.data || "You are not authorized to access workout schedules.");
         } else {
@@ -2127,7 +2132,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
     };
 
     loadSchedule();
-  }, [selfView, user?.id]);
+  }, [selfView, user?.id, isInstructor]);
 
   const set = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -2142,7 +2147,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
     setSuccess("");
     setPermissionError("");
 
-    if (!canEdit) {
+    if (!canEditFields) {
       setPermissionError("You are not authorized to modify this workout schedule.");
       return;
     }
@@ -2187,6 +2192,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
       const { data } = await api[method](endpoint, payload);
       setSchedule(data);
       setForm(workoutScheduleToForm(data));
+      setIsEditing(false);
       setSuccess(hasExisting ? "Workout schedule updated successfully." : "Workout schedule assigned successfully.");
       onSaved?.(data);
     } catch (err) {
@@ -2200,6 +2206,25 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleStartEdit = () => {
+    if (!isInstructor || !schedule) return;
+    setForm(workoutScheduleToForm(schedule));
+    setIsEditing(true);
+    setError("");
+    setSuccess("");
+    setPermissionError("");
+  };
+
+  const handleCancelEdit = () => {
+    if (schedule) {
+      setForm(workoutScheduleToForm(schedule));
+      setIsEditing(false);
+    }
+    setError("");
+    setSuccess("");
+    setPermissionError("");
   };
 
   return (
@@ -2229,8 +2254,16 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
               </div>
             ) : (
               <p className="empty-msg">
-                {canEdit ? "No workout schedule assigned yet. Create one below." : "No workout schedule assigned yet."}
+                {isInstructor ? "No workout schedule assigned yet. Create one below." : "No workout schedule assigned yet."}
               </p>
+            )}
+
+            {isInstructor && hasExistingSchedule && !isEditing && (
+              <div className="modal-actions modal-actions--tight">
+                <button type="button" className="btn-edit-inline" onClick={handleStartEdit}>
+                  Edit Schedule
+                </button>
+              </div>
             )}
 
             <form className="edit-form" onSubmit={handleSubmit}>
@@ -2240,7 +2273,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                   <input
                     value={form.trainingType}
                     onChange={set("trainingType")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     required
                   />
                 </div>
@@ -2249,7 +2282,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                   <select
                     value={form.fitnessGoal}
                     onChange={set("fitnessGoal")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     required
                   >
                     {FITNESS_GOAL_OPTIONS.map((goal) => (
@@ -2266,7 +2299,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                     rows={4}
                     value={form.exercises}
                     onChange={set("exercises")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     placeholder="List workout exercises and sets"
                     required
                   />
@@ -2281,7 +2314,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                     min="1"
                     value={form.durationMinutes}
                     onChange={set("durationMinutes")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     required
                   />
                 </div>
@@ -2292,7 +2325,7 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                     min="1"
                     value={form.frequencyPerWeek}
                     onChange={set("frequencyPerWeek")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     required
                   />
                 </div>
@@ -2305,14 +2338,19 @@ const WorkoutScheduleModal = ({ user, onClose, viewerRole, selfView = false, onS
                     rows={3}
                     value={form.specialInstructions}
                     onChange={set("specialInstructions")}
-                    disabled={!canEdit}
+                    disabled={!canEditFields}
                     placeholder="Optional coach notes and cautions"
                   />
                 </div>
               </div>
 
-              {canEdit && (
+              {canEditFields && (
                 <div className="modal-actions modal-actions--tight">
+                  {hasExistingSchedule && (
+                    <button type="button" className="btn-cancel" onClick={handleCancelEdit}>
+                      Cancel
+                    </button>
+                  )}
                   <button type="submit" className="btn-save" disabled={saving}>
                     {saving ? "Saving..." : schedule ? "Update Schedule" : "Assign Schedule"}
                   </button>
