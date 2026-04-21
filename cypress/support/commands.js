@@ -1,16 +1,3 @@
-Cypress.Commands.add("getAuthToken", () => {
-  return cy
-    .request("POST", "/api/auth/login", {
-      identifier: "admin@fat2fit.lk",
-      password: "Admin@1234",
-    })
-    .then((res) => res.body.accessToken);
-});
-
-/**
- * UI login for admin user.
- * Uses cy.session to speed up repeated tests.
- */
 Cypress.Commands.add("loginAsAdmin", () => {
   cy.session("admin-ui", () => {
     cy.visit("/login");
@@ -21,22 +8,13 @@ Cypress.Commands.add("loginAsAdmin", () => {
   });
 });
 
-Cypress.Commands.add("loginAsStaff", () => {
-  cy.visit("/login");
-  cy.fixture("users").then((users) => {
-    cy.get("#identifier").clear().type(users.admin.identifier);
-    cy.get("#password").clear().type(users.admin.password);
-  });
-  cy.get('button[type="submit"]').click();
-  cy.url().should("not.include", "/login");
-});
-
-Cypress.Commands.add("loginAsInstructor", () => {
-  cy.visit("/login");
-  cy.get("#identifier").clear().type("instructor@gmail.com");
-  cy.get("#password").clear().type("12345678");
-  cy.get('button[type="submit"]').click();
-  cy.url().should("not.include", "/login");
+Cypress.Commands.add("getAuthToken", () => {
+  return cy
+    .request("POST", "/api/auth/login", {
+      identifier: "admin@fat2fit.lk",
+      password: "Admin@1234",
+    })
+    .then((res) => res.body.accessToken);
 });
 
 Cypress.Commands.add("triggerExpiryJob", (token) => {
@@ -86,6 +64,20 @@ Cypress.Commands.add("deactivatePlan", (planName) => {
     .should("exist");
 });
 
+});
+
+Cypress.Commands.add("loginAsStaff", () => {
+  cy.loginAsAdmin();
+});
+
+Cypress.Commands.add("loginAsInstructor", () => {
+  cy.visit("/login");
+  cy.get("#identifier").clear().type("instructor@gmail.com");
+  cy.get("#password").clear().type("12345678");
+  cy.get("form.login-form").submit();
+  cy.url({ timeout: 15000 }).should("not.include", "/login");
+});
+
 Cypress.Commands.add("openManagePage", () => {
   cy.visit("/manage");
   cy.contains("h1", "Manage").should("be.visible");
@@ -117,6 +109,30 @@ Cypress.Commands.add("selectPlanInEditModal", (planName) => {
       .then(($select) => {
         cy.wrap($select).select(String(planName));
       });
+  });
+});
+
+Cypress.Commands.add("setMembershipStartDateInEditModal", (dateValue) => {
+  cy.get(".modal-card").within(() => {
+    cy.contains("label", "Membership Start Date")
+      .parent()
+      .find('input[type="date"]')
+      .should("be.enabled")
+      .clear({ force: true })
+      .type(dateValue, { force: true })
+      .blur()
+      .should("have.value", dateValue);
+  });
+});
+
+  });
+
+  cy.contains("h2", "Edit").should("be.visible");
+});
+
+Cypress.Commands.add("selectPlanInEditModal", (planValue) => {
+  cy.get(".modal-card").within(() => {
+    cy.contains("label", "Membership Plan").parent().find("select").select(String(planValue));
   });
 });
 
