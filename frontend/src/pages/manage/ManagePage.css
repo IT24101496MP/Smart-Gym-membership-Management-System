@@ -131,6 +131,27 @@
 .status-badge.active   { background: #e8f5e9; color: #2e7d32; }
 .status-badge.inactive { background: #fce4ec; color: #c62828; }
 
+.health-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.health-risk-badge.high {
+  background: #fce4ec;
+  color: #9b1c1c;
+}
+
+.health-risk-badge.normal {
+  background: #e8f5e9;
+  color: #1f6a31;
+}
+
 .membership-status-badge {
   font-size: 0.72rem;
   font-weight: 700;
@@ -323,6 +344,38 @@
   background: #c0392b;
 }
 
+.btn-goals {
+  padding: 0.35rem 0.9rem;
+  background: #5e3b22;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-goals:hover {
+  background: #452b18;
+}
+
+.btn-workout {
+  padding: 0.35rem 0.9rem;
+  background: #2d6a4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-workout:hover {
+  background: #24543f;
+}
+
 .btn-membership-profile {
   padding: 0.35rem 0.9rem;
   background: #1565c0;
@@ -351,6 +404,22 @@
 }
 .btn-payment:hover {
   background: #5c3f2a;
+}
+
+.btn-health {
+  padding: 0.35rem 0.9rem;
+  background: #7a1f1f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-health:hover {
+  background: #611818;
 }
 
 .btn-employment {
@@ -664,6 +733,39 @@
   margin-bottom: 1rem;
 }
 
+.fitness-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.fitness-goal-card {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: #fff;
+}
+
+.fitness-goal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fitness-goal-card-header h4 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.fitness-goal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
 .goal-checkbox {
   display: flex;
   align-items: center;
@@ -831,7 +933,8 @@ select.emp-input--readonly {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   padding: 0.55rem 0.8rem;
   border: 1.5px solid #ddd;
   border-radius: 7px;
@@ -845,8 +948,57 @@ select.emp-input--readonly {
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   border-color: #c0392b;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.health-question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.health-question-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.health-question-row label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.health-question-options {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.health-question-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #222;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.health-question-options input[type="radio"] {
+  accent-color: #c0392b;
 }
 
 .form-section-label {

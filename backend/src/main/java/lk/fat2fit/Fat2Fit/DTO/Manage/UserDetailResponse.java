@@ -45,6 +45,7 @@ public class UserDetailResponse {
     private String membershipStatus;
     private LocalDate membershipStartDate;
     private LocalDate membershipEndDate;
+    private Boolean highRiskMember;
 
     // ── Instructor-only fields (null for non-instructors) ────────────────────
     private ProfileStatus instructorStatus;
