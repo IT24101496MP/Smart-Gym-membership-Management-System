@@ -1,33 +1,32 @@
 package lk.fat2fit.Fat2Fit.DTO.Manage;
 
-import lk.fat2fit.Fat2Fit.Entity.Enum.FitnessGoal;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Set;
 
 /**
- * Response body for a client's body metrics.
+ * Response body for a recorded client body measurement.
  */
 @Data
 @Builder
 public class ClientMetricsResponse {
 
+    private Long measurementId;
     private Long clientId;
 
-    private BigDecimal weightKg;
     private BigDecimal heightCm;
-    private BigDecimal hipSizeCm;
-    private BigDecimal breastSizeCm;
-    private BigDecimal waistSizeCm;
-    private BigDecimal armSizeCm;
-    private BigDecimal shoulderSizeCm;
-    private BigDecimal buttSizeCm;
+    private BigDecimal weightKg;
+    private BigDecimal waistCm;
+    private BigDecimal hipCm;
+    private BigDecimal armCm;
+    private BigDecimal shoulderCm;
+    private BigDecimal breastCm;
+    private BigDecimal buttocksCm;
 
-    private Set<FitnessGoal> fitnessGoals;
-    private String otherGoalSpecification;
-
-    private LocalDateTime updatedAt;
+    private LocalDate measurementDate;
+    private BigDecimal bmi;
+    private LocalDateTime recordedAt;
 }

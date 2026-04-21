@@ -228,6 +228,44 @@ function setupPlanAndClient({ planOverrides = {}, clientOverrides = {} } = {}) {
   });
 }
 
+function setupStaffClientAndLogin({ clientOverrides = {} } = {}) {
+  return cy.fixture("users.json").then((users) => {
+    const staffIdentifier = users.instructor?.identifier || users.admin?.identifier;
+    const staffPassword = users.instructor?.password || users.admin?.password;
+    const clientPassword = users.client?.password || "Password123!";
+
+    return loginJson({ identifier: staffIdentifier, password: staffPassword }).then((staffTokens) => {
+      const client = {
+        firstName: "QA",
+        lastName: `HealthClient_${Date.now()}`,
+        age: 25,
+        dateOfBirth: "2000-01-01",
+        gender: "MALE",
+        phoneNumber: uniqueSriLankaMobile(),
+        email: uniqueEmail("health.client.qa"),
+        address: "123 Main Street, Colombo",
+        ...clientOverrides,
+      };
+
+      return registerClientClientRegister({ client, clientPassword }).then(() => {
+        return loginJson({ identifier: client.email, password: clientPassword }).then((clientTokens) => {
+          return getAuthMe(clientTokens.accessToken).then((me) => {
+            return {
+              staffTokens,
+              clientTokens,
+              createdClient: {
+                ...client,
+                id: me.id,
+              },
+              clientId: me.id,
+            };
+          });
+        });
+      });
+    });
+  });
+}
+
 module.exports = {
   API_BASE,
   FRONTEND_BASE,
@@ -243,6 +281,7 @@ module.exports = {
   getMembershipHistory,
   waitForClientMembershipActive,
   setupPlanAndClient,
+  setupStaffClientAndLogin,
   registerClientClientRegister,
 };
 
