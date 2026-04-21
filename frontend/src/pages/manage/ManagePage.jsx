@@ -3059,6 +3059,9 @@ const ManagePage = () => {
                 <button className="btn-attendance" onClick={() => navigate("/attendance")}>
                   Attendance
                 </button>
+                <button className="btn-attendance" onClick={() => navigate("/admin/contact-messages")}>
+                  Contact
+                </button>
                 <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
                   Membership Plans
                 </button>

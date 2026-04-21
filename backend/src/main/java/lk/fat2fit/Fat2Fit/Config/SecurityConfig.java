@@ -42,16 +42,20 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/client/register",
-                            "/api/instructor/register",
-                            "/api/payments/payhere/notify")
+                                "/api/instructor/register",
+                                "/api/payments/payhere/notify",
+                                "/api/contact/send")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Authenticated-only
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
 
                         // ADMIN only
                         .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/contact/messages").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/contact/messages/*/reply").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/membership-plans").hasRole("ADMIN")

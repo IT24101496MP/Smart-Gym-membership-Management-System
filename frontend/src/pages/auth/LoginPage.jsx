@@ -169,6 +169,7 @@ const LoginPage = () => {
               Register
             </Link>
           </p>
+
         </form>
       </div>
     </div>

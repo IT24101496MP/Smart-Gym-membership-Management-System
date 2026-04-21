@@ -193,7 +193,7 @@ public class ManageController {
      * Admin or Instructor: suspend/unsuspend a client's membership.
      */
     @PutMapping("/clients/{id}/membership/suspension")
-    public ResponseEntity<?> updateClientMembershipSuspension(@PathVariable int id,
+    public ResponseEntity<?> updateClientMembershipSuspension(@PathVariable Long id,
                                                               @RequestBody ClientMembershipSuspendRequest req) {
         return manageService.updateClientMembershipSuspension(id, req);
     }
@@ -203,7 +203,7 @@ public class ManageController {
      * Admin or Instructor: renew a client's membership period from a start date.
      */
     @PutMapping("/clients/{id}/membership/renew")
-    public ResponseEntity<?> renewClientMembership(@PathVariable int id,
+    public ResponseEntity<?> renewClientMembership(@PathVariable Long id,
                                                    @RequestBody(required = false) ClientMembershipRenewRequest req) {
         return manageService.renewClientMembership(id, req);
     }

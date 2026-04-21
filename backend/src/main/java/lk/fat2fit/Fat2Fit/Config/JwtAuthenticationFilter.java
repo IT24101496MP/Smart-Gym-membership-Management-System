@@ -35,10 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmailFromToken(token);
                 String role  = jwtUtil.getRoleFromToken(token);
 
-                // If role is missing from the token, deny authentication entirely
+                // Ignore tokens without a role claim and continue as anonymous.
                 if (role == null || role.isBlank()) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                            "Access denied: role claim is missing from the token.");
+                    filterChain.doFilter(request, response);
                     return;
                 }
 
