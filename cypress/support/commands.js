@@ -1,3 +1,12 @@
+Cypress.Commands.add("getAuthToken", () => {
+  return cy
+    .request("POST", "/api/auth/login", {
+      identifier: "admin@fat2fit.lk",
+      password: "Admin@1234",
+    })
+    .then((res) => res.body.accessToken);
+});
+
 Cypress.Commands.add("loginAsAdmin", () => {
   cy.session("admin-ui", () => {
     cy.visit("/login");
@@ -8,13 +17,22 @@ Cypress.Commands.add("loginAsAdmin", () => {
   });
 });
 
-Cypress.Commands.add("getAuthToken", () => {
-  return cy
-    .request("POST", "/api/auth/login", {
-      identifier: "admin@fat2fit.lk",
-      password: "Admin@1234",
-    })
-    .then((res) => res.body.accessToken);
+Cypress.Commands.add("loginAsStaff", () => {
+  cy.visit("/login");
+  cy.fixture("users").then((users) => {
+    cy.get("#identifier").type(users.admin.identifier);
+    cy.get("#password").type(users.admin.password);
+  });
+  cy.get('button[type="submit"]').click();
+  cy.url().should("not.include", "/login");
+});
+
+Cypress.Commands.add("loginAsInstructor", () => {
+  cy.visit("http://localhost:5173/login");
+  cy.get('input[name="identifier"]').should("exist").type("instructor@gmail.com");
+  cy.get('input[name="password"]').should("exist").type("12345678");
+  cy.get('button[type="submit"]').click();
+  cy.url().should("not.include", "/login");
 });
 
 Cypress.Commands.add("triggerExpiryJob", (token) => {
@@ -64,6 +82,52 @@ Cypress.Commands.add("deactivatePlan", (planName) => {
     .should("exist");
 });
 
+Cypress.Commands.add("openMemberProfile", (memberId) => {
+  cy.visit("/manage");
+  cy.contains("h1", "Manage").should("be.visible");
+  cy.get("table.manage-table tbody tr").should("have.length.greaterThan", 0);
+  cy.get("table.manage-table tbody tr").then(($rows) => {
+    const targetRow = Array.from($rows).find((row) => {
+      const idCell = row.querySelector("td.cell-id");
+      return idCell && idCell.textContent.trim() === String(memberId);
+    });
+
+    if (targetRow) {
+      cy.wrap(targetRow).within(() => {
+        cy.contains("button", "Profile").click();
+      });
+      return;
+    }
+
+    cy.wrap($rows[0]).within(() => {
+      cy.contains("button", "Profile").click();
+    });
+  });
+  cy.contains("h2", "Member Profile").should("be.visible");
+});
+
+Cypress.Commands.add("clickRenew", () => {
+  cy.get("body").then(($body) => {
+    const renewBtn = $body.find('.membership-renew-form button[type="submit"]');
+    if (renewBtn.length > 0) {
+      cy.wrap(renewBtn.first()).click();
+    }
+  });
+});
+
+Cypress.Commands.add("confirmRenew", () => {
+  cy.get("body").then(($body) => {
+    if ($body.find('button:contains("Confirm")').length > 0) {
+      cy.contains("button", "Confirm").click();
+    }
+  });
+});
+
+Cypress.Commands.add("openManagePage", () => {
+  cy.visit("/manage");
+  cy.contains("h1", "Manage").should("be.visible");
+});
+
 });
 
 Cypress.Commands.add("loginAsStaff", () => {
@@ -97,7 +161,6 @@ Cypress.Commands.add("openClientEditModal", (clientId) => {
       cy.contains("button", "Edit").click();
     });
   });
-
   cy.contains("h2", "Edit").should("be.visible");
 });
 
@@ -125,6 +188,10 @@ Cypress.Commands.add("setMembershipStartDateInEditModal", (dateValue) => {
   });
 });
 
+Cypress.Commands.add("saveEditModal", () => {
+  cy.get(".modal-card").within(() => {
+    cy.contains("button", "Save Changes").click();
+  });
   });
 
   cy.contains("h2", "Edit").should("be.visible");

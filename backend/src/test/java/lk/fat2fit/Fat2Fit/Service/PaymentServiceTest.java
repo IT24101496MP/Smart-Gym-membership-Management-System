@@ -74,7 +74,7 @@ class PaymentServiceTest {
                 .build();
 
         RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
-        request.setClientId(10);
+        request.setClientId(10L);
         request.setMembershipPlanId(1);
         request.setPaymentAmount(new BigDecimal("5000.00"));
         request.setPaymentDate(LocalDate.now());
@@ -113,7 +113,7 @@ class PaymentServiceTest {
                 .build();
 
         RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
-        request.setClientId(20);
+        request.setClientId(20L);
         request.setMembershipPlanId(2);
         request.setPaymentAmount(new BigDecimal("9000.00"));
         request.setPaymentDate(LocalDate.now());
