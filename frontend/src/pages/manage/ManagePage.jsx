@@ -3069,6 +3069,9 @@ const ManagePage = () => {
             )}
             {role === "CLIENT" && (
               <>
+                <button className="btn-membership" onClick={() => navigate("/membership-plans")}>
+                  View Available Plans
+                </button>
                 <button className="btn-metrics" onClick={handleOpenSelfTrends}>
                   View Trends
                 </button>
