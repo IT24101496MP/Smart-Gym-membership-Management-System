@@ -363,6 +363,19 @@ const ClientRegistrationPage = () => {
               {isSubmitting ? "Submitting..." : "Register"}
             </button>
           </div>
+
+          <div className="form-actions" style={{ gap: "12px", flexWrap: "wrap" }}>
+            <button type="button" className="submit-button" onClick={() => navigate("/login")}> 
+              Go to Login
+            </button>
+            <button
+              type="button"
+              className="submit-button"
+              onClick={() => navigate("/instructor/register")}
+            >
+              Instructor Register
+            </button>
+          </div>
         </form>
       </div>
     </div>
