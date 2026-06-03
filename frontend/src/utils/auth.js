@@ -2,6 +2,9 @@ import axios from "axios";
 
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/";
+
+const authApi = axios.create({ baseURL: API_BASE_URL });
 
 export const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 export const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -45,7 +48,7 @@ export const refreshAccessToken = async () => {
   if (!refreshToken) return false;
 
   try {
-    const { data } = await axios.post("http://localhost:8080/api/auth/refresh", {
+    const { data } = await authApi.post("/api/auth/refresh", {
       refreshToken,
     });
     setTokens(data.accessToken, data.refreshToken);
@@ -75,7 +78,7 @@ export const logout = async () => {
   const refreshToken = getRefreshToken();
   if (refreshToken) {
     try {
-      await axios.post("http://localhost:8080/api/auth/logout", { refreshToken });
+      await authApi.post("/api/auth/logout", { refreshToken });
     } catch {
       // Proceed with local cleanup even if the request fails
     }

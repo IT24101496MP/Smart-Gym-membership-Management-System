@@ -9,14 +9,20 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UnauthorizedPage from "./pages/error/UnauthorizedPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import ManagePage from "./pages/manage/ManagePage";
-import MembershipPlanPage from "./pages/membership/MembershipPlanPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
+import MembershipPlansOverviewPage from "./pages/membership/MembershipPlansOverviewPage";
 import PaymentPage from "./pages/payment/PaymentPage";
+import LandingPage from "./pages/home/LandingPage";
+import AdminContactMessagesPage from "./pages/admin/AdminContactMessagesPage";
+import TestimonialsPage from "./pages/testimonials/TestimonialsPage";
+import AboutUsPage from "./pages/about/AboutUsPage";
 
 function App() {
   return (
       <BrowserRouter>
         <Routes>
+
+          <Route path="/" element={<LandingPage />} />
 
           {/* Login/Signup Page */}
           <Route path="/login" element={<LoginPage />} />
@@ -76,9 +82,17 @@ function App() {
 
           <Route
             path="/membership-plans"
+            element={<MembershipPlansOverviewPage />}
+          />
+
+          <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/about-us" element={<AboutUsPage />} />
+
+          <Route
+            path="/admin/contact-messages"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>
-                <MembershipPlanPage />
+                <AdminContactMessagesPage />
               </ProtectedRoute>
             }
           />
@@ -92,11 +106,10 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Catch all unknown routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </BrowserRouter>

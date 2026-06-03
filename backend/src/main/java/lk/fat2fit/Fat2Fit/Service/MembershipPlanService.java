@@ -54,7 +54,7 @@ public class MembershipPlanService {
 
     public ResponseEntity<?> getActivePlans() {
         List<MembershipPlanResponse> plans = membershipPlanRepository
-                .findByStatusOrderByIdDesc(MembershipPlanStatus.ACTIVE)
+                .findByStatusOrderByDurationDaysAscMonthlyPriceAscIdAsc(MembershipPlanStatus.ACTIVE)
                 .stream()
                 .map(this::toResponse)
                 .toList();

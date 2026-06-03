@@ -14,4 +14,5 @@ public class MembershipRenewalRequest {
     private Integer durationMonths;
     private Double price;
     private java.time.LocalDate renewalDate;
+    private Boolean overrideOverlap;
 }

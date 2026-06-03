@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.List;
 
@@ -30,4 +31,13 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
             "c.phoneNumber LIKE CONCAT('%', :keyword, '%') OR " +
             "CAST(c.id as string) LIKE CONCAT('%', :keyword, '%')")
     List<Client> searchClients(@Param("keyword") String keyword);
+
+        @Query("""
+                        SELECT c FROM Client c
+                        WHERE c.membershipPlan IS NOT NULL
+                            AND c.membershipEndDate IN :dates
+                            AND (c.membershipSuspended IS NULL OR c.membershipSuspended = false)
+                        """)
+        List<Client> findActiveClientsExpiringOnDates(@Param("dates") List<LocalDate> dates);
+
 }

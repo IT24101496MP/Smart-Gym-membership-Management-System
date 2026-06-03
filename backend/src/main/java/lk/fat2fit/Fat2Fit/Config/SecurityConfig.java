@@ -42,23 +42,25 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/client/register",
-                            "/api/instructor/register",
-                            "/api/payments/payhere/notify")
+                                "/api/instructor/register",
+                                "/api/payments/payhere/notify",
+                                "/api/contact/send")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans/active").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Authenticated-only
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
 
                         // ADMIN only
                         .requestMatchers(HttpMethod.GET, "/api/instructor").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/contact/messages").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/contact/messages/*/reply").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/membership-plans").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/membership-plans").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew")
-                        .hasAnyRole("ADMIN", "INSTRUCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**")
-                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/membership-plans/renew").hasAnyRole("ADMIN", "INSTRUCTOR", "CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/membership-plans/history/**").hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/membership-plans/**").hasRole("ADMIN")
 
                         // Manage endpoints
@@ -66,9 +68,35 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/manage/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/manage/clients").hasAnyRole("ADMIN", "INSTRUCTOR")
                         // Personal details edit: ADMIN only
+                        .requestMatchers(HttpMethod.POST, "/api/manage/clients/*/metrics")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/metrics")
                         .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/fitness-goals")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/manage/clients/*/fitness-goals")
+                        .hasRole("INSTRUCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/fitness-goals/*")
+                        .hasRole("INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/workout-schedule")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/manage/clients/*/workout-schedule")
+                        .hasRole("INSTRUCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/clients/*/workout-schedule")
+                        .hasRole("INSTRUCTOR")
                         .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/metrics")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/metrics/history")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/me/workout-schedule")
+                        .hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/me/fitness-goals")
+                        .hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/manage/me/fitness-goals/*")
+                        .hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/manage/clients/*/health-screening/latest")
+                        .hasAnyRole("ADMIN", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/manage/clients/*/health-screening")
                         .hasAnyRole("ADMIN", "INSTRUCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/manage/clients/**").hasRole("ADMIN")
                         .requestMatchers("/api/manage/me").authenticated()
@@ -82,6 +110,9 @@ public class SecurityConfig {
                         // ADMIN or CLIENT
                         .requestMatchers("/api/client/**").hasAnyRole("ADMIN", "CLIENT")
 
+                        // Payment recording by staff
+                        .requestMatchers(HttpMethod.POST, "/api/payments/record").hasAnyRole("ADMIN", "INSTRUCTOR")
+
                         // Everything else requires authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -92,7 +123,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174"));
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "https://smart-gym-membership-management-sys.vercel.app"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

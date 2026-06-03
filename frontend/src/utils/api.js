@@ -6,7 +6,7 @@ import {
   clearTokens,
 } from "./auth";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/";
 
 // ── Public instance ────────────────────────────────────────────────────────
 // No Authorization header. Used for login, registration, and auth refresh.

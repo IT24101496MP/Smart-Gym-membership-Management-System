@@ -74,14 +74,14 @@ class PaymentServiceTest {
                 .build();
 
         RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
-        request.setClientId(10);
+        request.setClientId(10L);
         request.setMembershipPlanId(1);
         request.setPaymentAmount(new BigDecimal("5000.00"));
         request.setPaymentDate(LocalDate.now());
         request.setPaymentMethod(PaymentMethod.CARD);
         request.setReferenceNumber("TXN-123");
 
-        when(clientRepository.findById(10)).thenReturn(Optional.of(client));
+        when(clientRepository.findById(10L)).thenReturn(Optional.of(client));
         when(paymentRecordRepository.findFirstByClientIdAndReferenceNumberAndPaymentMethodOrderByIdDesc(
                 10L,
                 "TXN-123",
@@ -113,7 +113,7 @@ class PaymentServiceTest {
                 .build();
 
         RecordMembershipPaymentRequest request = new RecordMembershipPaymentRequest();
-        request.setClientId(20);
+        request.setClientId(20L);
         request.setMembershipPlanId(2);
         request.setPaymentAmount(new BigDecimal("9000.00"));
         request.setPaymentDate(LocalDate.now());
@@ -121,7 +121,7 @@ class PaymentServiceTest {
 
         AtomicReference<PaymentRecord> savedRef = new AtomicReference<>();
 
-        when(clientRepository.findById(20)).thenReturn(Optional.of(client));
+        when(clientRepository.findById(20L)).thenReturn(Optional.of(client));
         when(paymentRecordRepository.existsByClientIdAndMembershipPlanIdAndAmountAndPaymentDateAndPaymentMethod(
                 20L,
                 2,

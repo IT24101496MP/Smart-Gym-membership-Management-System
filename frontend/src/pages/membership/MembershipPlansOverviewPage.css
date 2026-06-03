@@ -1,0 +1,286 @@
+.membership-overview-page {
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+  background: #ffffff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f1f1f;
+}
+
+.membership-overview-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.membership-overview-hero {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #ffd5d2;
+  box-shadow: 0 12px 26px rgba(130, 20, 20, 0.1);
+  padding: 1.25rem 1.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.membership-overview-hero h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.membership-overview-hero p {
+  margin: 0.45rem 0 0;
+  color: #575757;
+  max-width: 62ch;
+}
+
+.membership-overview-logo {
+  width: min(220px, 45vw);
+  height: auto;
+  object-fit: contain;
+  align-self: center;
+}
+
+.membership-overview-toolbar {
+  margin-top: 1rem;
+  background: #ffffff;
+  border: 1px solid #ffd8d5;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(130, 20, 20, 0.08);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.membership-overview-toolbar .filter-label {
+  font-size: 0.78rem;
+  color: #7c2d12;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.membership-overview-toolbar select,
+.membership-overview-toolbar input,
+.membership-overview-admin-form input,
+.membership-overview-admin-form textarea {
+  width: 100%;
+  border: 1px solid #f4b9b4;
+  border-radius: 10px;
+  padding: 0.58rem 0.65rem;
+  font-size: 0.94rem;
+  background: #fff;
+}
+
+.membership-overview-grid {
+  margin-top: 1.15rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+  gap: 0.95rem;
+}
+
+.membership-plan-card {
+  background: #ffffff;
+  border: 1px solid #ffd9d7;
+  border-radius: 14px;
+  box-shadow: 0 10px 20px rgba(130, 20, 20, 0.09);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.membership-plan-card h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.membership-plan-meta {
+  font-size: 0.9rem;
+  color: #565656;
+}
+
+.membership-plan-price {
+  margin-top: 0.2rem;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  color: #b71c1c;
+  font-weight: 800;
+}
+
+.membership-plan-price small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6f1d1b;
+}
+
+.membership-plan-benefits {
+  margin: 0.2rem 0 0;
+  padding-left: 1rem;
+  color: #313131;
+}
+
+.membership-plan-benefits li {
+  margin-bottom: 0.24rem;
+  font-size: 0.88rem;
+}
+
+.membership-btn,
+.membership-overview-hero .membership-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  background: linear-gradient(180deg, #ef5350, #c62828);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.membership-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.membership-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.membership-btn.secondary {
+  background: #fcebea;
+  color: #9b1c1c;
+  border: 1px solid #f7b1ab;
+}
+
+.membership-msg {
+  margin-top: 0.8rem;
+  border-radius: 10px;
+  padding: 0.62rem 0.72rem;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+}
+
+.membership-msg.error {
+  background: #fff0f0;
+  border-color: #ffc4c4;
+  color: #8e1c1c;
+}
+
+.membership-msg.success {
+  background: #f0fff4;
+  border-color: #b9efcc;
+  color: #1f6b3a;
+}
+
+.membership-overview-admin {
+  margin-top: 1rem;
+  background: #ffffff;
+  border: 1px solid #ffd5d2;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(130, 20, 20, 0.08);
+  padding: 1rem;
+}
+
+.membership-overview-admin h2 {
+  margin: 0;
+  font-size: 1.07rem;
+}
+
+.membership-overview-admin p {
+  margin: 0.3rem 0 0.85rem;
+  color: #5f5f5f;
+}
+
+.membership-overview-registrations {
+  margin-top: 0.9rem;
+}
+
+.membership-overview-admin-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.membership-overview-admin-form .full {
+  grid-column: 1 / -1;
+}
+
+.membership-admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.membership-overview-empty {
+  margin-top: 1rem;
+  background: #ffffff;
+  border: 1px dashed #f6a9a2;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #6a2b2b;
+}
+
+.membership-registration-groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+
+.membership-registration-group {
+  border: 1px solid #f7c6c2;
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fff;
+}
+
+.membership-registration-group h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.membership-registration-group span {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.84rem;
+  color: #6f1d1b;
+}
+
+.membership-registration-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.55rem;
+}
+
+.membership-registration-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.membership-registration-table th,
+.membership-registration-table td {
+  text-align: left;
+  font-size: 0.86rem;
+  padding: 0.5rem 0.45rem;
+  border-bottom: 1px solid #f8e3e1;
+}
+
+.membership-registration-table thead th {
+  color: #7a2522;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .membership-overview-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .membership-overview-admin-form {
+    grid-template-columns: 1fr;
+  }
+}
